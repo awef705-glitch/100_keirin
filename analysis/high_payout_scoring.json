@@ -1,0 +1,109 @@
+{
+  "input_file": "data\\keirin_results_20240101_20251004.csv",
+  "num_records": 48682,
+  "positive_count": 12931,
+  "metrics": {
+    "auc": 0.7404335469011575,
+    "average_precision": 0.5073789729566283,
+    "classification_report": {
+      "0": {
+        "precision": 0.8385614702154626,
+        "recall": 0.7401761991329884,
+        "f1-score": 0.7863032013667087,
+        "support": 7151.0
+      },
+      "1": {
+        "precision": 0.4575182481751825,
+        "recall": 0.6059551430781129,
+        "f1-score": 0.5213774746298453,
+        "support": 2586.0
+      },
+      "accuracy": 0.7045291157440691,
+      "macro avg": {
+        "precision": 0.6480398591953225,
+        "recall": 0.6730656711055507,
+        "f1-score": 0.653840337998277,
+        "support": 9737.0
+      },
+      "weighted avg": {
+        "precision": 0.7373621508977913,
+        "recall": 0.7045291157440691,
+        "f1-score": 0.715942933384627,
+        "support": 9737.0
+      }
+    },
+    "positive_rate": 0.2656217903948071
+  },
+  "group_importance": [
+    {
+      "group": "pos1",
+      "importance_percent": 37.66473970306426,
+      "raw_importance": 1415.3684880835272
+    },
+    {
+      "group": "pos2",
+      "importance_percent": 32.03008802567839,
+      "raw_importance": 1203.6291135817535
+    },
+    {
+      "group": "pos3",
+      "importance_percent": 28.230624554508655,
+      "raw_importance": 1060.8525827703486
+    },
+    {
+      "group": "category",
+      "importance_percent": 1.6450306478118106,
+      "raw_importance": 61.81708832186736
+    },
+    {
+      "group": "grade",
+      "importance_percent": 0.11735080203886901,
+      "raw_importance": 4.409817472962132
+    },
+    {
+      "group": "track",
+      "importance_percent": 0.0987010108484198,
+      "raw_importance": 3.708994183901885
+    },
+    {
+      "group": "car_std",
+      "importance_percent": 0.05709066451241203,
+      "raw_importance": 2.1453573860233677
+    },
+    {
+      "group": "car_range",
+      "importance_percent": 0.038682999544750164,
+      "raw_importance": 1.4536327348024791
+    },
+    {
+      "group": "car_sum",
+      "importance_percent": 0.03636089355067814,
+      "raw_importance": 1.3663724569959652
+    },
+    {
+      "group": "car_max",
+      "importance_percent": 0.033561670875315384,
+      "raw_importance": 1.2611830518103246
+    },
+    {
+      "group": "race",
+      "importance_percent": 0.01908238918882855,
+      "raw_importance": 0.7170794899457753
+    },
+    {
+      "group": "meeting",
+      "importance_percent": 0.011191034162122642,
+      "raw_importance": 0.42053754325682996
+    },
+    {
+      "group": "car_median",
+      "importance_percent": 0.009225667064589205,
+      "raw_importance": 0.346682827167057
+    },
+    {
+      "group": "car_min",
+      "importance_percent": 0.00826993715088769,
+      "raw_importance": 0.31076833489560596
+    }
+  ]
+}
