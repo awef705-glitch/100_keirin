@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1976d2">
+    <title>競輪予測アプリ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>競輪予測アプリ</h1>
+            <p class="subtitle">レース情報を入力して高配当の可能性を予測</p>
+        </header>
+
+        <main>
+            <form id="raceForm">
+                <div class="section">
+                    <h2>基本情報</h2>
+
+                    <div class="form-group">
+                        <label for="track">場名</label>
+                        <select id="track" name="track" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="grade">グレード</label>
+                        <select id="grade" name="grade" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">カテゴリー</label>
+                        <select id="category" name="category" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="race_no">レース番号</label>
+                        <input type="text" id="race_no" name="race_no" placeholder="例: 1" required>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>着順予想</h2>
+
+                    <div class="position-group">
+                        <h3>1着</h3>
+                        <div class="form-group">
+                            <label for="pos1_car_no">車番</label>
+                            <input type="number" id="pos1_car_no" name="pos1_car_no" min="1" max="9" placeholder="1-9" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pos1_name">選手名</label>
+                            <input type="text" id="pos1_name" name="pos1_name" placeholder="例: 山田 太郎">
+                        </div>
+                        <div class="form-group">
+                            <label for="pos1_decision">決まり手</label>
+                            <select id="pos1_decision" name="pos1_decision">
+                                <option value="">選択してください</option>
+                                <option value="捲り">捲り</option>
+                                <option value="差し">差し</option>
+                                <option value="逃げ">逃げ</option>
+                                <option value="マーク">マーク</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="position-group">
+                        <h3>2着</h3>
+                        <div class="form-group">
+                            <label for="pos2_car_no">車番</label>
+                            <input type="number" id="pos2_car_no" name="pos2_car_no" min="1" max="9" placeholder="1-9" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pos2_name">選手名</label>
+                            <input type="text" id="pos2_name" name="pos2_name" placeholder="例: 佐藤 次郎">
+                        </div>
+                        <div class="form-group">
+                            <label for="pos2_decision">決まり手</label>
+                            <select id="pos2_decision" name="pos2_decision">
+                                <option value="">選択してください</option>
+                                <option value="捲り">捲り</option>
+                                <option value="差し">差し</option>
+                                <option value="逃げ">逃げ</option>
+                                <option value="マーク">マーク</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="position-group">
+                        <h3>3着</h3>
+                        <div class="form-group">
+                            <label for="pos3_car_no">車番</label>
+                            <input type="number" id="pos3_car_no" name="pos3_car_no" min="1" max="9" placeholder="1-9" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pos3_name">選手名</label>
+                            <input type="text" id="pos3_name" name="pos3_name" placeholder="例: 鈴木 三郎">
+                        </div>
+                        <div class="form-group">
+                            <label for="pos3_decision">決まり手</label>
+                            <select id="pos3_decision" name="pos3_decision">
+                                <option value="">選択してください</option>
+                                <option value="捲り">捲り</option>
+                                <option value="差し">差し</option>
+                                <option value="逃げ">逃げ</option>
+                                <option value="マーク">マーク</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    予測する
+                </button>
+            </form>
+
+            <div id="result" class="result hidden">
+                <h2>予測結果</h2>
+                <div class="result-content">
+                    <div class="probability-display">
+                        <div class="probability-label">高配当の確率</div>
+                        <div class="probability-value" id="probabilityValue">0%</div>
+                        <div class="probability-bar">
+                            <div class="probability-fill" id="probabilityFill"></div>
+                        </div>
+                        <div class="prediction-label" id="predictionLabel">-</div>
+                    </div>
+
+                    <div class="strategy">
+                        <h3>買い方の提案</h3>
+                        <div class="confidence" id="confidence">-</div>
+                        <div id="recommendations"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>競輪予測アプリ v1.0</p>
+        </footer>
+    </div>
+
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>予測中...</p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
