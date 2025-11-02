@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -276,62 +277,65 @@ INDEX_TEMPLATE = """<!DOCTYPE html>
         </label>
       </div>
 
-      <div class="section-title" style="margin-top:32px;"><span>2</span>コンディション</div>
-      <div class="grid two">
-        <div>
-          <label for="meeting_day">開催日程</label>
-          <select id="meeting_day" name="meeting_day">
-            <option value="">-- 未選択 --</option>
-            <option value="1">1日目（初日）</option>
-            <option value="2">2日目</option>
-            <option value="3">3日目</option>
-            <option value="4">4日目</option>
-            <option value="5">5日目</option>
-            <option value="6">6日目</option>
-          </select>
+      <div class="section-title" style="margin-top:32px;"><span>2</span>追加コンディション（任意）</div>
+      <details style="background: rgba(43,89,195,0.06); padding: 16px; border-radius: 14px;">
+        <summary style="cursor:pointer; font-weight:600;">開くと天候やバンク状態などを入力できます（空欄でも予測可能）</summary>
+        <div class="grid two" style="margin-top:16px;">
+          <div>
+            <label for="meeting_day">開催日程</label>
+            <select id="meeting_day" name="meeting_day">
+              <option value="">-- 未選択 --</option>
+              <option value="1">1日目（初日）</option>
+              <option value="2">2日目</option>
+              <option value="3">3日目</option>
+              <option value="4">4日目</option>
+              <option value="5">5日目</option>
+              <option value="6">6日目</option>
+            </select>
+          </div>
+          <div>
+            <label for="weather_condition">天候</label>
+            <select id="weather_condition" name="weather_condition">
+              <option value="">-- 選択 --</option>
+              <option value="晴れ">晴れ</option>
+              <option value="曇り">曇り</option>
+              <option value="雨">雨</option>
+              <option value="豪雨">豪雨</option>
+              <option value="雪">雪</option>
+            </select>
+          </div>
+          <div>
+            <label for="track_condition">バンク状態</label>
+            <select id="track_condition" name="track_condition">
+              <option value="">-- 選択 --</option>
+              <option value="良">良</option>
+              <option value="やや重">やや重</option>
+              <option value="重">重</option>
+            </select>
+          </div>
+          <div>
+            <label for="temperature">気温 (℃)</label>
+            <input type="number" step="0.1" id="temperature" name="temperature" placeholder="例: 18.5">
+          </div>
+          <div>
+            <label for="wind_speed">風速 (m/s)</label>
+            <input type="number" step="0.1" id="wind_speed" name="wind_speed" placeholder="例: 6.0">
+          </div>
+          <div>
+            <label for="wind_direction">風向</label>
+            <input type="text" id="wind_direction" name="wind_direction" placeholder="例: 向かい風">
+          </div>
         </div>
-        <div>
-          <label for="weather_condition">天候</label>
-          <select id="weather_condition" name="weather_condition">
-            <option value="">-- 選択 --</option>
-            <option value="晴れ">晴れ</option>
-            <option value="曇り">曇り</option>
-            <option value="雨">雨</option>
-            <option value="豪雨">豪雨</option>
-            <option value="雪">雪</option>
-          </select>
+        <div class="checkbox-group" style="margin-top:12px;">
+          <label class="checkbox-item">
+            <input type="checkbox" name="is_night_race"> ナイター開催
+          </label>
         </div>
-        <div>
-          <label for="track_condition">バンク状態</label>
-          <select id="track_condition" name="track_condition">
-            <option value="">-- 選択 --</option>
-            <option value="良">良</option>
-            <option value="やや重">やや重</option>
-            <option value="重">重</option>
-          </select>
+        <div class="notes-area">
+          <label for="notes">気になるメモ</label>
+          <textarea id="notes" name="notes" placeholder="例: 地元ラインが主導権／当日は雨模様など"></textarea>
         </div>
-        <div>
-          <label for="temperature">気温 (℃)</label>
-          <input type="number" step="0.1" id="temperature" name="temperature" placeholder="例: 18.5">
-        </div>
-        <div>
-          <label for="wind_speed">風速 (m/s)</label>
-          <input type="number" step="0.1" id="wind_speed" name="wind_speed" placeholder="例: 6.0">
-        </div>
-        <div>
-          <label for="wind_direction">風向</label>
-          <input type="text" id="wind_direction" name="wind_direction" placeholder="例: 向かい風">
-        </div>
-      </div>
-      <div class="checkbox-group" style="margin-top:12px;">
-        <label class="checkbox-item">
-          <input type="checkbox" name="is_night_race"> ナイター開催
-        </label>
-      </div>
-      <div class="notes-area">
-        <label for="notes">気になるメモ</label>
-        <textarea id="notes" name="notes" placeholder="例: 地元ラインが主導権／当日は雨模様など"></textarea>
-      </div>
+      </details>
 
       <div class="section-title" style="margin-top:32px;"><span>3</span>選手情報</div>
       <p class="pill">最大9名まで入力可能。空欄は自動的に除外されます。</p>
@@ -611,6 +615,9 @@ RESULT_TEMPLATE = """<!DOCTYPE html>
       <div class="confidence">
         信頼度: {{ result.confidence }} ｜ グレード: {{ race.grade or '-' }}
       </div>
+      <p style="margin:8px 0 0;font-size:0.95rem;">
+        → このレースが「三連単で1万円超」の高配当になる確率は <strong>{{ '%.0f'|format(probability * 100) }}%</strong> です。
+      </p>
       <div class="recommendation">{{ result.recommendation }}</div>
     </div>
 
@@ -944,8 +951,11 @@ if __name__ == "__main__":
     print("=" * 70)
     print("競輪 高配当予測 Web アプリ")
     print("=" * 70)
-    print("スタート: http://localhost:8000")
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    print(f"スタート: http://{host}:{port}")
     print("スマホからアクセスするには PC と同じネットワークに接続し、PC の IP を指定してください。")
+    print("（例）http://<PCのIPアドレス>:{port}/")
     print("終了するには Ctrl+C を押してください。")
     print("=" * 70)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=host, port=port)
