@@ -1,0 +1,78 @@
+{
+  "race_date": "20241025",
+  "track": "京王閣",
+  "keirin_cd": "27",
+  "race_no": 7,
+  "grade": "F1",
+  "is_first_day": false,
+  "is_final_day": true,
+  "is_weekend": false,
+  "entry_count": 7,
+  "has_narabi": true,
+  "narabi_count": 2,
+  "riders": [
+    {
+      "car_no": 1,
+      "name": "山田太郎",
+      "prefecture": "東京",
+      "grade": "S1",
+      "style": "逃",
+      "avg_score": 90.5,
+      "is_consecutive": false
+    },
+    {
+      "car_no": 2,
+      "name": "田中一郎",
+      "prefecture": "神奈川",
+      "grade": "S2",
+      "style": "追",
+      "avg_score": 88.2,
+      "is_consecutive": true
+    },
+    {
+      "car_no": 3,
+      "name": "佐藤次郎",
+      "prefecture": "大阪",
+      "grade": "A1",
+      "style": "両",
+      "avg_score": 85.0,
+      "is_consecutive": false
+    },
+    {
+      "car_no": 4,
+      "name": "鈴木三郎",
+      "prefecture": "福岡",
+      "grade": "A1",
+      "style": "追",
+      "avg_score": 84.5,
+      "is_consecutive": true
+    },
+    {
+      "car_no": 5,
+      "name": "高橋四郎",
+      "prefecture": "愛知",
+      "grade": "A2",
+      "style": "逃",
+      "avg_score": 82.0,
+      "is_consecutive": false
+    },
+    {
+      "car_no": 6,
+      "name": "伊藤五郎",
+      "prefecture": "北海道",
+      "grade": "A2",
+      "style": "追",
+      "avg_score": 79.5,
+      "is_consecutive": false
+    },
+    {
+      "car_no": 7,
+      "name": "渡辺六郎",
+      "prefecture": "青森",
+      "grade": "A3",
+      "style": "両",
+      "avg_score": 75.0,
+      "is_consecutive": false
+    }
+  ]
+}

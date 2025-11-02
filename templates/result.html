@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>競輪 高配当予測 : 結果</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f0f3ff;
+      --card: #ffffff;
+      --primary: #2b59c3;
+      --accent: #f97316;
+      --text: #1f2933;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #dde7ff, #f6f7fb 45%);
+      color: var(--text);
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 18px 80px;
+    }
+    .score-card {
+      background: linear-gradient(135deg, #2b59c3, #4f8ae2);
+      border-radius: 18px;
+      padding: 24px;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(43,89,195,0.28);
+    }
+    .score-card h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
+    }
+    .probability {
+      font-size: 3.2rem;
+      margin: 12px 0 6px;
+      font-weight: 700;
+    }
+    .confidence {
+      font-size: 1rem;
+      opacity: 0.85;
+    }
+    .recommendation {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      font-size: 0.9rem;
+    }
+    .risk-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(249,115,22,0.18);
+      color: #fff;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .section {
+      margin-top: 26px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 12px 32px rgba(43,89,195,0.08);
+    }
+    .section h3 {
+      margin: 0 0 12px;
+      font-size: 1.02rem;
+    }
+    .reasons {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .reasons li {
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(43,89,195,0.08);
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .ticket-list {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0 12px;
+    }
+    .ticket-item {
+      background: rgba(43,89,195,0.08);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .ticket-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .money-note {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .summary-grid,
+    .condition-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+      gap: 12px;
+    }
+    .summary-item,
+    .condition-item {
+      border: 1px solid #e5e9f5;
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(43,89,195,0.04);
+    }
+    .summary-item span,
+    .condition-item span {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e9f5;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: rgba(43,89,195,0.08);
+      font-weight: 600;
+    }
+    .btn-back {
+      margin-top: 28px;
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid #94a3b8;
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .warning {
+      margin-top: 28px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="score-card">
+      <h2>{{ race.track or '未入力' }} {{ race.race_no }}R / {{ race.race_date }}</h2>
+      <div class="probability">{{ '%.0f'|format(probability * 100) }}%</div>
+      <div class="confidence">
+        信頼度: {{ result.confidence }} ｜ グレード: {{ race.grade or '-' }}
+      </div>
+      <div class="recommendation">{{ result.recommendation }}</div>
+    </div>
+
+    <div class="section">
+      <h3>推奨ベットプラン</h3>
+      <div class="risk-chip">
+        {{ result.betting_plan.risk_level }} ｜ 指標 {{ '%.0f'|format(result.betting_plan.effective_score * 100) }}%
+      </div>
+      <p>{{ result.betting_plan.plan_summary }}</p>
+      <div class="ticket-list">
+        {% for ticket in result.betting_plan.ticket_plan %}
+        <div class="ticket-item">
+          <strong>{{ ticket.label }}</strong>
+          <p>{{ ticket.description }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="money-note">
+        <strong>資金配分</strong><br>
+        {{ result.betting_plan.money_management }}
+      </div>
+      <div class="money-note">
+        <strong>ヘッジのヒント</strong><br>
+        {{ result.betting_plan.hedge_note }}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>予測ロジックのハイライト</h3>
+      <ul class="reasons">
+        {% for reason in result.reasons %}
+        <li>{{ reason }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3>レースコンディション</h3>
+      <div class="condition-grid">
+        <div class="condition-item">
+          <span>天候</span>
+          {{ summary.get('weather_condition', '') or race.weather_condition or '未入力' }}
+        </div>
+        <div class="condition-item">
+          <span>バンク状態</span>
+          {{ summary.get('track_condition', '') or race.track_condition or '未入力' }}
+        </div>
+        <div class="condition-item">
+          <span>気温</span>
+          {% if summary.get('temperature_c') is not none %}
+            {{ '%.1f℃'|format(summary.get('temperature_c')) }}
+          {% elif race.temperature %}
+            {{ race.temperature }}℃
+          {% else %}
+            未入力
+          {% endif %}
+        </div>
+        <div class="condition-item">
+          <span>風速 / 風向</span>
+          {% if summary.get('wind_speed_mps') is not none %}
+            {{ '%.1f m/s'|format(summary.get('wind_speed_mps')) }} {{ summary.get('wind_direction') or '' }}
+          {% elif race.wind_speed %}
+            {{ race.wind_speed }} m/s {{ race.wind_direction or '' }}
+          {% else %}
+            未入力
+          {% endif %}
+        </div>
+        <div class="condition-item">
+          <span>開催日程</span>
+          {% if summary.get('meeting_day') %}
+            {{ summary.get('meeting_day') }}日目
+          {% else %}
+            {{ race.meeting_day or '未入力' }}
+          {% endif %}
+        </div>
+        <div class="condition-item">
+          <span>ナイター</span>
+          {% if summary.get('is_night_race') %}
+            ナイター
+          {% elif race.is_night_race %}
+            ナイター
+          {% else %}
+            昼開催
+          {% endif %}
+        </div>
+      </div>
+      {% if race.notes %}
+      <div class="money-note" style="margin-top:14px;">
+        <strong>メモ</strong><br>{{ race.notes }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h3>特徴量サマリ</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span>平均得点</span>
+          {{ '%.2f'|format(summary.score_mean or 0.0) }}
+        </div>
+        <div class="summary-item">
+          <span>得点レンジ</span>
+          {{ '%.2f'|format(summary.score_range or 0.0) }}
+        </div>
+        <div class="summary-item">
+          <span>得点CV</span>
+          {{ '%.2f'|format(summary.score_cv or 0.0) }}
+        </div>
+        <div class="summary-item">
+          <span>脚質多様性</span>
+          {{ '%.2f'|format(summary.style_diversity or 0.0) }}
+        </div>
+        <div class="summary-item">
+          <span>脚質構成</span>
+          {% set ratios = summary.get('style_ratios', {}) %}
+          {% if ratios %}
+            {% for key, value in ratios.items() %}
+              {{ key }} {{ '%.0f'|format(value * 100) }}%{% if not loop.last %} / {% endif %}
+            {% endfor %}
+          {% else %}
+            -
+          {% endif %}
+        </div>
+        <div class="summary-item">
+          <span>地元エリア数</span>
+          {{ summary.prefecture_unique_count }}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>入力した選手一覧</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>名前</th>
+            <th>府県</th>
+            <th>階級</th>
+            <th>脚質</th>
+            <th>得点</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rider in riders %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ rider.name }}</td>
+            <td>{{ rider.prefecture }}</td>
+            <td>{{ rider.grade }}</td>
+            <td>{{ rider.style }}</td>
+            <td>
+              {% if rider.avg_score is not none %}
+                {{ '%.2f'|format(rider.avg_score) }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <a href="/" class="btn-back">↩ 新しいレースを入力する</a>
+
+    <div class="warning">
+      免責: 本ツールは過去データに基づく統計的推定です。実際の結果を保証するものではありません。投票は自己責任で行ってください。
+    </div>
+  </div>
+</body>
+</html>

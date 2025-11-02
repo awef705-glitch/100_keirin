@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+logs/
+data/
+!data/README.md
+workspace/
+assets/downloads/
+analysis/model_outputs/*
+!analysis/model_outputs/prerace_model_lgbm.txt
+!analysis/model_outputs/prerace_model_metadata.json
+!analysis/model_outputs/prerace_model_feature_importance.csv
+.env
