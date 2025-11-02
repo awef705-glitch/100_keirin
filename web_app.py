@@ -820,20 +820,41 @@ ERROR_TEMPLATE = """<!DOCTYPE html>
 """
 
 # Load model artefacts once at startup.
+MODEL = None
+METADATA = {}
+MODEL_READY = False
+LIGHTGBM_READY = False
+USE_LIGHTGBM = os.getenv("KEIRIN_ENABLE_LIGHTGBM", "").strip().lower() in {"1", "true", "yes"}
+
+# Metadata is required even for fallback heuristics.
 try:
-    MODEL = prerace_model.load_model()
     METADATA = prerace_model.load_metadata()
     MODEL_READY = True
 except FileNotFoundError:
-    MODEL = None
     METADATA = {}
     MODEL_READY = False
+
+# LightGBM inference is optional and can be toggled via env var.
+if MODEL_READY and USE_LIGHTGBM:
+    try:
+        MODEL = prerace_model.load_model()
+        LIGHTGBM_READY = MODEL is not None
+    except FileNotFoundError:
+        MODEL = None
+        LIGHTGBM_READY = False
+    except Exception:
+        MODEL = None
+        LIGHTGBM_READY = False
 
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request) -> HTMLResponse:
     create_templates()
-    context = {"request": request, "model_ready": MODEL_READY}
+    context = {
+        "request": request,
+        "model_ready": MODEL_READY,
+        "lightgbm_ready": LIGHTGBM_READY,
+    }
     return templates.TemplateResponse("index.html", context)
 
 
@@ -916,7 +937,8 @@ async def predict(
 
     bundle = prerace_model.build_manual_feature_row(race_info)
     feature_frame, summary = prerace_model.align_features(bundle, METADATA["feature_columns"])
-    probability = prerace_model.predict_probability(feature_frame, MODEL, METADATA)
+    model_for_inference = MODEL if LIGHTGBM_READY else None
+    probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA)
     result = prerace_model.build_prediction_response(probability, summary, METADATA)
 
     context = {
@@ -926,24 +948,28 @@ async def predict(
         "result": result,
         "riders": riders,
         "summary": summary,
+        "lightgbm_ready": LIGHTGBM_READY,
     }
     return templates.TemplateResponse("result.html", context)
 
 
 def create_templates() -> None:
-    """Write template files if they do not exist."""
+    """Ensure template directory exists and warn when core templates are missing."""
 
-    index_html = TEMPLATES_DIR / "index.html"
-    if not index_html.exists():
-        index_html.write_text(INDEX_TEMPLATE, encoding="utf-8")
+    TEMPLATES_DIR.mkdir(exist_ok=True)
 
-    result_html = TEMPLATES_DIR / "result.html"
-    if not result_html.exists():
-        result_html.write_text(RESULT_TEMPLATE, encoding="utf-8")
+    missing: List[str] = []
+    for name in ("index.html", "result.html"):
+        if not (TEMPLATES_DIR / name).exists():
+            missing.append(name)
+
+    if missing:
+        print("[WARN] " + "テンプレートが見つかりません: " + ", ".join(missing))
+        print("       リポジトリの templates/ ディレクトリから復元してください。")
 
     error_html = TEMPLATES_DIR / "error.html"
     if not error_html.exists():
-        error_html.write_text(ERROR_TEMPLATE, encoding="utf-8")
+        print("[WARN] error.html が存在しません。templates/error.html を復元してください。")
 
 
 if __name__ == "__main__":
@@ -953,9 +979,31 @@ if __name__ == "__main__":
     print("=" * 70)
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
-    print(f"スタート: http://{host}:{port}")
-    print("スマホからアクセスするには PC と同じネットワークに接続し、PC の IP を指定してください。")
-    print("（例）http://<PCのIPアドレス>:{port}/")
+    local_url = f"http://127.0.0.1:{port}"
+    if host in {"0.0.0.0", "127.0.0.1"}:
+        print(f"PC からアクセス: {local_url}")
+    else:
+        print(f"指定ホストで待機中: http://{host}:{port}")
+
+    try:
+        import socket
+
+        hostname = socket.gethostname()
+        candidate_ips = {
+            addr[4][0]
+            for addr in socket.getaddrinfo(hostname, None, family=socket.AF_INET)
+            if addr[4][0] and not addr[4][0].startswith("127.")
+        }
+    except Exception:
+        candidate_ips = set()
+
+    if candidate_ips:
+        print("スマホなど別端末は同じネットワークに接続し、次の URL を開いてください。")
+        for ip in sorted(candidate_ips):
+            print(f"  - http://{ip}:{port}")
+    else:
+        print("スマホなど別端末からは、PC の IP アドレスを調べて http://<PCのIPアドレス>:{port} を開いてください。")
+
     print("終了するには Ctrl+C を押してください。")
     print("=" * 70)
     uvicorn.run(app, host=host, port=port)

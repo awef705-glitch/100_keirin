@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
+import math
 import numpy as np
 import pandas as pd
 
@@ -112,6 +113,16 @@ def _normalise_style(value: Any) -> str:
     key = str(value).strip()
     if not key:
         return "unknown"
+    direct_map = {
+        "先行": "nige",
+        "逃げ": "nige",
+        "追込": "tsui",
+        "追い込み": "tsui",
+        "自在": "ryo",
+        "両": "ryo",
+    }
+    if key in direct_map:
+        return direct_map[key]
     for alias, mapped in STYLE_ALIASES.items():
         if key.startswith(alias):
             return mapped
@@ -730,13 +741,22 @@ def save_metadata(metadata: Dict[str, Any]) -> None:
 
 
 def load_model() -> Any:
-    import lightgbm as lgb  # Local import to avoid hard dependency for docs.
+    """
+    Try to load the LightGBM booster. If読み込みに失敗した場合は None を返し、
+    フォールバックのヒューリスティックを使う。
+    """
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            "Model file not found. Train the model with analysis/train_prerace_lightgbm.py."
+        )
+    try:
+        import lightgbm as lgb  # Optional dependency
 
-    if MODEL_PATH.exists():
         return lgb.Booster(model_file=str(MODEL_PATH))
-    raise FileNotFoundError(
-        "Model file not found. Train the model with analysis/train_prerace_lightgbm.py."
-    )
+    except Exception as exc:
+        print("[WARN] LightGBMモデルのロードに失敗しました。ヒューリスティック推論に切り替えます。")
+        print(f"       詳細: {exc}")
+        return None
 
 
 def predict_probability(
@@ -747,8 +767,66 @@ def predict_probability(
     feature_columns = metadata.get("feature_columns")
     if feature_columns is None:
         raise ValueError("metadata must contain 'feature_columns'")
-    frame = feature_frame[feature_columns]
-    return float(model.predict(frame)[0])
+    frame = feature_frame[feature_columns].astype(float)
+    if model is not None:
+        try:
+            return float(model.predict(frame)[0])
+        except Exception as exc:
+            print("[WARN] LightGBM推論に失敗したため、ヒューリスティック推定を利用します。")
+            print(f"       詳細: {exc}")
+    row = feature_frame.iloc[0]
+    return _fallback_probability(row, metadata)
+
+
+def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
+    """LightGBM が利用できないときの簡易スコアリング."""
+    score_cv = float(row.get("score_cv", 0.0) or 0.0)
+    score_range = float(row.get("score_range", 0.0) or 0.0)
+    style_diversity = float(row.get("style_diversity", 0.0) or 0.0)
+    prefecture_unique = float(row.get("prefecture_unique_count", 0.0) or 0.0)
+    tsui_ratio = float(row.get("style_tsui_ratio", 0.0) or 0.0)
+    ryo_ratio = float(row.get("style_ryo_ratio", 0.0) or 0.0)
+    nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
+    entry_count = float(row.get("entry_count", 0.0) or 0.0)
+
+    grade_s1 = float(row.get("grade_S1_ratio", 0.0) or 0.0)
+    grade_ss = float(row.get("grade_SS_ratio", 0.0) or 0.0)
+    grade_a3 = float(row.get("grade_A3_ratio", 0.0) or 0.0)
+
+    # ベーススコア（荒れやすさの指標）
+    base = (
+        3.0 * min(score_cv, 0.18)
+        + 1.8 * min(score_range / 8.0, 1.5)
+        + 1.2 * style_diversity
+        + 0.6 * min(prefecture_unique / 6.0, 1.0)
+        + 0.4 * tsui_ratio
+        + 0.3 * ryo_ratio
+    )
+
+    # 小頭数や逃げ選手が少ないレースは荒れやすいと仮定
+    if entry_count <= 7:
+        base += 0.25
+    if nige_count <= 1:
+        base += 0.25
+
+    # 上位S級が多いと盤石、本命有利とみなしマイナス
+    base -= 0.6 * min(grade_s1 + grade_ss, 1.0)
+
+    # A3が大半なら堅めとみなして少し下げる
+    if grade_a3 >= 0.8:
+        base -= 0.1
+
+    if row.get("is_final_day", 0):
+        base += 0.15
+    if row.get("is_second_day", 0):
+        base += 0.05
+    if row.get("is_first_day", 0):
+        base -= 0.1
+
+    # 線形→確率へ変換
+    logit = base - 1.0
+    probability = 1.0 / (1.0 + math.exp(-logit))
+    return float(min(1.0, max(0.0, probability)))
 
 
 def generate_reasons(summary: Dict[str, Any], probability: float, metadata: Dict[str, Any]) -> List[str]:
