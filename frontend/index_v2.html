@@ -23,26 +23,59 @@
             <form id="raceForm">
                 <!-- メイン入力エリア -->
                 <div class="main-input-section">
-                    <h2>🎯 着順予想（車番のみ）</h2>
-                    <p class="input-hint">予想される1〜3着の車番を入力してください</p>
+                    <h2>🎯 着順予想</h2>
+                    <p class="input-hint">予想される1〜3着の車番と選手名を入力</p>
 
-                    <div class="car-number-grid">
-                        <div class="car-input-group">
-                            <label>1着</label>
-                            <input type="number" id="pos1_car_no" name="pos1_car_no"
-                                   min="1" max="9" placeholder="1" required class="car-input gold">
+                    <div class="position-inputs">
+                        <!-- 1着 -->
+                        <div class="position-group gold-bg">
+                            <div class="position-label">🥇 1着</div>
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>車番</label>
+                                    <input type="number" id="pos1_car_no" name="pos1_car_no"
+                                           min="1" max="9" placeholder="7" required class="car-input">
+                                </div>
+                                <div class="input-col flex-grow">
+                                    <label>選手名</label>
+                                    <input type="text" id="pos1_name" name="pos1_name"
+                                           placeholder="山田 太郎" required class="name-input">
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="car-input-group">
-                            <label>2着</label>
-                            <input type="number" id="pos2_car_no" name="pos2_car_no"
-                                   min="1" max="9" placeholder="2" required class="car-input silver">
+                        <!-- 2着 -->
+                        <div class="position-group silver-bg">
+                            <div class="position-label">🥈 2着</div>
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>車番</label>
+                                    <input type="number" id="pos2_car_no" name="pos2_car_no"
+                                           min="1" max="9" placeholder="9" required class="car-input">
+                                </div>
+                                <div class="input-col flex-grow">
+                                    <label>選手名</label>
+                                    <input type="text" id="pos2_name" name="pos2_name"
+                                           placeholder="佐藤 次郎" required class="name-input">
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="car-input-group">
-                            <label>3着</label>
-                            <input type="number" id="pos3_car_no" name="pos3_car_no"
-                                   min="1" max="9" placeholder="3" required class="car-input bronze">
+                        <!-- 3着 -->
+                        <div class="position-group bronze-bg">
+                            <div class="position-label">🥉 3着</div>
+                            <div class="input-row">
+                                <div class="input-col">
+                                    <label>車番</label>
+                                    <input type="number" id="pos3_car_no" name="pos3_car_no"
+                                           min="1" max="9" placeholder="1" required class="car-input">
+                                </div>
+                                <div class="input-col flex-grow">
+                                    <label>選手名</label>
+                                    <input type="text" id="pos3_name" name="pos3_name"
+                                           placeholder="鈴木 三郎" required class="name-input">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

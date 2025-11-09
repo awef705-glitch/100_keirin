@@ -1,124 +1,124 @@
 {
-  "auc": 0.7117041754148145,
-  "average_precision": 0.49104568042162733,
+  "auc": 0.7095601424275784,
+  "average_precision": 0.48551907761449686,
   "classification_report": {
     "0": {
-      "precision": 0.8311118609751983,
-      "recall": 0.6888547056355755,
-      "f1-score": 0.753326196666157,
+      "precision": 0.8294495103005741,
+      "recall": 0.68689693749126,
+      "f1-score": 0.7514725005737015,
       "support": 7151.0
     },
     "1": {
-      "precision": 0.41601049868766404,
-      "recall": 0.6129156999226605,
-      "f1-score": 0.49562226391494696,
+      "precision": 0.4131061598951507,
+      "recall": 0.6094354215003867,
+      "f1-score": 0.49242305889704735,
       "support": 2586.0
     },
-    "accuracy": 0.6686864537331827,
+    "accuracy": 0.6663243298757318,
     "macro avg": {
-      "precision": 0.6235611798314311,
-      "recall": 0.650885202779118,
-      "f1-score": 0.6244742302905519,
+      "precision": 0.6212778350978624,
+      "recall": 0.6481661794958233,
+      "f1-score": 0.6219477797353744,
       "support": 9737.0
     },
     "weighted avg": {
-      "precision": 0.7208672144849484,
-      "recall": 0.6686864537331827,
-      "f1-score": 0.684883927990525,
+      "precision": 0.7188750105420834,
+      "recall": 0.6663243298757318,
+      "f1-score": 0.6826728850683274,
       "support": 9737.0
     }
   },
   "positive_rate": 0.2656217903948071,
   "confusion_matrix": [
     [
-      4926,
-      2225
+      4912,
+      2239
     ],
     [
-      1001,
-      1585
+      1010,
+      1576
     ]
   ],
   "feature_importance": [
     {
       "feature": "car_product",
-      "importance": 25314.50271654129
+      "importance": 23145.482279777527
     },
     {
       "feature": "category_encoded",
-      "importance": 18978.530177116394
-    },
-    {
-      "feature": "track_encoded",
-      "importance": 6951.343906402588
-    },
-    {
-      "feature": "race_no_numeric",
-      "importance": 6849.769016265869
-    },
-    {
-      "feature": "grade_encoded",
-      "importance": 6808.211577415466
+      "importance": 16301.691597938538
     },
     {
       "feature": "car_max",
-      "importance": 5501.927234649658
+      "importance": 6022.418078422546
+    },
+    {
+      "feature": "grade_encoded",
+      "importance": 5880.967227935791
+    },
+    {
+      "feature": "pos1_name_encoded",
+      "importance": 5677.951294898987
     },
     {
       "feature": "diff_12",
-      "importance": 5321.049184083939
+      "importance": 5203.638008117676
     },
     {
-      "feature": "pos1_car_no",
-      "importance": 5007.660774230957
+      "feature": "race_no_numeric",
+      "importance": 4764.382035732269
+    },
+    {
+      "feature": "pos3_name_encoded",
+      "importance": 4170.212023258209
     },
     {
       "feature": "pos3_car_no",
-      "importance": 4735.3209862709045
+      "importance": 4091.0981888771057
     },
     {
-      "feature": "car_sum",
-      "importance": 3992.760017633438
+      "feature": "pos1_car_no",
+      "importance": 3885.440121650696
+    },
+    {
+      "feature": "pos2_name_encoded",
+      "importance": 3826.381001472473
     },
     {
       "feature": "odd_count",
-      "importance": 3476.9842491149902
+      "importance": 3165.787570476532
+    },
+    {
+      "feature": "car_sum",
+      "importance": 3107.277057647705
+    },
+    {
+      "feature": "track_encoded",
+      "importance": 3093.328357219696
     },
     {
       "feature": "car_median",
-      "importance": 3275.333067178726
+      "importance": 2765.7284259796143
     },
     {
       "feature": "pos2_car_no",
-      "importance": 3107.5888154506683
+      "importance": 2401.3334798812866
     },
     {
       "feature": "car_std",
-      "importance": 2921.7645633220673
+      "importance": 1927.63911819458
     },
     {
       "feature": "diff_23",
-      "importance": 1956.8462204933167
-    },
-    {
-      "feature": "diff_13",
-      "importance": 1443.4986340999603
+      "importance": 1388.640724658966
     },
     {
       "feature": "car_min",
-      "importance": 736.2994809150696
+      "importance": 977.7282319068909
     },
     {
       "feature": "car_mean",
-      "importance": 546.15181016922
-    },
-    {
-      "feature": "is_ascending",
-      "importance": 416.9797692298889
-    },
-    {
-      "feature": "even_count",
-      "importance": 347.73274755477905
+      "importance": 867.5892276763916
     }
   ]
 }

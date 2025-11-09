@@ -101,8 +101,11 @@ def build_dataset(csv_path: Path) -> tuple:
     # 高度な特徴量を生成
     df = create_advanced_features(df)
 
-    # カテゴリカル列の処理（シンプルに）
-    cat_cols = ["grade", "track", "category"]
+    # カテゴリカル列の処理（選手名を含む）
+    cat_cols = [
+        "grade", "track", "category",
+        "pos1_name", "pos2_name", "pos3_name"  # 選手名は超重要！
+    ]
     for col in cat_cols:
         df[col] = df[col].fillna("(欠損)").astype(str)
 

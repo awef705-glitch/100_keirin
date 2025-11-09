@@ -123,13 +123,18 @@ def encode_categorical(data: dict) -> dict:
 
     for col in model_stats["cat_cols"]:
         value = data.get(col, "")
+
+        # 選手名の場合、空の場合はデフォルト値を設定しない
+        if "name" in col and not value:
+            value = "(欠損)"
+
         classes = model_stats["label_encoders"].get(col, [])
 
-        # 存在する値ならエンコード、なければ0
+        # 存在する値ならエンコード、なければ0（未知の選手）
         if value in classes:
             encoded[f"{col}_encoded"] = float(classes.index(value))
         else:
-            # デフォルト値（最頻値を0とする）
+            # 未知の値は0（モデルが未知として扱う）
             encoded[f"{col}_encoded"] = 0.0
 
     return encoded
