@@ -1,32 +1,124 @@
 {
-  "auc": 0.741242686353798,
-  "average_precision": 0.5083324551515637,
+  "auc": 0.7117041754148145,
+  "average_precision": 0.49104568042162733,
   "classification_report": {
     "0": {
-      "precision": 0.8379490425700269,
-      "recall": 0.740455880296462,
-      "f1-score": 0.7861915367483296,
+      "precision": 0.8311118609751983,
+      "recall": 0.6888547056355755,
+      "f1-score": 0.753326196666157,
       "support": 7151.0
     },
     "1": {
-      "precision": 0.4569923932124049,
-      "recall": 0.6040216550657386,
-      "f1-score": 0.5203197868087942,
+      "precision": 0.41601049868766404,
+      "recall": 0.6129156999226605,
+      "f1-score": 0.49562226391494696,
       "support": 2586.0
     },
-    "accuracy": 0.7042210126322276,
+    "accuracy": 0.6686864537331827,
     "macro avg": {
-      "precision": 0.6474707178912159,
-      "recall": 0.6722387676811004,
-      "f1-score": 0.6532556617785619,
+      "precision": 0.6235611798314311,
+      "recall": 0.650885202779118,
+      "f1-score": 0.6244742302905519,
       "support": 9737.0
     },
     "weighted avg": {
-      "precision": 0.7367727156480991,
-      "recall": 0.7042210126322276,
-      "f1-score": 0.7155800193052118,
+      "precision": 0.7208672144849484,
+      "recall": 0.6686864537331827,
+      "f1-score": 0.684883927990525,
       "support": 9737.0
     }
   },
-  "positive_rate": 0.2656217903948071
+  "positive_rate": 0.2656217903948071,
+  "confusion_matrix": [
+    [
+      4926,
+      2225
+    ],
+    [
+      1001,
+      1585
+    ]
+  ],
+  "feature_importance": [
+    {
+      "feature": "car_product",
+      "importance": 25314.50271654129
+    },
+    {
+      "feature": "category_encoded",
+      "importance": 18978.530177116394
+    },
+    {
+      "feature": "track_encoded",
+      "importance": 6951.343906402588
+    },
+    {
+      "feature": "race_no_numeric",
+      "importance": 6849.769016265869
+    },
+    {
+      "feature": "grade_encoded",
+      "importance": 6808.211577415466
+    },
+    {
+      "feature": "car_max",
+      "importance": 5501.927234649658
+    },
+    {
+      "feature": "diff_12",
+      "importance": 5321.049184083939
+    },
+    {
+      "feature": "pos1_car_no",
+      "importance": 5007.660774230957
+    },
+    {
+      "feature": "pos3_car_no",
+      "importance": 4735.3209862709045
+    },
+    {
+      "feature": "car_sum",
+      "importance": 3992.760017633438
+    },
+    {
+      "feature": "odd_count",
+      "importance": 3476.9842491149902
+    },
+    {
+      "feature": "car_median",
+      "importance": 3275.333067178726
+    },
+    {
+      "feature": "pos2_car_no",
+      "importance": 3107.5888154506683
+    },
+    {
+      "feature": "car_std",
+      "importance": 2921.7645633220673
+    },
+    {
+      "feature": "diff_23",
+      "importance": 1956.8462204933167
+    },
+    {
+      "feature": "diff_13",
+      "importance": 1443.4986340999603
+    },
+    {
+      "feature": "car_min",
+      "importance": 736.2994809150696
+    },
+    {
+      "feature": "car_mean",
+      "importance": 546.15181016922
+    },
+    {
+      "feature": "is_ascending",
+      "importance": 416.9797692298889
+    },
+    {
+      "feature": "even_count",
+      "importance": 347.73274755477905
+    }
+  ]
 }

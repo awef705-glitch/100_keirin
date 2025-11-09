@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <title>競輪予測AI - 高精度版</title>
+    <link rel="stylesheet" href="style_v2.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏁 競輪予測AI</h1>
+            <p class="subtitle">高精度機械学習モデル搭載</p>
+            <div class="model-badge">LightGBM</div>
+        </header>
+
+        <main>
+            <form id="raceForm">
+                <!-- メイン入力エリア -->
+                <div class="main-input-section">
+                    <h2>🎯 着順予想（車番のみ）</h2>
+                    <p class="input-hint">予想される1〜3着の車番を入力してください</p>
+
+                    <div class="car-number-grid">
+                        <div class="car-input-group">
+                            <label>1着</label>
+                            <input type="number" id="pos1_car_no" name="pos1_car_no"
+                                   min="1" max="9" placeholder="1" required class="car-input gold">
+                        </div>
+
+                        <div class="car-input-group">
+                            <label>2着</label>
+                            <input type="number" id="pos2_car_no" name="pos2_car_no"
+                                   min="1" max="9" placeholder="2" required class="car-input silver">
+                        </div>
+
+                        <div class="car-input-group">
+                            <label>3着</label>
+                            <input type="number" id="pos3_car_no" name="pos3_car_no"
+                                   min="1" max="9" placeholder="3" required class="car-input bronze">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- オプション設定（折りたたみ） -->
+                <div class="optional-section">
+                    <button type="button" class="toggle-optional" id="toggleOptional">
+                        <span id="toggleText">⚙️ 詳細設定（オプション）</span>
+                        <span class="toggle-icon" id="toggleIcon">▼</span>
+                    </button>
+
+                    <div class="optional-content" id="optionalContent">
+                        <div class="form-group">
+                            <label for="track">競輪場</label>
+                            <select id="track" name="track">
+                                <option value="">自動選択</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="grade">グレード</label>
+                            <select id="grade" name="grade">
+                                <option value="">自動選択</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">レース種別</label>
+                            <select id="category" name="category">
+                                <option value="">自動選択</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="race_no">レース番号</label>
+                            <input type="text" id="race_no" name="race_no" placeholder="例: 1">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">AI予測を実行</span>
+                </button>
+            </form>
+
+            <!-- 結果表示エリア -->
+            <div id="result" class="result hidden">
+                <div class="result-header">
+                    <h2>📊 予測結果</h2>
+                    <div class="confidence-badge" id="confidenceBadge">-</div>
+                </div>
+
+                <div class="result-content">
+                    <!-- 確率表示 -->
+                    <div class="probability-display">
+                        <div class="probability-circle" id="probabilityCircle">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
+                                <circle class="circle-progress" id="circleProgress" cx="50" cy="50" r="45"></circle>
+                            </svg>
+                            <div class="probability-text">
+                                <span class="probability-value" id="probabilityValue">0%</span>
+                                <span class="probability-label">高配当確率</span>
+                            </div>
+                        </div>
+                        <div class="prediction-label" id="predictionLabel">-</div>
+                    </div>
+
+                    <!-- 買い方提案 -->
+                    <div class="strategy">
+                        <h3>💡 おすすめの買い方</h3>
+                        <div id="recommendations" class="recommendations"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>🤖 Powered by LightGBM AI</p>
+            <p class="version">v2.0 - 高精度版</p>
+        </footer>
+    </div>
+
+    <!-- ローディング -->
+    <div id="loading" class="loading hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>AI予測中...</p>
+            <p class="loading-hint">高度な機械学習モデルで分析しています</p>
+        </div>
+    </div>
+
+    <script src="app_v2.js"></script>
+</body>
+</html>
