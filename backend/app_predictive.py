@@ -19,45 +19,57 @@ CORS(app)
 model = None
 player_stats = None
 model_info = None
+combo_stats = None
+optimal_threshold = 0.65
 
 
 def load_model():
     """モデルと選手統計をロード"""
-    global model, player_stats, model_info
+    global model, player_stats, model_info, combo_stats, optimal_threshold
 
     model_dir = Path(__file__).parent / "models"
 
     # モデルのロード
-    with open(model_dir / "model_predictive.pkl", "rb") as f:
+    with open(model_dir / "model_final.pkl", "rb") as f:
         model = pickle.load(f)
 
-    # 選手統計のロード
-    with open(model_dir / "player_stats.json", "r", encoding="utf-8") as f:
+    # 選手統計のロード（詳細版）
+    with open(model_dir / "player_stats_advanced.json", "r", encoding="utf-8") as f:
         player_stats = json.load(f)
 
     # モデル情報のロード
-    with open(model_dir / "model_predictive_info.json", "r", encoding="utf-8") as f:
+    with open(model_dir / "model_final_info.json", "r", encoding="utf-8") as f:
         model_info = json.load(f)
 
-    print(f"モデルをロードしました")
+    # 車番組み合わせ統計のロード
+    with open(model_dir / "combo_stats.json", "r", encoding="utf-8") as f:
+        combo_stats_raw = json.load(f)
+        # キーをタプルに変換
+        combo_stats = {}
+        for k, v in combo_stats_raw.items():
+            # "(1, 2, 3)" のような文字列をタプルに変換
+            key = tuple(map(int, k.strip("()").split(", ")))
+            combo_stats[key] = v
+
+    # 最適閾値のロード
+    try:
+        with open(model_dir / "optimal_threshold.json", "r", encoding="utf-8") as f:
+            threshold_info = json.load(f)
+            optimal_threshold = threshold_info.get("threshold", 0.65)
+    except:
+        optimal_threshold = 0.65
+
+    print(f"改善版モデルをロードしました")
     print(f"  特徴量数: {model_info['feature_count']}")
     print(f"  登録選手数: {len(player_stats):,}")
+    print(f"  車番組み合わせ: {len(combo_stats):,}")
+    print(f"  予測精度: {model_info.get('test_accuracy', 0)*100:.2f}%")
+    print(f"  最適閾値: {optimal_threshold:.2f}")
 
 
-def get_player_features(player_name: str) -> dict:
-    """選手の過去成績から特徴量を取得"""
-    if player_name in player_stats:
-        stats = player_stats[player_name]
-        return {
-            "win_rate": stats["win_rate"],
-            "place_2_rate": stats["place_2_rate"],
-            "place_3_rate": stats["place_3_rate"],
-            "top3_rate": stats["top3_rate"],
-            "avg_payout": stats["avg_payout"],
-            "high_payout_rate": stats["high_payout_rate"],
-            "races": min(stats["races"], 500) / 500,  # 正規化
-        }
-    else:
+def get_player_features(player_name: str, track: str = None, grade: str = None, category: str = None) -> dict:
+    """選手の過去成績から特徴量を取得（詳細版）"""
+    if player_name not in player_stats:
         # 未知の選手はデフォルト値
         return {
             "win_rate": 0.1,
@@ -67,71 +79,171 @@ def get_player_features(player_name: str) -> dict:
             "avg_payout": 5000,
             "high_payout_rate": 0.2,
             "races": 0.0,
+            "recent_win_rate": 0.1,
+            "recent_top3_rate": 0.3,
+            "track_win_rate": 0.1,
+            "grade_win_rate": 0.1,
+            "category_win_rate": 0.1,
+            "consistency": 0.0,
         }
 
+    stats = player_stats[player_name]
 
-def preprocess_input(data: dict) -> pd.DataFrame:
-    """入力データを前処理して特徴量を作成"""
+    features = {
+        "win_rate": stats["win_rate"],
+        "place_2_rate": stats["place_2_rate"],
+        "place_3_rate": stats["place_3_rate"],
+        "top3_rate": stats["top3_rate"],
+        "avg_payout": stats["avg_payout"],
+        "high_payout_rate": stats["high_payout_rate"],
+        "races": min(stats["races"], 500) / 500,
+    }
+
+    # 最近のパフォーマンス
+    features["recent_win_rate"] = stats.get("recent_win_rate", stats["win_rate"])
+    features["recent_top3_rate"] = stats.get("recent_top3_rate", stats["top3_rate"])
+
+    # 場所別勝率
+    if track and track in stats.get("by_track", {}):
+        features["track_win_rate"] = stats["by_track"][track]["win_rate"]
+    else:
+        features["track_win_rate"] = stats["win_rate"]
+
+    # グレード別勝率
+    if grade and grade in stats.get("by_grade", {}):
+        features["grade_win_rate"] = stats["by_grade"][grade]["win_rate"]
+    else:
+        features["grade_win_rate"] = stats["win_rate"]
+
+    # カテゴリー別勝率
+    if category and category in stats.get("by_category", {}):
+        features["category_win_rate"] = stats["by_category"][category]["win_rate"]
+    else:
+        features["category_win_rate"] = stats["win_rate"]
+
+    # 安定性
+    features["consistency"] = 1.0 - abs(features["recent_win_rate"] - stats["win_rate"])
+
+    return features
+
+
+def preprocess_input(data: dict) -> tuple:
+    """入力データを前処理して特徴量を作成（最終版）"""
+
+    # レース情報を取得
+    track = data.get("track", "不明")
+    grade = data.get("grade", "不明")
+    category = data.get("category", "不明")
 
     # 選手名を取得
     pos1_name = data.get("pos1_name", "")
     pos2_name = data.get("pos2_name", "")
     pos3_name = data.get("pos3_name", "")
 
-    # 選手の過去成績を取得
-    pos1_stats = get_player_features(pos1_name)
-    pos2_stats = get_player_features(pos2_name)
-    pos3_stats = get_player_features(pos3_name)
+    # 選手の過去成績を取得（場所・グレード考慮）
+    pos1_stats = get_player_features(pos1_name, track, grade, category)
+    pos2_stats = get_player_features(pos2_name, track, grade, category)
+    pos3_stats = get_player_features(pos3_name, track, grade, category)
 
     # 車番を取得
     pos1_car = int(data.get("pos1_car_no", 5))
     pos2_car = int(data.get("pos2_car_no", 5))
     pos3_car = int(data.get("pos3_car_no", 5))
 
-    # 特徴量を構築
+    # 車番組み合わせ統計
+    cars_combo = tuple(sorted([pos1_car, pos2_car, pos3_car]))
+    combo_high_payout_rate = combo_stats.get(cars_combo, 0.266)
+
+    # 基本統計を計算
+    avg_win_rate = np.mean([pos1_stats["win_rate"], pos2_stats["win_rate"], pos3_stats["win_rate"]])
+    avg_recent_win_rate = np.mean([pos1_stats["recent_win_rate"], pos2_stats["recent_win_rate"], pos3_stats["recent_win_rate"]])
+    avg_high_payout_rate = np.mean([pos1_stats["high_payout_rate"], pos2_stats["high_payout_rate"], pos3_stats["high_payout_rate"]])
+    avg_consistency = np.mean([pos1_stats["consistency"], pos2_stats["consistency"], pos3_stats["consistency"]])
+    win_rate_gap_1_3 = pos1_stats["win_rate"] - pos3_stats["win_rate"]
+    car_sum = pos1_car + pos2_car + pos3_car
+    outer_count = sum(1 for c in [pos1_car, pos2_car, pos3_car] if c >= 7)
+
+    # 特徴量を構築（最終版 - 58特徴量）
     features = {
-        # 選手統計（1着）
+        # 選手統計（1着） - 8特徴量
         "pos1_win_rate": pos1_stats["win_rate"],
         "pos1_top3_rate": pos1_stats["top3_rate"],
         "pos1_avg_payout": pos1_stats["avg_payout"],
         "pos1_high_payout_rate": pos1_stats["high_payout_rate"],
+        "pos1_recent_win_rate": pos1_stats["recent_win_rate"],
+        "pos1_track_win_rate": pos1_stats["track_win_rate"],
+        "pos1_grade_win_rate": pos1_stats["grade_win_rate"],
+        "pos1_consistency": pos1_stats["consistency"],
 
-        # 選手統計（2着）
+        # 選手統計（2着） - 8特徴量
         "pos2_win_rate": pos2_stats["win_rate"],
         "pos2_top3_rate": pos2_stats["top3_rate"],
         "pos2_avg_payout": pos2_stats["avg_payout"],
         "pos2_high_payout_rate": pos2_stats["high_payout_rate"],
+        "pos2_recent_win_rate": pos2_stats["recent_win_rate"],
+        "pos2_track_win_rate": pos2_stats["track_win_rate"],
+        "pos2_grade_win_rate": pos2_stats["grade_win_rate"],
+        "pos2_consistency": pos2_stats["consistency"],
 
-        # 選手統計（3着）
+        # 選手統計（3着） - 8特徴量
         "pos3_win_rate": pos3_stats["win_rate"],
         "pos3_top3_rate": pos3_stats["top3_rate"],
         "pos3_avg_payout": pos3_stats["avg_payout"],
         "pos3_high_payout_rate": pos3_stats["high_payout_rate"],
+        "pos3_recent_win_rate": pos3_stats["recent_win_rate"],
+        "pos3_track_win_rate": pos3_stats["track_win_rate"],
+        "pos3_grade_win_rate": pos3_stats["grade_win_rate"],
+        "pos3_consistency": pos3_stats["consistency"],
 
-        # 3選手の統計的特徴
-        "avg_win_rate": np.mean([pos1_stats["win_rate"], pos2_stats["win_rate"], pos3_stats["win_rate"]]),
+        # 3選手の統計的特徴 - 14特徴量
+        "avg_win_rate": avg_win_rate,
         "std_win_rate": np.std([pos1_stats["win_rate"], pos2_stats["win_rate"], pos3_stats["win_rate"]]),
         "min_win_rate": np.min([pos1_stats["win_rate"], pos2_stats["win_rate"], pos3_stats["win_rate"]]),
         "max_win_rate": np.max([pos1_stats["win_rate"], pos2_stats["win_rate"], pos3_stats["win_rate"]]),
 
-        # 車番特徴
+        "avg_recent_win_rate": avg_recent_win_rate,
+        "std_recent_win_rate": np.std([pos1_stats["recent_win_rate"], pos2_stats["recent_win_rate"], pos3_stats["recent_win_rate"]]),
+
+        "avg_track_win_rate": np.mean([pos1_stats["track_win_rate"], pos2_stats["track_win_rate"], pos3_stats["track_win_rate"]]),
+        "std_track_win_rate": np.std([pos1_stats["track_win_rate"], pos2_stats["track_win_rate"], pos3_stats["track_win_rate"]]),
+
+        "avg_high_payout_rate": avg_high_payout_rate,
+        "std_high_payout_rate": np.std([pos1_stats["high_payout_rate"], pos2_stats["high_payout_rate"], pos3_stats["high_payout_rate"]]),
+
+        "avg_consistency": avg_consistency,
+
+        # 実力差 - 3特徴量
+        "win_rate_gap_1_2": pos1_stats["win_rate"] - pos2_stats["win_rate"],
+        "win_rate_gap_2_3": pos2_stats["win_rate"] - pos3_stats["win_rate"],
+        "win_rate_gap_1_3": win_rate_gap_1_3,
+
+        # 車番特徴 - 10特徴量
         "pos1_car_no": pos1_car,
         "pos2_car_no": pos2_car,
         "pos3_car_no": pos3_car,
-        "car_sum": pos1_car + pos2_car + pos3_car,
+        "car_sum": car_sum,
         "car_std": np.std([pos1_car, pos2_car, pos3_car]),
         "car_range": max(pos1_car, pos2_car, pos3_car) - min(pos1_car, pos2_car, pos3_car),
-
-        # 外枠・内枠
-        "outer_count": sum(1 for c in [pos1_car, pos2_car, pos3_car] if c >= 7),
+        "outer_count": outer_count,
         "inner_count": sum(1 for c in [pos1_car, pos2_car, pos3_car] if c <= 3),
+        "has_1_car": 1 if 1 in [pos1_car, pos2_car, pos3_car] else 0,
+        "has_9_car": 1 if 9 in [pos1_car, pos2_car, pos3_car] else 0,
 
-        # カテゴリカル（簡易エンコード）
-        "is_F1": 1 if data.get("grade") == "F1" else 0,
-        "is_F2": 1 if data.get("grade") == "F2" else 0,
-        "is_G1": 1 if data.get("grade") == "G1" else 0,
-        "is_G2": 1 if data.get("grade") == "G2" else 0,
-        "is_G3": 1 if data.get("grade") == "G3" else 0,
+        # 車番組み合わせ統計 - 1特徴量
+        "combo_high_payout_rate": combo_high_payout_rate,
+
+        # グレード（簡易エンコード） - 5特徴量
+        "is_F1": 1 if grade == "F1" else 0,
+        "is_F2": 1 if grade == "F2" else 0,
+        "is_G1": 1 if grade == "G1" else 0,
+        "is_G2": 1 if grade == "G2" else 0,
+        "is_G3": 1 if grade == "G3" else 0,
+
+        # 交互作用特徴 - 4特徴量
+        "win_rate_x_car_sum": avg_win_rate * car_sum,
+        "high_payout_x_outer": avg_high_payout_rate * outer_count,
+        "consistency_x_recent": avg_consistency * avg_recent_win_rate,
+        "gap_x_combo": win_rate_gap_1_3 * combo_high_payout_rate,
     }
 
     # DataFrameに変換し、モデルの特徴量順に並べる
@@ -281,9 +393,9 @@ def predict():
         # 入力の前処理
         X, stats_info = preprocess_input(data)
 
-        # 予測
+        # 予測（最適閾値を使用）
         probability = float(model.predict(X, num_iteration=model.best_iteration)[0])
-        prediction = int(probability >= 0.5)
+        prediction = int(probability >= optimal_threshold)
 
         # 買い方の提案
         betting_strategy = generate_betting_strategy(probability, data, stats_info)
@@ -314,7 +426,10 @@ def health():
         "status": "ok",
         "model_loaded": model is not None,
         "player_count": len(player_stats) if player_stats else 0,
-        "model_type": "predictive (before-race data)"
+        "model_type": "improved (before-race data)",
+        "model_accuracy": f"{model_info.get('test_accuracy', 0)*100:.2f}%" if model_info else "N/A",
+        "optimal_threshold": optimal_threshold,
+        "feature_count": model_info.get("feature_count", 0) if model_info else 0,
     })
 
 

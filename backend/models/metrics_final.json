@@ -1,0 +1,266 @@
+{
+  "auc": 0.7657779111341815,
+  "average_precision": 0.560138685209881,
+  "accuracy": 0.76723070573669,
+  "classification_report": {
+    "0": {
+      "precision": 0.7986222167548284,
+      "recall": 0.9129517648713261,
+      "f1-score": 0.8519685039370078,
+      "support": 7111.0
+    },
+    "1": {
+      "precision": 0.6039667306461932,
+      "recall": 0.36574970941495544,
+      "f1-score": 0.4555984555984556,
+      "support": 2581.0
+    },
+    "accuracy": 0.76723070573669,
+    "macro avg": {
+      "precision": 0.7012944737005108,
+      "recall": 0.6393507371431408,
+      "f1-score": 0.6537834797677318,
+      "support": 9692.0
+    },
+    "weighted avg": {
+      "precision": 0.7467850510876403,
+      "recall": 0.76723070573669,
+      "f1-score": 0.746414325773388,
+      "support": 9692.0
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "avg_high_payout_rate",
+      "importance": 70801.2869528532
+    },
+    {
+      "feature": "combo_high_payout_rate",
+      "importance": 57563.84512504935
+    },
+    {
+      "feature": "win_rate_gap_1_3",
+      "importance": 25578.41567850113
+    },
+    {
+      "feature": "pos1_high_payout_rate",
+      "importance": 21688.60655578971
+    },
+    {
+      "feature": "pos1_grade_win_rate",
+      "importance": 19832.515428960323
+    },
+    {
+      "feature": "pos2_high_payout_rate",
+      "importance": 13137.26756298542
+    },
+    {
+      "feature": "pos1_win_rate",
+      "importance": 12308.364938735962
+    },
+    {
+      "feature": "pos3_high_payout_rate",
+      "importance": 11573.067299365997
+    },
+    {
+      "feature": "gap_x_combo",
+      "importance": 11453.65534684062
+    },
+    {
+      "feature": "pos3_avg_payout",
+      "importance": 10902.070859193802
+    },
+    {
+      "feature": "pos2_avg_payout",
+      "importance": 10806.879886209965
+    },
+    {
+      "feature": "pos1_avg_payout",
+      "importance": 10789.283897161484
+    },
+    {
+      "feature": "pos2_grade_win_rate",
+      "importance": 10688.70602376759
+    },
+    {
+      "feature": "pos2_consistency",
+      "importance": 10340.967720508575
+    },
+    {
+      "feature": "win_rate_gap_2_3",
+      "importance": 10244.825835347176
+    },
+    {
+      "feature": "pos3_consistency",
+      "importance": 10204.827159881592
+    },
+    {
+      "feature": "std_high_payout_rate",
+      "importance": 10102.648802220821
+    },
+    {
+      "feature": "win_rate_x_car_sum",
+      "importance": 10021.530061721802
+    },
+    {
+      "feature": "win_rate_gap_1_2",
+      "importance": 9764.4571595788
+    },
+    {
+      "feature": "pos1_consistency",
+      "importance": 9283.265563964844
+    },
+    {
+      "feature": "std_track_win_rate",
+      "importance": 8713.368538372219
+    },
+    {
+      "feature": "pos1_car_no",
+      "importance": 8597.905555486679
+    },
+    {
+      "feature": "avg_consistency",
+      "importance": 8424.28366035968
+    },
+    {
+      "feature": "avg_track_win_rate",
+      "importance": 7976.082945048809
+    },
+    {
+      "feature": "std_win_rate",
+      "importance": 7870.265871167183
+    },
+    {
+      "feature": "consistency_x_recent",
+      "importance": 7803.622818827629
+    },
+    {
+      "feature": "avg_win_rate",
+      "importance": 7741.25418035686
+    },
+    {
+      "feature": "car_sum",
+      "importance": 7705.041686147451
+    },
+    {
+      "feature": "pos3_car_no",
+      "importance": 7578.313152819872
+    },
+    {
+      "feature": "max_win_rate",
+      "importance": 6831.510088920593
+    },
+    {
+      "feature": "min_win_rate",
+      "importance": 6758.2316700425
+    },
+    {
+      "feature": "std_recent_win_rate",
+      "importance": 6722.359984457493
+    },
+    {
+      "feature": "pos3_grade_win_rate",
+      "importance": 6523.629768759012
+    },
+    {
+      "feature": "pos1_track_win_rate",
+      "importance": 6420.375989437103
+    },
+    {
+      "feature": "pos3_win_rate",
+      "importance": 6334.178218007088
+    },
+    {
+      "feature": "pos2_track_win_rate",
+      "importance": 6272.549329847097
+    },
+    {
+      "feature": "pos2_win_rate",
+      "importance": 6191.818552017212
+    },
+    {
+      "feature": "pos3_track_win_rate",
+      "importance": 5983.765998005867
+    },
+    {
+      "feature": "pos2_car_no",
+      "importance": 5954.081934928894
+    },
+    {
+      "feature": "high_payout_x_outer",
+      "importance": 4798.986487865448
+    },
+    {
+      "feature": "is_F1",
+      "importance": 4317.391125679016
+    },
+    {
+      "feature": "car_std",
+      "importance": 4214.817540049553
+    },
+    {
+      "feature": "pos1_recent_win_rate",
+      "importance": 3365.3753167688847
+    },
+    {
+      "feature": "avg_recent_win_rate",
+      "importance": 2883.812944173813
+    },
+    {
+      "feature": "pos3_recent_win_rate",
+      "importance": 2760.423726081848
+    },
+    {
+      "feature": "pos2_recent_win_rate",
+      "importance": 2752.9922902584076
+    },
+    {
+      "feature": "has_1_car",
+      "importance": 2388.4854440689087
+    },
+    {
+      "feature": "is_F2",
+      "importance": 2322.8998885154724
+    },
+    {
+      "feature": "inner_count",
+      "importance": 1995.24041056633
+    },
+    {
+      "feature": "is_G1",
+      "importance": 1138.4543557167053
+    },
+    {
+      "feature": "car_range",
+      "importance": 1125.307367324829
+    },
+    {
+      "feature": "is_G2",
+      "importance": 287.40453910827637
+    },
+    {
+      "feature": "has_9_car",
+      "importance": 267.2602605819702
+    },
+    {
+      "feature": "is_G3",
+      "importance": 236.71062898635864
+    },
+    {
+      "feature": "outer_count",
+      "importance": 208.10721111297607
+    },
+    {
+      "feature": "pos3_top3_rate",
+      "importance": 0.0
+    },
+    {
+      "feature": "pos1_top3_rate",
+      "importance": 0.0
+    },
+    {
+      "feature": "pos2_top3_rate",
+      "importance": 0.0
+    }
+  ]
+}
