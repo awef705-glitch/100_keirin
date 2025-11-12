@@ -360,13 +360,13 @@ def main():
     )
 
     # [3/5] Optunaでハイパーパラメータ最適化
-    print("\n[3/5] Optunaでハイパーパラメータ最適化中（100試行）...")
+    print("\n[3/5] Optunaでハイパーパラメータ最適化中（10試行・軽量版）...")
     print("  この処理には時間がかかります（約20〜30分）")
 
     study = optuna.create_study(direction='maximize', study_name='keirin_ultra_accuracy')
     study.optimize(
         lambda trial: objective(trial, X_train_opt, y_train_opt, X_val_opt, y_val_opt),
-        n_trials=100,
+        n_trials=10,
         show_progress_bar=True
     )
 
