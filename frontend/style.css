@@ -356,6 +356,14 @@ footer {
     margin-bottom: 12px;
 }
 
+.region-note {
+    display: block;
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    font-style: italic;
+}
+
 .form-row {
     display: grid;
     grid-template-columns: 2fr 1fr;

@@ -66,15 +66,10 @@ function generateRiderInputs(count) {
         riderDiv.className = 'rider-input';
         riderDiv.innerHTML = `
             <h4>車番 ${i}</h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="rider${i}_name">選手名 *</label>
-                    <input type="text" id="rider${i}_name" name="rider${i}_name" placeholder="例: 山田 太郎" required>
-                </div>
-                <div class="form-group">
-                    <label for="rider${i}_region">地域</label>
-                    <input type="text" id="rider${i}_region" name="rider${i}_region" placeholder="例: 福岡">
-                </div>
+            <div class="form-group">
+                <label for="rider${i}_name">選手名 *</label>
+                <input type="text" id="rider${i}_name" name="rider${i}_name" placeholder="例: 山田 太郎" required>
+                <small class="region-note">地域は自動的に取得されます</small>
             </div>
         `;
         ridersContainer.appendChild(riderDiv);
@@ -110,14 +105,13 @@ async function predictRace() {
         race_date: formData.get('race_date').replace(/-/g, '') // YYYY-MM-DD → YYYYMMDD
     };
 
-    // 選手情報
+    // 選手情報（地域はサーバー側で自動取得）
     const riderCount = parseInt(formData.get('rider_count'));
     const riders = [];
     for (let i = 1; i <= riderCount; i++) {
         riders.push({
             car_no: i,
-            name: formData.get(`rider${i}_name`),
-            region: formData.get(`rider${i}_region`) || '不明'
+            name: formData.get(`rider${i}_name`)
         });
     }
 

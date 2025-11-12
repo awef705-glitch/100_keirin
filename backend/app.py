@@ -22,11 +22,12 @@ model_info = None
 player_stats = None
 combo_stats = None
 reference_data = None
+player_region_map = None
 
 
 def load_model():
     """モデルとパラメータをロード"""
-    global model, model_info, player_stats, combo_stats, reference_data
+    global model, model_info, player_stats, combo_stats, reference_data, player_region_map
 
     model_dir = Path(__file__).parent / "models"
 
@@ -54,13 +55,18 @@ def load_model():
     with open(model_dir / "reference_data.json", "r", encoding="utf-8") as f:
         reference_data = json.load(f)
 
+    # 選手地域マッピングのロード
+    with open(model_dir / "player_region_map.json", "r", encoding="utf-8") as f:
+        player_region_map = json.load(f)
+
     print("=" * 70)
-    print("新モデル（Ultra）をロードしました - 何日目対応")
+    print("新モデル（Ultra）をロードしました - 地域自動取得対応")
     print(f"  - 特徴量数: {model_info['feature_count']}")
     print(f"  - テストAUC: {model_info['test_auc']:.4f}")
     print(f"  - テスト精度: {model_info['test_accuracy']*100:.2f}%")
     print(f"  - 最適閾値: {model_info['optimal_threshold']}")
     print(f"  - 選手数: {len(player_stats):,}")
+    print(f"  - 地域マッピング: {len(player_region_map):,}人")
     print("=" * 70)
 
 
@@ -469,18 +475,28 @@ def predict():
         for perm in permutations(riders, 3):
             pos1, pos2, pos3 = perm
 
+            # 選手名を正規化（半角スペース→全角スペース）
+            pos1_name = pos1["name"].replace(" ", "　")
+            pos2_name = pos2["name"].replace(" ", "　")
+            pos3_name = pos3["name"].replace(" ", "　")
+
+            # 選手名から地域を自動取得
+            pos1_region = player_region_map.get(pos1_name, "不明")
+            pos2_region = player_region_map.get(pos2_name, "不明")
+            pos3_region = player_region_map.get(pos3_name, "不明")
+
             # この組み合わせの入力データを作成
             combo_data = {
                 **race_info,
                 "pos1_car_no": pos1["car_no"],
-                "pos1_name": pos1["name"],
-                "pos1_region": pos1.get("region", "不明"),
+                "pos1_name": pos1_name,
+                "pos1_region": pos1_region,
                 "pos2_car_no": pos2["car_no"],
-                "pos2_name": pos2["name"],
-                "pos2_region": pos2.get("region", "不明"),
+                "pos2_name": pos2_name,
+                "pos2_region": pos2_region,
                 "pos3_car_no": pos3["car_no"],
-                "pos3_name": pos3["name"],
-                "pos3_region": pos3.get("region", "不明"),
+                "pos3_name": pos3_name,
+                "pos3_region": pos3_region,
             }
 
             # 特徴量を計算
@@ -494,7 +510,7 @@ def predict():
                 "combination": f"{pos1['car_no']}-{pos2['car_no']}-{pos3['car_no']}",
                 "car_numbers": [pos1["car_no"], pos2["car_no"], pos3["car_no"]],
                 "riders": [pos1["name"], pos2["name"], pos3["name"]],
-                "regions": [pos1.get("region", "不明"), pos2.get("region", "不明"), pos3.get("region", "不明")],
+                "regions": [pos1_region, pos2_region, pos3_region],
                 "probability": probability,
                 "prediction": prediction,
                 "prediction_label": "荒れる" if prediction == 1 else "堅い"
