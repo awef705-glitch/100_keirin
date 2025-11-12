@@ -4,8 +4,8 @@
 
 改善手法：
 1. Optunaによる徹底的なハイパーパラメータチューニング
-2. より高度な特徴量エンジニアリング（73特徴量）
-3. 何日目の情報を追加（事前にわかる情報のみ）
+2. より高度な特徴量エンジニアリング（100特徴量超）
+3. 事前情報のみ使用：何日目、地域、季節、曜日
 4. アンサンブル学習
 5. 時系列分割での厳密な検証
 """
@@ -13,6 +13,7 @@ import json
 import pickle
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
 
 import pandas as pd
 import numpy as np
@@ -78,8 +79,8 @@ def get_player_features(player_name: str, player_stats: dict, track: str = None,
 
 
 def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: dict) -> tuple:
-    """より高度な特徴量を構築（拡張版: 73特徴量）"""
-    print("\n高度な特徴量を構築中（73特徴量）...")
+    """より高度な特徴量を構築（拡張版: 100特徴量超）"""
+    print("\n高度な特徴量を構築中（地域・季節・曜日対応）...")
 
     X_list = []
     y_list = []
@@ -103,10 +104,25 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
         category = row.get("category", "不明")
         meeting_icon = row.get("meeting_icon", 3)  # 何日目（1,3,5,8）
 
+        # 日付情報
+        race_date = str(row.get("race_date", "20240101"))
+        try:
+            date_obj = datetime.strptime(race_date, "%Y%m%d")
+            month = date_obj.month
+            weekday = date_obj.weekday()  # 0=月曜, 6=日曜
+        except:
+            month = 1
+            weekday = 0
+
         # 選手名
         pos1_name = row.get("pos1_name")
         pos2_name = row.get("pos2_name")
         pos3_name = row.get("pos3_name")
+
+        # 選手の地域
+        pos1_region = str(row.get("pos1_region", "不明")).strip()
+        pos2_region = str(row.get("pos2_region", "不明")).strip()
+        pos3_region = str(row.get("pos3_region", "不明")).strip()
 
         if pd.isna(pos1_name) or pd.isna(pos2_name) or pd.isna(pos3_name):
             continue
@@ -169,7 +185,7 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
         consistency_x_win_rate = avg_consistency * avg_win_rate
         consistency_variance = np.var([pos1_stats["consistency"], pos2_stats["consistency"], pos3_stats["consistency"]])
 
-        # 特徴量を構築（拡張: 58 → 72 → 73特徴量）
+        # 特徴量を構築（拡張: 58 → 72 → 73 → 98特徴量）
         features = {
             # 選手統計（1着） - 8特徴量
             "pos1_win_rate": pos1_stats["win_rate"],
@@ -241,6 +257,37 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
 
             # 何日目 - 1特徴量
             "meeting_day": int(meeting_icon) if not pd.isna(meeting_icon) else 3,
+
+            # 地域特徴 - 6特徴量
+            "same_region_count": sum([pos1_region == pos2_region, pos2_region == pos3_region, pos1_region == pos3_region]),
+            "all_same_region": 1 if (pos1_region == pos2_region == pos3_region) else 0,
+            "pos1_is_home": 1 if (track in pos1_region or pos1_region in track) else 0,
+            "pos2_is_home": 1 if (track in pos2_region or pos2_region in track) else 0,
+            "pos3_is_home": 1 if (track in pos3_region or pos3_region in track) else 0,
+            "home_count": sum([1 if (track in r or r in track) else 0 for r in [pos1_region, pos2_region, pos3_region]]),
+
+            # 月（季節） - 12特徴量
+            "month_1": 1 if month == 1 else 0,
+            "month_2": 1 if month == 2 else 0,
+            "month_3": 1 if month == 3 else 0,
+            "month_4": 1 if month == 4 else 0,
+            "month_5": 1 if month == 5 else 0,
+            "month_6": 1 if month == 6 else 0,
+            "month_7": 1 if month == 7 else 0,
+            "month_8": 1 if month == 8 else 0,
+            "month_9": 1 if month == 9 else 0,
+            "month_10": 1 if month == 10 else 0,
+            "month_11": 1 if month == 11 else 0,
+            "month_12": 1 if month == 12 else 0,
+
+            # 曜日 - 7特徴量
+            "weekday_0": 1 if weekday == 0 else 0,  # 月曜
+            "weekday_1": 1 if weekday == 1 else 0,  # 火曜
+            "weekday_2": 1 if weekday == 2 else 0,  # 水曜
+            "weekday_3": 1 if weekday == 3 else 0,  # 木曜
+            "weekday_4": 1 if weekday == 4 else 0,  # 金曜
+            "weekday_5": 1 if weekday == 5 else 0,  # 土曜
+            "weekday_6": 1 if weekday == 6 else 0,  # 日曜
 
             # 基本交互作用特徴 - 4特徴量
             "win_rate_x_car_sum": avg_win_rate * car_sum,

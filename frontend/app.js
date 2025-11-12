@@ -71,6 +71,11 @@ async function predictRace() {
         data[key] = value;
     });
 
+    // 日付をYYYYMMDD形式に変換（YYYY-MM-DD → YYYYMMDD）
+    if (data.race_date) {
+        data.race_date = data.race_date.replace(/-/g, '');
+    }
+
     // ローディング表示
     showLoading();
     hideResult();

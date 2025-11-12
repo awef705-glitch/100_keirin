@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-競輪予測APIサーバー（Ultra高精度モデル対応: 73特徴量）
-何日目の情報を追加（事前にわかる情報のみ使用）
+競輪予測APIサーバー（Ultra高精度モデル対応: 98特徴量）
+地域・季節（月）・曜日情報を追加（事前にわかる情報のみ使用）
 """
 import json
 import pickle
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -118,7 +119,7 @@ def get_player_features(player_name: str, track: str = None, grade: str = None, 
 
 
 def preprocess_input(data: dict) -> pd.DataFrame:
-    """入力データを前処理して73特徴量を作成"""
+    """入力データを前処理して98特徴量を作成"""
 
     # レース情報
     track = data.get("track", "不明")
@@ -126,10 +127,25 @@ def preprocess_input(data: dict) -> pd.DataFrame:
     category = data.get("category", "不明")
     meeting_day = int(data.get("meeting_day", 3))  # 何日目（1,3,5,8）
 
+    # 日付情報（月・曜日）
+    race_date = str(data.get("race_date", "20240101"))
+    try:
+        date_obj = datetime.strptime(race_date, "%Y%m%d")
+        month = date_obj.month
+        weekday = date_obj.weekday()  # 0=月曜, 6=日曜
+    except:
+        month = 1
+        weekday = 0
+
     # 選手名
     pos1_name = data.get("pos1_name", "")
     pos2_name = data.get("pos2_name", "")
     pos3_name = data.get("pos3_name", "")
+
+    # 選手の地域
+    pos1_region = str(data.get("pos1_region", "不明")).strip()
+    pos2_region = str(data.get("pos2_region", "不明")).strip()
+    pos3_region = str(data.get("pos3_region", "不明")).strip()
 
     # 選手統計を取得
     pos1_stats = get_player_features(pos1_name, track, grade, category)
@@ -272,6 +288,37 @@ def preprocess_input(data: dict) -> pd.DataFrame:
         "top3_rate_std": np.std([pos1_stats["top3_rate"], pos2_stats["top3_rate"], pos3_stats["top3_rate"]]),
         "recent_x_track_win_rate": avg_recent_win_rate * np.mean([pos1_stats["track_win_rate"], pos2_stats["track_win_rate"], pos3_stats["track_win_rate"]]),
         "grade_x_category_interaction": (1 if grade == "F1" else 0) * avg_win_rate,
+
+        # 地域特徴 - 6特徴量
+        "same_region_count": sum([pos1_region == pos2_region, pos2_region == pos3_region, pos1_region == pos3_region]),
+        "all_same_region": 1 if (pos1_region == pos2_region == pos3_region and pos1_region != "不明") else 0,
+        "pos1_is_home": 1 if (track in pos1_region or pos1_region in track) else 0,
+        "pos2_is_home": 1 if (track in pos2_region or pos2_region in track) else 0,
+        "pos3_is_home": 1 if (track in pos3_region or pos3_region in track) else 0,
+        "home_count": sum([1 if (track in r or r in track) else 0 for r in [pos1_region, pos2_region, pos3_region]]),
+
+        # 月（季節） - 12特徴量
+        "month_1": 1 if month == 1 else 0,
+        "month_2": 1 if month == 2 else 0,
+        "month_3": 1 if month == 3 else 0,
+        "month_4": 1 if month == 4 else 0,
+        "month_5": 1 if month == 5 else 0,
+        "month_6": 1 if month == 6 else 0,
+        "month_7": 1 if month == 7 else 0,
+        "month_8": 1 if month == 8 else 0,
+        "month_9": 1 if month == 9 else 0,
+        "month_10": 1 if month == 10 else 0,
+        "month_11": 1 if month == 11 else 0,
+        "month_12": 1 if month == 12 else 0,
+
+        # 曜日 - 7特徴量
+        "weekday_0": 1 if weekday == 0 else 0,  # 月曜
+        "weekday_1": 1 if weekday == 1 else 0,  # 火曜
+        "weekday_2": 1 if weekday == 2 else 0,  # 水曜
+        "weekday_3": 1 if weekday == 3 else 0,  # 木曜
+        "weekday_4": 1 if weekday == 4 else 0,  # 金曜
+        "weekday_5": 1 if weekday == 5 else 0,  # 土曜
+        "weekday_6": 1 if weekday == 6 else 0,  # 日曜
     }
 
     # DataFrameに変換して特徴量順序を保証
@@ -397,7 +444,7 @@ def predict():
     try:
         data = request.json
 
-        # 入力の前処理（72特徴量を計算）
+        # 入力の前処理（98特徴量を計算）
         X = preprocess_input(data)
 
         # 予測（LightGBMモデル）
