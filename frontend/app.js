@@ -8,11 +8,14 @@ const raceForm = document.getElementById('raceForm');
 const resultDiv = document.getElementById('result');
 const loadingDiv = document.getElementById('loading');
 const submitBtn = document.getElementById('submitBtn');
+const ridersContainer = document.getElementById('ridersContainer');
+const riderCountSelect = document.getElementById('rider_count');
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
     await loadReferenceData();
     setupFormHandlers();
+    generateRiderInputs(9); // デフォルト9人
 });
 
 // リファレンスデータの読み込み
@@ -54,8 +57,38 @@ async function loadReferenceData() {
     }
 }
 
+// 選手入力フォームを生成
+function generateRiderInputs(count) {
+    ridersContainer.innerHTML = '';
+
+    for (let i = 1; i <= count; i++) {
+        const riderDiv = document.createElement('div');
+        riderDiv.className = 'rider-input';
+        riderDiv.innerHTML = `
+            <h4>車番 ${i}</h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rider${i}_name">選手名 *</label>
+                    <input type="text" id="rider${i}_name" name="rider${i}_name" placeholder="例: 山田 太郎" required>
+                </div>
+                <div class="form-group">
+                    <label for="rider${i}_region">地域</label>
+                    <input type="text" id="rider${i}_region" name="rider${i}_region" placeholder="例: 福岡">
+                </div>
+            </div>
+        `;
+        ridersContainer.appendChild(riderDiv);
+    }
+}
+
 // フォームハンドラーの設定
 function setupFormHandlers() {
+    // 出走人数変更時
+    riderCountSelect.addEventListener('change', (e) => {
+        generateRiderInputs(parseInt(e.target.value));
+    });
+
+    // フォーム送信
     raceForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await predictRace();
@@ -66,15 +99,32 @@ function setupFormHandlers() {
 async function predictRace() {
     // フォームデータの取得
     const formData = new FormData(raceForm);
-    const data = {};
-    formData.forEach((value, key) => {
-        data[key] = value;
-    });
 
-    // 日付をYYYYMMDD形式に変換（YYYY-MM-DD → YYYYMMDD）
-    if (data.race_date) {
-        data.race_date = data.race_date.replace(/-/g, '');
+    // レース情報
+    const raceInfo = {
+        track: formData.get('track'),
+        grade: formData.get('grade'),
+        category: formData.get('category'),
+        race_no: formData.get('race_no'),
+        meeting_day: formData.get('meeting_day'),
+        race_date: formData.get('race_date').replace(/-/g, '') // YYYY-MM-DD → YYYYMMDD
+    };
+
+    // 選手情報
+    const riderCount = parseInt(formData.get('rider_count'));
+    const riders = [];
+    for (let i = 1; i <= riderCount; i++) {
+        riders.push({
+            car_no: i,
+            name: formData.get(`rider${i}_name`),
+            region: formData.get(`rider${i}_region`) || '不明'
+        });
     }
+
+    const data = {
+        ...raceInfo,
+        riders: riders
+    };
 
     // ローディング表示
     showLoading();
@@ -109,44 +159,23 @@ async function predictRace() {
 
 // 結果の表示
 function displayResult(result) {
-    const probability = result.probability;
-    const probabilityPercent = (probability * 100).toFixed(1);
+    // 総組み合わせ数
+    document.getElementById('totalCombinations').textContent = result.total_combinations;
 
-    // 確率の表示
-    document.getElementById('probabilityValue').textContent = `${probabilityPercent}%`;
-    document.getElementById('probabilityFill').style.width = `${probabilityPercent}%`;
+    // 高配当リスト
+    const highPayoutList = document.getElementById('highPayoutList');
+    highPayoutList.innerHTML = '';
+    result.high_payout_combinations.forEach(combo => {
+        const item = createCombinationItem(combo);
+        highPayoutList.appendChild(item);
+    });
 
-    // 予測ラベルの表示
-    const predictionLabel = document.getElementById('predictionLabel');
-    predictionLabel.textContent = result.prediction_label;
-    predictionLabel.className = 'prediction-label ' + (result.prediction === 1 ? 'high' : 'low');
-
-    // 信頼度の表示
-    const confidenceText = `信頼度: ${result.betting_strategy.confidence}`;
-    document.getElementById('confidence').textContent = confidenceText;
-
-    // 買い方の提案を表示
-    const recommendationsDiv = document.getElementById('recommendations');
-    recommendationsDiv.innerHTML = '';
-
-    result.betting_strategy.recommendations.forEach(rec => {
-        const item = document.createElement('div');
-        item.className = 'recommendation-item';
-
-        const title = document.createElement('h4');
-        title.textContent = rec.type;
-        item.appendChild(title);
-
-        const description = document.createElement('p');
-        description.textContent = rec.description;
-        item.appendChild(description);
-
-        const numbers = document.createElement('div');
-        numbers.className = 'recommendation-numbers';
-        numbers.textContent = `推奨車番: ${rec.suggested_numbers.join('-')} (${rec.bet_type})`;
-        item.appendChild(numbers);
-
-        recommendationsDiv.appendChild(item);
+    // 低配当リスト
+    const lowPayoutList = document.getElementById('lowPayoutList');
+    lowPayoutList.innerHTML = '';
+    result.low_payout_combinations.forEach(combo => {
+        const item = createCombinationItem(combo);
+        lowPayoutList.appendChild(item);
     });
 
     // 結果を表示
@@ -154,6 +183,36 @@ function displayResult(result) {
 
     // 結果までスクロール
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// 組み合わせアイテムを作成
+function createCombinationItem(combo) {
+    const div = document.createElement('div');
+    div.className = 'combination-item';
+
+    const probabilityPercent = (combo.probability * 100).toFixed(1);
+    const labelClass = combo.prediction === 1 ? 'high' : 'low';
+
+    div.innerHTML = `
+        <div class="combination-header">
+            <span class="rank">#${combo.rank}</span>
+            <span class="combination">${combo.combination}</span>
+            <span class="probability">${probabilityPercent}%</span>
+            <span class="label ${labelClass}">${combo.prediction_label}</span>
+        </div>
+        <div class="combination-details">
+            <div class="riders-info">
+                ${combo.riders.map((rider, idx) => `
+                    <span class="rider">
+                        <strong>${rider}</strong>
+                        <small>(${combo.regions[idx]})</small>
+                    </span>
+                `).join(' → ')}
+            </div>
+        </div>
+    `;
+
+    return div;
 }
 
 // ローディング表示/非表示
@@ -182,7 +241,7 @@ function disableSubmit() {
 
 function enableSubmit() {
     submitBtn.disabled = false;
-    submitBtn.textContent = '予測する';
+    submitBtn.textContent = '全組み合わせを予測';
 }
 
 // PWAサービスワーカーの登録

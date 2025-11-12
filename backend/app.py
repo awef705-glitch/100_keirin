@@ -440,28 +440,84 @@ def get_reference_data():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """レース情報から予測を実行（Ultra高精度モデル）"""
+    """全選手情報から高配当組み合わせを予測（Ultra高精度モデル）"""
     try:
         data = request.json
 
-        # 入力の前処理（98特徴量を計算）
-        X = preprocess_input(data)
+        # レース基本情報
+        race_info = {
+            "track": data.get("track", "不明"),
+            "grade": data.get("grade", "不明"),
+            "category": data.get("category", "不明"),
+            "race_no": data.get("race_no", "1"),
+            "meeting_day": data.get("meeting_day", "3"),
+            "race_date": data.get("race_date", "20240101")
+        }
 
-        # 予測（LightGBMモデル）
-        probability = float(model.predict(X)[0])
+        # 全選手情報
+        riders = data.get("riders", [])
+        if len(riders) < 3:
+            return jsonify({
+                "success": False,
+                "error": "最低3人以上の選手情報が必要です"
+            }), 400
 
-        # 最適閾値（0.65）で判定
-        prediction = int(probability >= model_info["optimal_threshold"])
+        # 全ての3連単組み合わせを生成
+        from itertools import permutations
+        combinations = []
 
-        # 買い方の提案
-        betting_strategy = generate_betting_strategy(probability, data)
+        for perm in permutations(riders, 3):
+            pos1, pos2, pos3 = perm
+
+            # この組み合わせの入力データを作成
+            combo_data = {
+                **race_info,
+                "pos1_car_no": pos1["car_no"],
+                "pos1_name": pos1["name"],
+                "pos1_region": pos1.get("region", "不明"),
+                "pos2_car_no": pos2["car_no"],
+                "pos2_name": pos2["name"],
+                "pos2_region": pos2.get("region", "不明"),
+                "pos3_car_no": pos3["car_no"],
+                "pos3_name": pos3["name"],
+                "pos3_region": pos3.get("region", "不明"),
+            }
+
+            # 特徴量を計算
+            X = preprocess_input(combo_data)
+
+            # 予測
+            probability = float(model.predict(X)[0])
+            prediction = int(probability >= model_info["optimal_threshold"])
+
+            combinations.append({
+                "combination": f"{pos1['car_no']}-{pos2['car_no']}-{pos3['car_no']}",
+                "car_numbers": [pos1["car_no"], pos2["car_no"], pos3["car_no"]],
+                "riders": [pos1["name"], pos2["name"], pos3["name"]],
+                "regions": [pos1.get("region", "不明"), pos2.get("region", "不明"), pos3.get("region", "不明")],
+                "probability": probability,
+                "prediction": prediction,
+                "prediction_label": "荒れる" if prediction == 1 else "堅い"
+            })
+
+        # 確率でソート
+        combinations_sorted = sorted(combinations, key=lambda x: x["probability"], reverse=True)
+
+        # 高配当TOP 10と低配当TOP 5を抽出
+        high_payout = combinations_sorted[:10]
+        low_payout = combinations_sorted[-5:][::-1]  # 確率が低い順
+
+        # ランク付け
+        for i, combo in enumerate(high_payout, 1):
+            combo["rank"] = i
+        for i, combo in enumerate(low_payout, 1):
+            combo["rank"] = i
 
         result = {
             "success": True,
-            "probability": probability,
-            "prediction": prediction,
-            "prediction_label": "荒れる" if prediction == 1 else "堅い",
-            "betting_strategy": betting_strategy,
+            "total_combinations": len(combinations),
+            "high_payout_combinations": high_payout,
+            "low_payout_combinations": low_payout,
             "model_info": {
                 "model_type": "LightGBM Ultra",
                 "test_auc": model_info["test_auc"],

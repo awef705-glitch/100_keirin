@@ -340,3 +340,158 @@ footer {
         padding-bottom: env(safe-area-inset-bottom);
     }
 }
+
+/* 選手入力 */
+.rider-input {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.rider-input h4 {
+    font-size: 16px;
+    color: #667eea;
+    margin-bottom: 12px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 480px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 結果サマリー */
+.result-summary {
+    background: #f0f4ff;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.result-summary p {
+    font-size: 16px;
+    color: #555;
+    margin: 0;
+}
+
+.result-summary strong {
+    color: #667eea;
+    font-size: 20px;
+}
+
+/* 高配当・低配当セクション */
+.high-payout-section,
+.low-payout-section {
+    margin-bottom: 32px;
+}
+
+.high-payout-section h3,
+.low-payout-section h3 {
+    font-size: 18px;
+    color: #667eea;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #667eea;
+}
+
+/* 組み合わせリスト */
+.combination-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.combination-item {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.combination-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.combination-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.combination-header .rank {
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+    min-width: 40px;
+}
+
+.combination-header .combination {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    flex: 1;
+}
+
+.combination-header .probability {
+    font-size: 18px;
+    font-weight: 700;
+    color: #666;
+}
+
+.combination-header .label {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+.combination-header .label.high {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.combination-header .label.low {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.combination-details {
+    margin-top: 8px;
+}
+
+.riders-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: #666;
+}
+
+.riders-info .rider {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.riders-info .rider strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.riders-info .rider small {
+    color: #999;
+    font-size: 11px;
+}

@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1976d2">
-    <title>競輪予測アプリ</title>
+    <title>競輪高配当予測 - AI予測アプリ</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -14,43 +14,43 @@
 <body>
     <div class="container">
         <header>
-            <h1>競輪予測アプリ</h1>
-            <p class="subtitle">レース情報を入力して高配当の可能性を予測</p>
+            <h1>🚴 競輪高配当予測</h1>
+            <p class="subtitle">AIが全組み合わせを分析して高配当を予測</p>
         </header>
 
         <main>
             <form id="raceForm">
                 <div class="section">
-                    <h2>基本情報</h2>
+                    <h2>レース情報</h2>
 
                     <div class="form-group">
-                        <label for="track">場名</label>
+                        <label for="track">場名 *</label>
                         <select id="track" name="track" required>
                             <option value="">選択してください</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="grade">グレード</label>
+                        <label for="grade">グレード *</label>
                         <select id="grade" name="grade" required>
                             <option value="">選択してください</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="category">カテゴリー</label>
+                        <label for="category">カテゴリー *</label>
                         <select id="category" name="category" required>
                             <option value="">選択してください</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="race_no">レース番号</label>
+                        <label for="race_no">レース番号 *</label>
                         <input type="text" id="race_no" name="race_no" placeholder="例: 1" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="meeting_day">何日目</label>
+                        <label for="meeting_day">何日目 *</label>
                         <select id="meeting_day" name="meeting_day" required>
                             <option value="">選択してください</option>
                             <option value="1">1日目</option>
@@ -61,98 +61,59 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="race_date">レース日</label>
+                        <label for="race_date">レース日 *</label>
                         <input type="date" id="race_date" name="race_date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rider_count">出走人数 *</label>
+                        <select id="rider_count" name="rider_count" required>
+                            <option value="7">7人</option>
+                            <option value="8">8人</option>
+                            <option value="9" selected>9人</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="section">
-                    <h2>着順予想（注目する3選手）</h2>
-                    <p class="note">※予測したい組み合わせの選手情報を入力してください</p>
+                    <h2>出走選手情報（全員）</h2>
+                    <p class="note">※出走する全選手の情報を入力してください</p>
 
-                    <div class="position-group">
-                        <h3>1番手</h3>
-                        <div class="form-group">
-                            <label for="pos1_car_no">車番 *</label>
-                            <input type="number" id="pos1_car_no" name="pos1_car_no" min="1" max="9" placeholder="1-9" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos1_name">選手名 *</label>
-                            <input type="text" id="pos1_name" name="pos1_name" placeholder="例: 山田 太郎" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos1_region">地域（県名など）</label>
-                            <input type="text" id="pos1_region" name="pos1_region" placeholder="例: 福岡">
-                        </div>
-                    </div>
-
-                    <div class="position-group">
-                        <h3>2番手</h3>
-                        <div class="form-group">
-                            <label for="pos2_car_no">車番 *</label>
-                            <input type="number" id="pos2_car_no" name="pos2_car_no" min="1" max="9" placeholder="1-9" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos2_name">選手名 *</label>
-                            <input type="text" id="pos2_name" name="pos2_name" placeholder="例: 佐藤 次郎" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos2_region">地域（県名など）</label>
-                            <input type="text" id="pos2_region" name="pos2_region" placeholder="例: 千葉">
-                        </div>
-                    </div>
-
-                    <div class="position-group">
-                        <h3>3番手</h3>
-                        <div class="form-group">
-                            <label for="pos3_car_no">車番 *</label>
-                            <input type="number" id="pos3_car_no" name="pos3_car_no" min="1" max="9" placeholder="1-9" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos3_name">選手名 *</label>
-                            <input type="text" id="pos3_name" name="pos3_name" placeholder="例: 鈴木 三郎" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pos3_region">地域（県名など）</label>
-                            <input type="text" id="pos3_region" name="pos3_region" placeholder="例: 神奈川">
-                        </div>
-                    </div>
+                    <div id="ridersContainer"></div>
                 </div>
 
                 <button type="submit" class="submit-btn" id="submitBtn">
-                    予測する
+                    全組み合わせを予測
                 </button>
             </form>
 
-            <div id="result" class="result hidden">
-                <h2>予測結果</h2>
-                <div class="result-content">
-                    <div class="probability-display">
-                        <div class="probability-label">高配当の確率</div>
-                        <div class="probability-value" id="probabilityValue">0%</div>
-                        <div class="probability-bar">
-                            <div class="probability-fill" id="probabilityFill"></div>
-                        </div>
-                        <div class="prediction-label" id="predictionLabel">-</div>
-                    </div>
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>全組み合わせを分析中...</p>
+            </div>
 
-                    <div class="strategy">
-                        <h3>買い方の提案</h3>
-                        <div class="confidence" id="confidence">-</div>
-                        <div id="recommendations"></div>
-                    </div>
+            <div id="result" class="result hidden">
+                <h2>🎯 予測結果</h2>
+
+                <div class="result-summary">
+                    <p>分析した組み合わせ数: <strong id="totalCombinations">0</strong></p>
+                </div>
+
+                <div class="high-payout-section">
+                    <h3>💰 高配当が期待できる組み合わせ TOP 10</h3>
+                    <div id="highPayoutList" class="combination-list"></div>
+                </div>
+
+                <div class="low-payout-section">
+                    <h3>📉 堅い組み合わせ TOP 5</h3>
+                    <div id="lowPayoutList" class="combination-list"></div>
                 </div>
             </div>
         </main>
 
         <footer>
-            <p>競輪予測アプリ v1.0</p>
+            <p>競輪高配当予測アプリ v2.0 | Powered by AI</p>
         </footer>
-    </div>
-
-    <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <p>予測中...</p>
     </div>
 
     <script src="app.js"></script>
