@@ -4,9 +4,10 @@
 
 改善手法：
 1. Optunaによる徹底的なハイパーパラメータチューニング
-2. より高度な特徴量エンジニアリング
-3. アンサンブル学習
-4. 時系列分割での厳密な検証
+2. より高度な特徴量エンジニアリング（73特徴量）
+3. 何日目の情報を追加（事前にわかる情報のみ）
+4. アンサンブル学習
+5. 時系列分割での厳密な検証
 """
 import json
 import pickle
@@ -77,8 +78,8 @@ def get_player_features(player_name: str, player_stats: dict, track: str = None,
 
 
 def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: dict) -> tuple:
-    """より高度な特徴量を構築（拡張版）"""
-    print("\n高度な特徴量を構築中...")
+    """より高度な特徴量を構築（拡張版: 73特徴量）"""
+    print("\n高度な特徴量を構築中（73特徴量）...")
 
     X_list = []
     y_list = []
@@ -100,6 +101,7 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
         track = row.get("track", "不明")
         grade = row.get("grade", "不明")
         category = row.get("category", "不明")
+        meeting_icon = row.get("meeting_icon", 3)  # 何日目（1,3,5,8）
 
         # 選手名
         pos1_name = row.get("pos1_name")
@@ -167,7 +169,7 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
         consistency_x_win_rate = avg_consistency * avg_win_rate
         consistency_variance = np.var([pos1_stats["consistency"], pos2_stats["consistency"], pos3_stats["consistency"]])
 
-        # 特徴量を構築（拡張: 58 → 72特徴量）
+        # 特徴量を構築（拡張: 58 → 72 → 73特徴量）
         features = {
             # 選手統計（1着） - 8特徴量
             "pos1_win_rate": pos1_stats["win_rate"],
@@ -236,6 +238,9 @@ def build_advanced_features(df: pd.DataFrame, player_stats: dict, combo_stats: d
             "is_G1": 1 if grade == "G1" else 0,
             "is_G2": 1 if grade == "G2" else 0,
             "is_G3": 1 if grade == "G3" else 0,
+
+            # 何日目 - 1特徴量
+            "meeting_day": int(meeting_icon) if not pd.isna(meeting_icon) else 3,
 
             # 基本交互作用特徴 - 4特徴量
             "win_rate_x_car_sum": avg_win_rate * car_sum,

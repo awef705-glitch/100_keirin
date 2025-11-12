@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-競輪予測APIサーバー（Ultra高精度モデル対応）
+競輪予測APIサーバー（Ultra高精度モデル対応: 73特徴量）
+何日目の情報を追加（事前にわかる情報のみ使用）
 """
 import json
 import pickle
@@ -53,7 +54,7 @@ def load_model():
         reference_data = json.load(f)
 
     print("=" * 70)
-    print("新モデル（Ultra）をロードしました")
+    print("新モデル（Ultra）をロードしました - 何日目対応")
     print(f"  - 特徴量数: {model_info['feature_count']}")
     print(f"  - テストAUC: {model_info['test_auc']:.4f}")
     print(f"  - テスト精度: {model_info['test_accuracy']*100:.2f}%")
@@ -117,12 +118,13 @@ def get_player_features(player_name: str, track: str = None, grade: str = None, 
 
 
 def preprocess_input(data: dict) -> pd.DataFrame:
-    """入力データを前処理して72特徴量を作成"""
+    """入力データを前処理して73特徴量を作成"""
 
     # レース情報
     track = data.get("track", "不明")
     grade = data.get("grade", "不明")
     category = data.get("category", "不明")
+    meeting_day = int(data.get("meeting_day", 3))  # 何日目（1,3,5,8）
 
     # 選手名
     pos1_name = data.get("pos1_name", "")
@@ -176,7 +178,7 @@ def preprocess_input(data: dict) -> pd.DataFrame:
     consistency_x_win_rate = avg_consistency * avg_win_rate
     consistency_variance = np.var([pos1_stats["consistency"], pos2_stats["consistency"], pos3_stats["consistency"]])
 
-    # 特徴量を構築（72特徴量）
+    # 特徴量を構築（73特徴量）
     features = {
         # 選手統計（1着） - 8特徴量
         "pos1_win_rate": pos1_stats["win_rate"],
@@ -245,6 +247,9 @@ def preprocess_input(data: dict) -> pd.DataFrame:
         "is_G1": 1 if grade == "G1" else 0,
         "is_G2": 1 if grade == "G2" else 0,
         "is_G3": 1 if grade == "G3" else 0,
+
+        # 何日目 - 1特徴量
+        "meeting_day": meeting_day,
 
         # 基本交互作用特徴 - 4特徴量
         "win_rate_x_car_sum": avg_win_rate * car_sum,
