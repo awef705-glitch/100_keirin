@@ -23,6 +23,7 @@ player_stats = None
 combo_stats = None
 reference_data = None
 player_region_map = None
+rider_names = None
 
 
 def load_model():
@@ -59,8 +60,13 @@ def load_model():
     with open(model_dir / "player_region_map.json", "r", encoding="utf-8") as f:
         player_region_map = json.load(f)
 
+    # 選手名リストのロード（オートコンプリート用）
+    global rider_names
+    with open(model_dir / "rider_names.json", "r", encoding="utf-8") as f:
+        rider_names = json.load(f)
+
     print("=" * 70)
-    print("新モデル（Ultra）をロードしました - 地域自動取得対応")
+    print("新モデル（Ultra）をロードしました - 脚質特徴対応（113特徴量）")
     print(f"  - 特徴量数: {model_info['feature_count']}")
     print(f"  - テストAUC: {model_info['test_auc']:.4f}")
     print(f"  - テスト精度: {model_info['test_accuracy']*100:.2f}%")
@@ -87,9 +93,18 @@ def get_player_features(player_name: str, track: str = None, grade: str = None, 
             "grade_win_rate": 0.1,
             "category_win_rate": 0.1,
             "consistency": 0.0,
+            "nige_rate": 0.33,
+            "sashi_rate": 0.33,
+            "makuri_rate": 0.34,
         }
 
     stats = player_stats[player_name]
+
+    # 脚質（決まり手）データを取得
+    decision_dist = stats.get("decision_distribution", {})
+    nige_rate = decision_dist.get("逃げ", 0.0)
+    sashi_rate = decision_dist.get("差し", 0.0)
+    makuri_rate = decision_dist.get("捲り", 0.0)
 
     features = {
         "win_rate": stats["win_rate"],
@@ -99,6 +114,9 @@ def get_player_features(player_name: str, track: str = None, grade: str = None, 
         "avg_payout": stats["avg_payout"],
         "high_payout_rate": stats["high_payout_rate"],
         "races": min(stats["races"], 500) / 500,
+        "nige_rate": nige_rate,
+        "sashi_rate": sashi_rate,
+        "makuri_rate": makuri_rate,
     }
 
     features["recent_win_rate"] = stats.get("recent_win_rate", stats["win_rate"])
@@ -273,6 +291,23 @@ def preprocess_input(data: dict) -> pd.DataFrame:
         # 何日目 - 1特徴量
         "meeting_day": meeting_day,
 
+        # 脚質特徴（決まり手） - 15特徴量
+        "pos1_nige_rate": pos1_stats["nige_rate"],
+        "pos1_sashi_rate": pos1_stats["sashi_rate"],
+        "pos1_makuri_rate": pos1_stats["makuri_rate"],
+        "pos2_nige_rate": pos2_stats["nige_rate"],
+        "pos2_sashi_rate": pos2_stats["sashi_rate"],
+        "pos2_makuri_rate": pos2_stats["makuri_rate"],
+        "pos3_nige_rate": pos3_stats["nige_rate"],
+        "pos3_sashi_rate": pos3_stats["sashi_rate"],
+        "pos3_makuri_rate": pos3_stats["makuri_rate"],
+        "avg_nige_rate": np.mean([pos1_stats["nige_rate"], pos2_stats["nige_rate"], pos3_stats["nige_rate"]]),
+        "avg_sashi_rate": np.mean([pos1_stats["sashi_rate"], pos2_stats["sashi_rate"], pos3_stats["sashi_rate"]]),
+        "avg_makuri_rate": np.mean([pos1_stats["makuri_rate"], pos2_stats["makuri_rate"], pos3_stats["makuri_rate"]]),
+        "nige_type_count": sum([1 if s["nige_rate"] > 0.5 else 0 for s in [pos1_stats, pos2_stats, pos3_stats]]),
+        "sashi_type_count": sum([1 if s["sashi_rate"] > 0.5 else 0 for s in [pos1_stats, pos2_stats, pos3_stats]]),
+        "makuri_type_count": sum([1 if s["makuri_rate"] > 0.5 else 0 for s in [pos1_stats, pos2_stats, pos3_stats]]),
+
         # 基本交互作用特徴 - 4特徴量
         "win_rate_x_car_sum": avg_win_rate * car_sum,
         "high_payout_x_outer": avg_high_payout_rate * outer_count,
@@ -442,6 +477,12 @@ def index():
 def get_reference_data():
     """リファレンスデータを取得"""
     return jsonify(reference_data)
+
+
+@app.route('/api/rider-names', methods=['GET'])
+def get_rider_names():
+    """選手名リストを取得（オートコンプリート用）"""
+    return jsonify(rider_names)
 
 
 @app.route('/api/predict', methods=['POST'])

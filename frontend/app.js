@@ -11,9 +11,13 @@ const submitBtn = document.getElementById('submitBtn');
 const ridersContainer = document.getElementById('ridersContainer');
 const riderCountSelect = document.getElementById('rider_count');
 
+// 選手名リスト
+let riderNamesList = [];
+
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
     await loadReferenceData();
+    await loadRiderNames();
     setupFormHandlers();
     generateRiderInputs(9); // デフォルト9人
 });
@@ -57,6 +61,17 @@ async function loadReferenceData() {
     }
 }
 
+// 選手名リストの読み込み
+async function loadRiderNames() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/rider-names`);
+        riderNamesList = await response.json();
+        console.log(`選手名リスト読み込み完了: ${riderNamesList.length}人`);
+    } catch (error) {
+        console.error('選手名リストの読み込みに失敗しました:', error);
+    }
+}
+
 // 選手入力フォームを生成
 function generateRiderInputs(count) {
     ridersContainer.innerHTML = '';
@@ -68,11 +83,29 @@ function generateRiderInputs(count) {
             <h4>車番 ${i}</h4>
             <div class="form-group">
                 <label for="rider${i}_name">選手名 *</label>
-                <input type="text" id="rider${i}_name" name="rider${i}_name" placeholder="例: 山田 太郎" required>
-                <small class="region-note">地域は自動的に取得されます</small>
+                <input type="text"
+                       id="rider${i}_name"
+                       name="rider${i}_name"
+                       list="rider-names-list"
+                       placeholder="例: 山田 太郎"
+                       autocomplete="off"
+                       required>
+                <small class="region-note">地域・脚質は自動取得されます</small>
             </div>
         `;
         ridersContainer.appendChild(riderDiv);
+    }
+
+    // datalist要素を一度だけ作成
+    if (!document.getElementById('rider-names-list')) {
+        const datalist = document.createElement('datalist');
+        datalist.id = 'rider-names-list';
+        riderNamesList.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        });
+        document.body.appendChild(datalist);
     }
 }
 
