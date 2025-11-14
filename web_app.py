@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 
 from analysis import prerace_model
+from analysis import betting_suggestions
 
 
 app = FastAPI(title="競輪 高配当予測ツール")
@@ -186,6 +187,13 @@ async def predict(
     probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA)
     result = prerace_model.build_prediction_response(probability, summary, METADATA)
 
+    # 買い目提案を生成
+    suggestions_data = betting_suggestions.generate_betting_suggestions(
+        race_info=race_info,
+        probability=probability,
+        confidence=result.get('confidence', '')
+    )
+
     context = {
         "request": request,
         "race": race_info,
@@ -194,6 +202,7 @@ async def predict(
         "riders": riders,
         "summary": summary,
         "lightgbm_ready": LIGHTGBM_READY,
+        "betting_suggestions": suggestions_data,
     }
     return templates.TemplateResponse("result.html", context)
 

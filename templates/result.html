@@ -336,6 +336,39 @@
       </table>
     </div>
 
+    {% if betting_suggestions and not betting_suggestions.get('error') %}
+    <div class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+      <h3 style="color: white;">💰 具体的な買い目提案</h3>
+      <p style="margin-bottom: 16px; opacity: 0.95;">
+        <strong>戦略:</strong> {{ betting_suggestions.strategy }}<br>
+        <strong>合計:</strong> {{ betting_suggestions.total_points }}点 × 100円 = {{ betting_suggestions.total_points * 100 }}円
+      </p>
+
+      <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+        <h4 style="color: white; font-size: 0.95rem; margin-bottom: 10px;">選手評価ランキング</h4>
+        {% for rider in betting_suggestions.rider_ranking[:6] %}
+        <div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
+          {{ loop.index }}位: {{ rider.car_no }}番 {{ rider.name }}
+          ({{ rider.grade }}/{{ rider.style }}{% if rider.avg_score %}/得点:{{ '%.1f'|format(rider.avg_score) }}{% endif %})
+          <span style="opacity: 0.8; margin-left: 10px;">評価:{{ '%.1f'|format(rider.strength) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px;">
+        <h4 style="color: white; font-size: 0.95rem; margin-bottom: 10px;">推奨買い目（三連単）</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+          {% for sug in betting_suggestions.suggestions %}
+          <div style="background: rgba(255,255,255,0.25); border-radius: 8px; padding: 10px; font-size: 0.9rem;">
+            <strong style="font-size: 1.1rem;">{{ sug.combination }}</strong><br>
+            <span style="opacity: 0.9;">{{ sug.points }}点 ({{ sug.type }})</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <a href="/" class="btn-back">↩ 新しいレースを入力する</a>
 
     <div class="warning">

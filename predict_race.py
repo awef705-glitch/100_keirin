@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from analysis import prerace_model
+from analysis import betting_suggestions
 
 
 def parse_args() -> argparse.Namespace:
@@ -235,6 +236,16 @@ def display_result(result: Dict[str, Any]) -> None:
     print(f"  脚質多様性(0-1)  : {summary.get('style_diversity', 0.0):.2f}")
     print(f"  地元勢の種類数    : {summary.get('prefecture_unique_count', 0)}")
     print("=" * 70)
+
+    # 買い目提案を生成・表示
+    print("\n")
+    suggestions_data = betting_suggestions.generate_betting_suggestions(
+        race_info=race,
+        probability=probability,
+        confidence=result['confidence']
+    )
+    suggestions_text = betting_suggestions.format_betting_suggestions(suggestions_data)
+    print(suggestions_text)
 
 
 def main() -> None:
