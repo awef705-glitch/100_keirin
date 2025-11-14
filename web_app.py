@@ -32,6 +32,7 @@ try:
     if RIDER_MASTER_PATH.exists():
         with open(RIDER_MASTER_PATH, 'r', encoding='utf-8') as f:
             RIDERS_DATA = json.load(f)
+    print(f"[INFO] Loaded {len(RIDERS_DATA)} riders")
 except Exception as e:
     print(f"[WARN] Failed to load rider master: {e}")
 
@@ -39,15 +40,13 @@ try:
     if TRACK_MASTER_PATH.exists():
         with open(TRACK_MASTER_PATH, 'r', encoding='utf-8') as f:
             TRACKS_DATA = json.load(f)
+    print(f"[INFO] Loaded {len(TRACKS_DATA)} tracks")
 except Exception as e:
     print(f"[WARN] Failed to load track master: {e}")
 
 TEMPLATES_DIR = Path("templates")
 TEMPLATES_DIR.mkdir(exist_ok=True)
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
-
-
 
 # Load model artefacts once at startup.
 MODEL = None
@@ -56,7 +55,6 @@ MODEL_READY = False
 LIGHTGBM_READY = False
 USE_LIGHTGBM = os.getenv("KEIRIN_ENABLE_LIGHTGBM", "").strip().lower() in {"1", "true", "yes"}
 
-# Metadata is required even for fallback heuristics.
 try:
     METADATA = prerace_model.load_metadata()
     MODEL_READY = True
@@ -64,7 +62,6 @@ except FileNotFoundError:
     METADATA = {}
     MODEL_READY = False
 
-# LightGBM inference is optional and can be toggled via env var.
 if MODEL_READY and USE_LIGHTGBM:
     try:
         MODEL = prerace_model.load_model()
@@ -133,7 +130,6 @@ async def predict(
     rider_styles: List[str] = Form([]),
     rider_scores: List[str] = Form([]),
 ) -> HTMLResponse:
-
     if not MODEL_READY:
         return templates.TemplateResponse(
             "error.html",
@@ -202,22 +198,6 @@ async def predict(
     return templates.TemplateResponse("result.html", context)
 
 
-    TEMPLATES_DIR.mkdir(exist_ok=True)
-
-    missing: List[str] = []
-    for name in ("index.html", "result.html"):
-        if not (TEMPLATES_DIR / name).exists():
-            missing.append(name)
-
-    if missing:
-        print("[WARN] " + "テンプレートが見つかりません: " + ", ".join(missing))
-        print("       リポジトリの templates/ ディレクトリから復元してください。")
-
-    error_html = TEMPLATES_DIR / "error.html"
-    if not error_html.exists():
-        print("[WARN] error.html が存在しません。templates/error.html を復元してください。")
-
-
 if __name__ == "__main__":
     print("=" * 70)
     print("競輪 高配当予測 Web アプリ")
@@ -232,7 +212,6 @@ if __name__ == "__main__":
 
     try:
         import socket
-
         hostname = socket.gethostname()
         candidate_ips = {
             addr[4][0]
