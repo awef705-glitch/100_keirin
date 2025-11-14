@@ -289,7 +289,7 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
         # Gap between 1st and 2nd (large gap = clear favorite = low upset potential)
         favorite_gap = rank1_score - rank2_score
 
-        # Top3 vs others average
+        # Top3 vs others average gap (large gap = strong favorites dominating = low upset potential)
         if len(scores) > 3:
             others_mean = float(scores.iloc[3:].mean())
             top3_vs_others = top3_mean - others_mean
