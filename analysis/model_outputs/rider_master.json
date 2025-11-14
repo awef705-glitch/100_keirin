@@ -1,11 +1,632 @@
 [
-  {"name": "山田太郎", "prefecture": "東京", "grade": "S1", "style": "逃", "avg_score": 110.5},
-  {"name": "佐藤次郎", "prefecture": "神奈川", "grade": "S1", "style": "追", "avg_score": 109.2},
-  {"name": "鈴木三郎", "prefecture": "埼玉", "grade": "S2", "style": "逃", "avg_score": 108.1},
-  {"name": "田中四郎", "prefecture": "千葉", "grade": "S2", "style": "追", "avg_score": 106.8},
-  {"name": "伊藤五郎", "prefecture": "茨城", "grade": "A1", "style": "両", "avg_score": 105.3},
-  {"name": "渡辺六郎", "prefecture": "栃木", "grade": "A1", "style": "逃", "avg_score": 104.1},
-  {"name": "中村七郎", "prefecture": "群馬", "grade": "A2", "style": "追", "avg_score": 102.5},
-  {"name": "小林八郎", "prefecture": "静岡", "grade": "A2", "style": "両", "avg_score": 101.3},
-  {"name": "加藤九郎", "prefecture": "愛知", "grade": "A3", "style": "逃", "avg_score": 99.8}
+  {
+    "name": "古性優作",
+    "prefecture": "大阪",
+    "grade": "SS",
+    "style": "両",
+    "avg_score": 118.5
+  },
+  {
+    "name": "脇本雄太",
+    "prefecture": "福井",
+    "grade": "SS",
+    "style": "追",
+    "avg_score": 116.8
+  },
+  {
+    "name": "平原康多",
+    "prefecture": "埼玉",
+    "grade": "SS",
+    "style": "両",
+    "avg_score": 115.2
+  },
+  {
+    "name": "岩本俊介",
+    "prefecture": "千葉",
+    "grade": "SS",
+    "style": "逃",
+    "avg_score": 113.9
+  },
+  {
+    "name": "守澤太志",
+    "prefecture": "秋田",
+    "grade": "SS",
+    "style": "追",
+    "avg_score": 114.5
+  },
+  {
+    "name": "郡司浩平",
+    "prefecture": "神奈川",
+    "grade": "SS",
+    "style": "両",
+    "avg_score": 115.7
+  },
+  {
+    "name": "佐藤慎太郎",
+    "prefecture": "福島",
+    "grade": "SS",
+    "style": "逃",
+    "avg_score": 114.2
+  },
+  {
+    "name": "松浦悠士",
+    "prefecture": "広島",
+    "grade": "SS",
+    "style": "追",
+    "avg_score": 113.6
+  },
+  {
+    "name": "清水裕友",
+    "prefecture": "山口",
+    "grade": "SS",
+    "style": "逃",
+    "avg_score": 112.8
+  },
+  {
+    "name": "太田海也",
+    "prefecture": "奈良",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 111.5
+  },
+  {
+    "name": "中野慎詞",
+    "prefecture": "東京",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 110.9
+  },
+  {
+    "name": "新田祐大",
+    "prefecture": "福島",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 112.3
+  },
+  {
+    "name": "河端朋之",
+    "prefecture": "岡山",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 111.2
+  },
+  {
+    "name": "渡辺一成",
+    "prefecture": "福島",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 110.7
+  },
+  {
+    "name": "和田健太郎",
+    "prefecture": "千葉",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 109.8
+  },
+  {
+    "name": "坂口晃輔",
+    "prefecture": "三重",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 110.4
+  },
+  {
+    "name": "松岡健介",
+    "prefecture": "和歌山",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 109.6
+  },
+  {
+    "name": "稲垣裕之",
+    "prefecture": "京都",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 110.1
+  },
+  {
+    "name": "吉田拓矢",
+    "prefecture": "茨城",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 109.3
+  },
+  {
+    "name": "村上義弘",
+    "prefecture": "京都",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 108.9
+  },
+  {
+    "name": "三谷竜生",
+    "prefecture": "奈良",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 110.8
+  },
+  {
+    "name": "浅井康太",
+    "prefecture": "三重",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 109.5
+  },
+  {
+    "name": "山崎賢人",
+    "prefecture": "長崎",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 108.7
+  },
+  {
+    "name": "深谷知広",
+    "prefecture": "静岡",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 109.2
+  },
+  {
+    "name": "近藤保",
+    "prefecture": "千葉",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 108.4
+  },
+  {
+    "name": "武田豊樹",
+    "prefecture": "茨城",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 107.9
+  },
+  {
+    "name": "神山雄一郎",
+    "prefecture": "栃木",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 108.6
+  },
+  {
+    "name": "岡本総",
+    "prefecture": "愛知",
+    "grade": "S1",
+    "style": "逃",
+    "avg_score": 107.8
+  },
+  {
+    "name": "小川真太郎",
+    "prefecture": "徳島",
+    "grade": "S1",
+    "style": "追",
+    "avg_score": 108.2
+  },
+  {
+    "name": "東口善朋",
+    "prefecture": "和歌山",
+    "grade": "S1",
+    "style": "両",
+    "avg_score": 107.5
+  },
+  {
+    "name": "山田英明",
+    "prefecture": "佐賀",
+    "grade": "S2",
+    "style": "逃",
+    "avg_score": 106.8
+  },
+  {
+    "name": "岡崎智哉",
+    "prefecture": "大阪",
+    "grade": "S2",
+    "style": "追",
+    "avg_score": 106.3
+  },
+  {
+    "name": "高橋晋也",
+    "prefecture": "福島",
+    "grade": "S2",
+    "style": "両",
+    "avg_score": 105.9
+  },
+  {
+    "name": "小林令",
+    "prefecture": "山梨",
+    "grade": "S2",
+    "style": "逃",
+    "avg_score": 106.5
+  },
+  {
+    "name": "大塚健一郎",
+    "prefecture": "大分",
+    "grade": "S2",
+    "style": "追",
+    "avg_score": 105.7
+  },
+  {
+    "name": "野田源一",
+    "prefecture": "福岡",
+    "grade": "S2",
+    "style": "両",
+    "avg_score": 106.2
+  },
+  {
+    "name": "山本伸一",
+    "prefecture": "京都",
+    "grade": "S2",
+    "style": "逃",
+    "avg_score": 105.4
+  },
+  {
+    "name": "黒沢征治",
+    "prefecture": "埼玉",
+    "grade": "S2",
+    "style": "追",
+    "avg_score": 106.1
+  },
+  {
+    "name": "根田空史",
+    "prefecture": "千葉",
+    "grade": "S2",
+    "style": "両",
+    "avg_score": 105.8
+  },
+  {
+    "name": "柴崎淳",
+    "prefecture": "三重",
+    "grade": "S2",
+    "style": "逃",
+    "avg_score": 105.2
+  },
+  {
+    "name": "中川誠一郎",
+    "prefecture": "熊本",
+    "grade": "S2",
+    "style": "追",
+    "avg_score": 104.9
+  },
+  {
+    "name": "桑原大志",
+    "prefecture": "山口",
+    "grade": "S2",
+    "style": "両",
+    "avg_score": 105.6
+  },
+  {
+    "name": "磯島成介",
+    "prefecture": "青森",
+    "grade": "S2",
+    "style": "逃",
+    "avg_score": 104.7
+  },
+  {
+    "name": "山口拳矢",
+    "prefecture": "岐阜",
+    "grade": "S2",
+    "style": "追",
+    "avg_score": 105.3
+  },
+  {
+    "name": "松田大",
+    "prefecture": "熊本",
+    "grade": "S2",
+    "style": "両",
+    "avg_score": 104.5
+  },
+  {
+    "name": "渡邉一洋",
+    "prefecture": "静岡",
+    "grade": "A1",
+    "style": "逃",
+    "avg_score": 103.8
+  },
+  {
+    "name": "鈴木玄人",
+    "prefecture": "東京",
+    "grade": "A1",
+    "style": "追",
+    "avg_score": 103.2
+  },
+  {
+    "name": "岡田泰地",
+    "prefecture": "栃木",
+    "grade": "A1",
+    "style": "両",
+    "avg_score": 102.9
+  },
+  {
+    "name": "齊藤健人",
+    "prefecture": "神奈川",
+    "grade": "A1",
+    "style": "逃",
+    "avg_score": 103.5
+  },
+  {
+    "name": "関谷哲平",
+    "prefecture": "奈良",
+    "grade": "A1",
+    "style": "追",
+    "avg_score": 102.7
+  },
+  {
+    "name": "小川将人",
+    "prefecture": "愛知",
+    "grade": "A1",
+    "style": "両",
+    "avg_score": 103.1
+  },
+  {
+    "name": "佐藤佑一",
+    "prefecture": "岩手",
+    "grade": "A1",
+    "style": "逃",
+    "avg_score": 102.4
+  },
+  {
+    "name": "木村隆弘",
+    "prefecture": "徳島",
+    "grade": "A1",
+    "style": "追",
+    "avg_score": 102.8
+  },
+  {
+    "name": "窓場千加頼",
+    "prefecture": "京都",
+    "grade": "A1",
+    "style": "両",
+    "avg_score": 102.3
+  },
+  {
+    "name": "上田尚輝",
+    "prefecture": "富山",
+    "grade": "A1",
+    "style": "逃",
+    "avg_score": 101.9
+  },
+  {
+    "name": "佐々木龍也",
+    "prefecture": "神奈川",
+    "grade": "A1",
+    "style": "追",
+    "avg_score": 102.6
+  },
+  {
+    "name": "石毛克幸",
+    "prefecture": "千葉",
+    "grade": "A1",
+    "style": "両",
+    "avg_score": 101.7
+  },
+  {
+    "name": "樋口有樹郎",
+    "prefecture": "兵庫",
+    "grade": "A1",
+    "style": "逃",
+    "avg_score": 102.1
+  },
+  {
+    "name": "中本匠栄",
+    "prefecture": "熊本",
+    "grade": "A1",
+    "style": "追",
+    "avg_score": 101.5
+  },
+  {
+    "name": "林慶次郎",
+    "prefecture": "福岡",
+    "grade": "A1",
+    "style": "両",
+    "avg_score": 101.8
+  },
+  {
+    "name": "内藤宣彦",
+    "prefecture": "秋田",
+    "grade": "A2",
+    "style": "逃",
+    "avg_score": 100.5
+  },
+  {
+    "name": "阿部力也",
+    "prefecture": "宮城",
+    "grade": "A2",
+    "style": "追",
+    "avg_score": 100.1
+  },
+  {
+    "name": "小出慎也",
+    "prefecture": "和歌山",
+    "grade": "A2",
+    "style": "両",
+    "avg_score": 99.8
+  },
+  {
+    "name": "高市訓但",
+    "prefecture": "愛媛",
+    "grade": "A2",
+    "style": "逃",
+    "avg_score": 100.3
+  },
+  {
+    "name": "池上孝之",
+    "prefecture": "兵庫",
+    "grade": "A2",
+    "style": "追",
+    "avg_score": 99.6
+  },
+  {
+    "name": "戸塚涼介",
+    "prefecture": "埼玉",
+    "grade": "A2",
+    "style": "両",
+    "avg_score": 100.2
+  },
+  {
+    "name": "細沼健治",
+    "prefecture": "埼玉",
+    "grade": "A2",
+    "style": "逃",
+    "avg_score": 99.4
+  },
+  {
+    "name": "舘泰守",
+    "prefecture": "愛知",
+    "grade": "A2",
+    "style": "追",
+    "avg_score": 99.9
+  },
+  {
+    "name": "中井勇介",
+    "prefecture": "大阪",
+    "grade": "A2",
+    "style": "両",
+    "avg_score": 99.2
+  },
+  {
+    "name": "工藤文彦",
+    "prefecture": "岡山",
+    "grade": "A2",
+    "style": "逃",
+    "avg_score": 99.7
+  },
+  {
+    "name": "田口守",
+    "prefecture": "山口",
+    "grade": "A2",
+    "style": "追",
+    "avg_score": 99.1
+  },
+  {
+    "name": "吉橋秀城",
+    "prefecture": "埼玉",
+    "grade": "A2",
+    "style": "両",
+    "avg_score": 99.5
+  },
+  {
+    "name": "小笠原光",
+    "prefecture": "岩手",
+    "grade": "A2",
+    "style": "逃",
+    "avg_score": 98.9
+  },
+  {
+    "name": "川崎健次",
+    "prefecture": "神奈川",
+    "grade": "A2",
+    "style": "追",
+    "avg_score": 99.3
+  },
+  {
+    "name": "金子真也",
+    "prefecture": "群馬",
+    "grade": "A2",
+    "style": "両",
+    "avg_score": 98.7
+  },
+  {
+    "name": "黒田充",
+    "prefecture": "栃木",
+    "grade": "A3",
+    "style": "逃",
+    "avg_score": 97.8
+  },
+  {
+    "name": "杉本正隆",
+    "prefecture": "茨城",
+    "grade": "A3",
+    "style": "追",
+    "avg_score": 97.3
+  },
+  {
+    "name": "赤松秀展",
+    "prefecture": "新潟",
+    "grade": "A3",
+    "style": "両",
+    "avg_score": 97.6
+  },
+  {
+    "name": "中西大",
+    "prefecture": "和歌山",
+    "grade": "A3",
+    "style": "逃",
+    "avg_score": 97.1
+  },
+  {
+    "name": "石貞有基",
+    "prefecture": "兵庫",
+    "grade": "A3",
+    "style": "追",
+    "avg_score": 96.9
+  },
+  {
+    "name": "安部達也",
+    "prefecture": "埼玉",
+    "grade": "A3",
+    "style": "両",
+    "avg_score": 97.4
+  },
+  {
+    "name": "廣田敦士",
+    "prefecture": "三重",
+    "grade": "A3",
+    "style": "逃",
+    "avg_score": 96.7
+  },
+  {
+    "name": "高野輝彰",
+    "prefecture": "愛知",
+    "grade": "A3",
+    "style": "追",
+    "avg_score": 97.2
+  },
+  {
+    "name": "井上善裕",
+    "prefecture": "埼玉",
+    "grade": "A3",
+    "style": "両",
+    "avg_score": 96.5
+  },
+  {
+    "name": "川添輝彦",
+    "prefecture": "沖縄",
+    "grade": "A3",
+    "style": "逃",
+    "avg_score": 96.8
+  },
+  {
+    "name": "長岡豪",
+    "prefecture": "群馬",
+    "grade": "A3",
+    "style": "追",
+    "avg_score": 96.3
+  },
+  {
+    "name": "沖健一",
+    "prefecture": "高知",
+    "grade": "A3",
+    "style": "両",
+    "avg_score": 96.6
+  },
+  {
+    "name": "加藤健一",
+    "prefecture": "神奈川",
+    "grade": "A3",
+    "style": "逃",
+    "avg_score": 96.1
+  },
+  {
+    "name": "高木真光",
+    "prefecture": "福岡",
+    "grade": "A3",
+    "style": "追",
+    "avg_score": 96.4
+  },
+  {
+    "name": "齋藤登志信",
+    "prefecture": "宮城",
+    "grade": "A3",
+    "style": "両",
+    "avg_score": 95.9
+  }
 ]
