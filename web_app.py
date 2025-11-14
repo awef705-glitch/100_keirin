@@ -114,6 +114,7 @@ async def predict(
     keirin_cd: str = Form(...),
     race_no: int = Form(...),
     grade: str = Form(""),
+    category: str = Form(""),
     meeting_day: Optional[str] = Form(None),
     is_first_day: Optional[str] = Form(None),
     is_second_day: Optional[str] = Form(None),
@@ -188,7 +189,7 @@ async def predict(
     # Prepare race context for track/category adjustment
     race_context = {
         'track': race_info.get('track', ''),
-        'category': summary.get('category', ''),
+        'category': category.strip(),
     }
 
     probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA, race_context)
