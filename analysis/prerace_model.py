@@ -212,6 +212,10 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_top3_mean",
             "score_bottom3_mean",
             "score_top_bottom_gap",
+            "estimated_top3_score_sum",
+            "estimated_favorite_dominance",
+            "estimated_favorite_gap",
+            "estimated_top3_vs_others",
             "style_diversity",
             "style_max_ratio",
             "style_min_ratio",
@@ -268,6 +272,38 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
     bottom3_mean = float(bottom3.mean()) if len(bottom3) else mean
     top_bottom_gap = top3_mean - bottom3_mean
 
+    # Estimated popularity features (score-based proxy for actual popularity)
+    # Higher scores = more popular = lower payout when they win
+    if not scores.empty and len(scores) >= 3:
+        sorted_scores = scores.sort_values(ascending=False)
+        rank1_score = float(sorted_scores.iloc[0])
+        rank2_score = float(sorted_scores.iloc[1]) if len(sorted_scores) > 1 else rank1_score
+        rank3_score = float(sorted_scores.iloc[2]) if len(sorted_scores) > 2 else rank2_score
+
+        # Top 3 sum (proxy for "favorite trifecta" - higher = more likely to be popular combination)
+        top3_score_sum = rank1_score + rank2_score + rank3_score
+
+        # Favorite dominance (how much stronger is the top rider)
+        favorite_dominance = rank1_score / (mean + 1e-6)
+
+        # Gap between 1st and 2nd (large gap = clear favorite = low upset potential)
+        favorite_gap = rank1_score - rank2_score
+
+        # Top3 vs others average
+        if len(scores) > 3:
+            others_mean = float(scores.iloc[3:].mean())
+            top3_vs_others = top3_mean - others_mean
+        else:
+            top3_vs_others = 0.0
+    else:
+        rank1_score = mean
+        rank2_score = mean
+        rank3_score = mean
+        top3_score_sum = mean * 3
+        favorite_dominance = 1.0
+        favorite_gap = 0.0
+        top3_vs_others = 0.0
+
     features.update(
         {
             "score_mean": mean,
@@ -283,6 +319,10 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_top3_mean": top3_mean,
             "score_bottom3_mean": bottom3_mean,
             "score_top_bottom_gap": top_bottom_gap,
+            "estimated_top3_score_sum": top3_score_sum,
+            "estimated_favorite_dominance": favorite_dominance,
+            "estimated_favorite_gap": favorite_gap,
+            "estimated_top3_vs_others": top3_vs_others,
         }
     )
     summary.update(
@@ -538,6 +578,10 @@ def _default_feature_columns() -> List[str]:
         "score_top3_mean",
         "score_bottom3_mean",
         "score_top_bottom_gap",
+        "estimated_top3_score_sum",
+        "estimated_favorite_dominance",
+        "estimated_favorite_gap",
+        "estimated_top3_vs_others",
         "style_nige_ratio",
         "style_tsui_ratio",
         "style_ryo_ratio",
