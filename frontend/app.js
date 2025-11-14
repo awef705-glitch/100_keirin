@@ -186,23 +186,75 @@ async function predictRace() {
 
 // 結果の表示
 function displayResult(result) {
-    // 総組み合わせ数
-    document.getElementById('totalCombinations').textContent = result.total_combinations;
+    // レース荒れ度
+    const probability = result.race_roughness_probability;
+    const probabilityPercent = (probability * 100).toFixed(1);
 
-    // 高配当リスト
-    const highPayoutList = document.getElementById('highPayoutList');
-    highPayoutList.innerHTML = '';
-    result.high_payout_combinations.forEach(combo => {
-        const item = createCombinationItem(combo);
-        highPayoutList.appendChild(item);
+    document.getElementById('roughnessProbability').textContent = probabilityPercent;
+    document.getElementById('roughnessLevel').textContent = result.roughness_level;
+
+    // 荒れ度バー
+    const roughnessBar = document.getElementById('roughnessBar');
+    roughnessBar.style.width = `${probabilityPercent}%`;
+
+    // バーの色を確率に応じて変更
+    if (probability >= 0.7) {
+        roughnessBar.style.backgroundColor = '#f44336'; // 赤 - 超高配当
+    } else if (probability >= 0.5) {
+        roughnessBar.style.backgroundColor = '#ff9800'; // オレンジ - 高配当
+    } else if (probability >= 0.3) {
+        roughnessBar.style.backgroundColor = '#ffc107'; // 黄 - やや荒れる
+    } else {
+        roughnessBar.style.backgroundColor = '#4caf50'; // 緑 - 堅い
+    }
+
+    // パターン分析
+    const patternAnalysis = document.getElementById('patternAnalysis');
+    patternAnalysis.innerHTML = '';
+
+    const patterns = result.pattern_analysis;
+    const patternItems = [
+        { icon: '🏃', label: '逃げ型選手', value: `${patterns.nige_count}人` },
+        { icon: '⚡', label: '差し型選手', value: `${patterns.sashi_count}人` },
+        { icon: '🌀', label: '捲り型選手', value: `${patterns.makuri_count}人` },
+        { icon: '🌏', label: '主要地域ライン', value: patterns.major_regions.join(', ') || 'なし' },
+        { icon: '🏠', label: 'ホーム選手', value: `${patterns.home_advantage_count}人` }
+    ];
+
+    patternItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'pattern-item';
+        div.innerHTML = `
+            <span class="pattern-icon">${item.icon}</span>
+            <span class="pattern-label">${item.label}:</span>
+            <strong class="pattern-value">${item.value}</strong>
+        `;
+        patternAnalysis.appendChild(div);
     });
 
-    // 低配当リスト
-    const lowPayoutList = document.getElementById('lowPayoutList');
-    lowPayoutList.innerHTML = '';
-    result.low_payout_combinations.forEach(combo => {
-        const item = createCombinationItem(combo);
-        lowPayoutList.appendChild(item);
+    // 買い方提案
+    const bettingSuggestions = document.getElementById('bettingSuggestions');
+    bettingSuggestions.innerHTML = '';
+
+    result.betting_suggestions.forEach((suggestion, idx) => {
+        const div = document.createElement('div');
+        div.className = 'betting-item';
+        div.innerHTML = `
+            <div class="betting-header">
+                <span class="betting-rank">${idx + 1}</span>
+                <span class="betting-type">${suggestion.ticket_type}</span>
+            </div>
+            <p class="betting-reason">${suggestion.reason}</p>
+            ${suggestion.combinations && suggestion.combinations.length > 0 ? `
+                <div class="betting-combinations">
+                    <strong>推奨組み合わせ例:</strong>
+                    ${suggestion.combinations.map(combo => `
+                        <span class="combo-tag">${combo}</span>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+        bettingSuggestions.appendChild(div);
     });
 
     // 結果を表示
@@ -210,36 +262,6 @@ function displayResult(result) {
 
     // 結果までスクロール
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-// 組み合わせアイテムを作成
-function createCombinationItem(combo) {
-    const div = document.createElement('div');
-    div.className = 'combination-item';
-
-    const probabilityPercent = (combo.probability * 100).toFixed(1);
-    const labelClass = combo.prediction === 1 ? 'high' : 'low';
-
-    div.innerHTML = `
-        <div class="combination-header">
-            <span class="rank">#${combo.rank}</span>
-            <span class="combination">${combo.combination}</span>
-            <span class="probability">${probabilityPercent}%</span>
-            <span class="label ${labelClass}">${combo.prediction_label}</span>
-        </div>
-        <div class="combination-details">
-            <div class="riders-info">
-                ${combo.riders.map((rider, idx) => `
-                    <span class="rider">
-                        <strong>${rider}</strong>
-                        <small>(${combo.regions[idx]})</small>
-                    </span>
-                `).join(' → ')}
-            </div>
-        </div>
-    `;
-
-    return div;
 }
 
 // ローディング表示/非表示

@@ -89,24 +89,31 @@
 
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
-                <p>全組み合わせを分析中...</p>
+                <p>レースを分析中...</p>
             </div>
 
             <div id="result" class="result hidden">
                 <h2>🎯 予測結果</h2>
 
                 <div class="result-summary">
-                    <p>分析した組み合わせ数: <strong id="totalCombinations">0</strong></p>
+                    <div class="roughness-indicator">
+                        <h3>レース荒れ度</h3>
+                        <div class="roughness-bar">
+                            <div id="roughnessBar" class="roughness-fill"></div>
+                        </div>
+                        <p class="roughness-value"><strong id="roughnessProbability">0</strong>%</p>
+                        <p class="roughness-level" id="roughnessLevel">-</p>
+                    </div>
                 </div>
 
-                <div class="high-payout-section">
-                    <h3>💰 高配当が期待できる組み合わせ TOP 10</h3>
-                    <div id="highPayoutList" class="combination-list"></div>
+                <div class="pattern-section">
+                    <h3>📊 レースパターン分析</h3>
+                    <div id="patternAnalysis" class="pattern-details"></div>
                 </div>
 
-                <div class="low-payout-section">
-                    <h3>📉 堅い組み合わせ TOP 5</h3>
-                    <div id="lowPayoutList" class="combination-list"></div>
+                <div class="betting-section">
+                    <h3>💡 おすすめ買い方</h3>
+                    <div id="bettingSuggestions" class="betting-list"></div>
                 </div>
             </div>
         </main>
