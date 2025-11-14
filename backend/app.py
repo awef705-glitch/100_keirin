@@ -142,8 +142,13 @@ def get_player_features(player_name: str, track: str = None, grade: str = None, 
     return features
 
 
-def preprocess_input(data: dict) -> pd.DataFrame:
-    """入力データを前処理して98特徴量を作成"""
+def preprocess_input(data: dict, stats_cache: dict = None) -> pd.DataFrame:
+    """入力データを前処理して98特徴量を作成
+
+    Args:
+        data: 入力データ
+        stats_cache: 選手名 -> 統計情報のキャッシュ（任意）
+    """
 
     # レース情報
     track = data.get("track", "不明")
@@ -171,10 +176,15 @@ def preprocess_input(data: dict) -> pd.DataFrame:
     pos2_region = str(data.get("pos2_region", "不明")).strip()
     pos3_region = str(data.get("pos3_region", "不明")).strip()
 
-    # 選手統計を取得
-    pos1_stats = get_player_features(pos1_name, track, grade, category)
-    pos2_stats = get_player_features(pos2_name, track, grade, category)
-    pos3_stats = get_player_features(pos3_name, track, grade, category)
+    # 選手統計を取得（キャッシュがあればそれを使用）
+    if stats_cache:
+        pos1_stats = stats_cache.get(pos1_name, get_player_features(pos1_name, track, grade, category))
+        pos2_stats = stats_cache.get(pos2_name, get_player_features(pos2_name, track, grade, category))
+        pos3_stats = stats_cache.get(pos3_name, get_player_features(pos3_name, track, grade, category))
+    else:
+        pos1_stats = get_player_features(pos1_name, track, grade, category)
+        pos2_stats = get_player_features(pos2_name, track, grade, category)
+        pos3_stats = get_player_features(pos3_name, track, grade, category)
 
     # 車番
     pos1_car = int(data.get("pos1_car_no", 5))
@@ -507,15 +517,23 @@ def predict():
                 "error": "最低7人以上の選手情報が必要です"
             }), 400
 
-        # 各選手の統計情報を取得
+        # 各選手の統計情報を取得（事前キャッシュで高速化）
         riders_stats = []
+        player_stats_cache = {}  # 選手名 -> 統計情報のキャッシュ
+
         for rider in riders:
             rider_name = rider["name"].replace(" ", "　")
             region = player_region_map.get(rider_name, "不明")
+
+            # 統計情報を取得してキャッシュ
+            stats = get_player_features(rider_name, track, grade, category)
+            player_stats_cache[rider_name] = stats
+
             riders_stats.append({
                 "car_no": rider["car_no"],
                 "name": rider_name,
-                "region": region
+                "region": region,
+                "stats": stats
             })
 
         # レース共通情報
@@ -554,8 +572,8 @@ def predict():
                 "pos3_region": pos3_region,
             }
 
-            # 予測
-            X = preprocess_input(combo_data)
+            # 予測（キャッシュを使って高速化）
+            X = preprocess_input(combo_data, stats_cache=player_stats_cache)
             probability = float(model.predict(X)[0])
             prediction = int(probability >= model_info["optimal_threshold"])
 
@@ -593,22 +611,14 @@ def predict():
             combo["rank"] = i
 
         # === パターン分析 ===
-        # 各選手の詳細統計を取得（パターン分析用）
-        riders_detailed_stats = []
-        for rider in riders_stats:
-            stats = get_player_features(rider["name"], track, grade, category)
-            riders_detailed_stats.append({
-                **rider,
-                "stats": stats
-            })
-
-        pattern_analysis = analyze_race_patterns(riders_detailed_stats, track)
+        # riders_statsには既に統計情報が含まれているので、そのまま使用
+        pattern_analysis = analyze_race_patterns(riders_stats, track)
 
         # === 買い方提案 ===
         betting_suggestions = suggest_betting_strategy(
             race_roughness_probability,
             pattern_analysis,
-            riders_detailed_stats,
+            riders_stats,  # 既に統計情報を含む
             high_payout[:10]  # TOP10組み合わせも渡す
         )
 
