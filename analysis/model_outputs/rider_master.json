@@ -1,0 +1,11 @@
+[
+  {"name": "山田太郎", "prefecture": "東京", "grade": "S1", "style": "逃", "avg_score": 110.5},
+  {"name": "佐藤次郎", "prefecture": "神奈川", "grade": "S1", "style": "追", "avg_score": 109.2},
+  {"name": "鈴木三郎", "prefecture": "埼玉", "grade": "S2", "style": "逃", "avg_score": 108.1},
+  {"name": "田中四郎", "prefecture": "千葉", "grade": "S2", "style": "追", "avg_score": 106.8},
+  {"name": "伊藤五郎", "prefecture": "茨城", "grade": "A1", "style": "両", "avg_score": 105.3},
+  {"name": "渡辺六郎", "prefecture": "栃木", "grade": "A1", "style": "逃", "avg_score": 104.1},
+  {"name": "中村七郎", "prefecture": "群馬", "grade": "A2", "style": "追", "avg_score": 102.5},
+  {"name": "小林八郎", "prefecture": "静岡", "grade": "A2", "style": "両", "avg_score": 101.3},
+  {"name": "加藤九郎", "prefecture": "愛知", "grade": "A3", "style": "逃", "avg_score": 99.8}
+]

@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 import uvicorn
 
@@ -18,6 +19,28 @@ from analysis import prerace_model
 
 
 app = FastAPI(title="競輪 高配当予測ツール")
+
+# Load master data
+MASTER_DATA_DIR = Path("analysis/model_outputs")
+RIDER_MASTER_PATH = MASTER_DATA_DIR / "rider_master.json"
+TRACK_MASTER_PATH = MASTER_DATA_DIR / "track_master.json"
+
+RIDERS_DATA: List[Dict[str, Any]] = []
+TRACKS_DATA: List[Dict[str, Any]] = []
+
+try:
+    if RIDER_MASTER_PATH.exists():
+        with open(RIDER_MASTER_PATH, 'r', encoding='utf-8') as f:
+            RIDERS_DATA = json.load(f)
+except Exception as e:
+    print(f"[WARN] Failed to load rider master: {e}")
+
+try:
+    if TRACK_MASTER_PATH.exists():
+        with open(TRACK_MASTER_PATH, 'r', encoding='utf-8') as f:
+            TRACKS_DATA = json.load(f)
+except Exception as e:
+    print(f"[WARN] Failed to load track master: {e}")
 
 TEMPLATES_DIR = Path("templates")
 TEMPLATES_DIR.mkdir(exist_ok=True)
@@ -856,6 +879,27 @@ async def home(request: Request) -> HTMLResponse:
         "lightgbm_ready": LIGHTGBM_READY,
     }
     return templates.TemplateResponse("index.html", context)
+
+
+@app.get("/api/riders")
+async def get_riders() -> JSONResponse:
+    """Return list of riders for autocomplete."""
+    return JSONResponse(content=RIDERS_DATA)
+
+
+@app.get("/api/tracks")
+async def get_tracks() -> JSONResponse:
+    """Return list of tracks with codes."""
+    return JSONResponse(content=TRACKS_DATA)
+
+
+@app.get("/api/rider/{rider_name}")
+async def get_rider(rider_name: str) -> JSONResponse:
+    """Return specific rider details."""
+    for rider in RIDERS_DATA:
+        if rider.get("name") == rider_name:
+            return JSONResponse(content=rider)
+    return JSONResponse(content={"error": "Rider not found"}, status_code=404)
 
 
 @app.post("/predict", response_class=HTMLResponse)
