@@ -76,6 +76,11 @@ def parse_args() -> argparse.Namespace:
         default=100,
         help="Print LightGBM metrics every N rounds (0 disables).",
     )
+    parser.add_argument(
+        "--optimize",
+        action="store_true",
+        help="Run hyperparameter optimization with multiple configurations.",
+    )
     return parser.parse_args()
 
 
@@ -89,6 +94,11 @@ def train_lightgbm(
 
     tscv = TimeSeriesSplit(n_splits=args.folds)
 
+    # Calculate class weights for imbalanced data
+    n_negative = (y == 0).sum()
+    n_positive = (y == 1).sum()
+    scale_pos_weight = float(n_negative / n_positive) if n_positive > 0 else 1.0
+
     params = {
         "objective": "binary",
         "metric": ["auc", "average_precision"],
@@ -101,6 +111,7 @@ def train_lightgbm(
         "min_data_in_leaf": 50,
         "lambda_l1": 0.1,
         "lambda_l2": 0.1,
+        "scale_pos_weight": scale_pos_weight,  # Address class imbalance
         "verbosity": -1,
         "boost_from_average": True,
         "seed": 42,
@@ -239,6 +250,54 @@ def train_lightgbm(
     return metrics
 
 
+def optimize_hyperparameters(
+    dataset: pd.DataFrame,
+    feature_columns: List[str],
+    args: argparse.Namespace,
+) -> None:
+    """Test multiple hyperparameter configurations and report the best."""
+    print("\n" + "=" * 70)
+    print("HYPERPARAMETER OPTIMIZATION MODE")
+    print("=" * 70)
+
+    param_configs = [
+        {"learning_rate": 0.03, "num_leaves": 31, "max_depth": 7, "min_data_in_leaf": 100},
+        {"learning_rate": 0.05, "num_leaves": 63, "max_depth": -1, "min_data_in_leaf": 50},
+        {"learning_rate": 0.07, "num_leaves": 127, "max_depth": -1, "min_data_in_leaf": 30},
+        {"learning_rate": 0.05, "num_leaves": 31, "max_depth": 5, "min_data_in_leaf": 80},
+        {"learning_rate": 0.04, "num_leaves": 50, "max_depth": 8, "min_data_in_leaf": 60},
+    ]
+
+    results = []
+    for idx, param_config in enumerate(param_configs, start=1):
+        print(f"\n[Config {idx}/{len(param_configs)}] Testing: {param_config}")
+        temp_args = argparse.Namespace(**vars(args))
+        for key, value in param_config.items():
+            setattr(temp_args, key, value)
+
+        # Temporarily disable verbose eval for optimization
+        temp_args.verbose_eval = 0
+
+        metrics = train_lightgbm(dataset, feature_columns, temp_args)
+        results.append({
+            "config": param_config,
+            "roc_auc": metrics["roc_auc"],
+            "avg_precision": metrics["average_precision"],
+            "precision_at_k": metrics["precision_at_top_k"],
+        })
+        print(f"   ROC-AUC: {metrics['roc_auc']:.4f} | Avg Precision: {metrics['average_precision']:.4f}")
+
+    print("\n" + "=" * 70)
+    print("OPTIMIZATION RESULTS")
+    print("=" * 70)
+    best_result = max(results, key=lambda x: x["roc_auc"])
+    print(f"\nBest configuration by ROC-AUC:")
+    print(f"  Config: {best_result['config']}")
+    print(f"  ROC-AUC: {best_result['roc_auc']:.4f}")
+    print(f"  Avg Precision: {best_result['avg_precision']:.4f}")
+    print(f"  Precision@Top{args.top_k}: {best_result['precision_at_k']:.4f}")
+
+
 def main() -> None:
     args = parse_args()
     dataset, feature_columns = prerace_model.build_training_dataset(
@@ -256,20 +315,23 @@ def main() -> None:
     print(f"Feature columns   : {len(feature_columns)}")
     print(f"Output CSV        : {prerace_model.DATASET_PATH}")
 
-    metrics = train_lightgbm(dataset, feature_columns, args)
+    if args.optimize:
+        optimize_hyperparameters(dataset, feature_columns, args)
+    else:
+        metrics = train_lightgbm(dataset, feature_columns, args)
 
-    print("\n" + "=" * 70)
-    print("Training finished")
-    print("=" * 70)
-    print(f"ROC-AUC             : {metrics['roc_auc']:.4f}")
-    print(f"Average Precision   : {metrics['average_precision']:.4f}")
-    print(f"Best F1 Score       : {metrics['best_f1']:.4f}")
-    print(f"Best Threshold      : {metrics['best_threshold']:.4f}")
-    print(f"Precision@Top{metrics['top_k']}: {metrics['precision_at_top_k']:.4f}")
-    print(f"Model saved to      : {prerace_model.MODEL_PATH}")
-    print(f"OOF predictions     : {prerace_model.MODEL_DIR / 'prerace_model_oof.csv'}")
-    print(f"Feature importance  : {prerace_model.MODEL_DIR / 'prerace_model_feature_importance.csv'}")
-    print(f"Metadata            : {prerace_model.METADATA_PATH}")
+        print("\n" + "=" * 70)
+        print("Training finished")
+        print("=" * 70)
+        print(f"ROC-AUC             : {metrics['roc_auc']:.4f}")
+        print(f"Average Precision   : {metrics['average_precision']:.4f}")
+        print(f"Best F1 Score       : {metrics['best_f1']:.4f}")
+        print(f"Best Threshold      : {metrics['best_threshold']:.4f}")
+        print(f"Precision@Top{metrics['top_k']}: {metrics['precision_at_top_k']:.4f}")
+        print(f"Model saved to      : {prerace_model.MODEL_PATH}")
+        print(f"OOF predictions     : {prerace_model.MODEL_DIR / 'prerace_model_oof.csv'}")
+        print(f"Feature importance  : {prerace_model.MODEL_DIR / 'prerace_model_feature_importance.csv'}")
+        print(f"Metadata            : {prerace_model.METADATA_PATH}")
 
 
 if __name__ == "__main__":

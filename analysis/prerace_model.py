@@ -211,10 +211,14 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_cv",
             "score_top3_mean",
             "score_bottom3_mean",
+            "score_top_bottom_gap",
             "style_diversity",
             "style_max_ratio",
             "style_min_ratio",
             "style_unknown_ratio",
+            "style_entropy",
+            "grade_entropy",
+            "grade_has_mixed",
         ]:
             features[key] = 0.0
         for style in STYLE_FEATURES:
@@ -260,6 +264,10 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
     top3 = scores.nlargest(min(3, len(scores))) if not scores.empty else pd.Series(dtype=float)
     bottom3 = scores.nsmallest(min(3, len(scores))) if not scores.empty else pd.Series(dtype=float)
 
+    top3_mean = float(top3.mean()) if len(top3) else mean
+    bottom3_mean = float(bottom3.mean()) if len(bottom3) else mean
+    top_bottom_gap = top3_mean - bottom3_mean
+
     features.update(
         {
             "score_mean": mean,
@@ -272,8 +280,9 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_q75": q75,
             "score_iqr": iq_range,
             "score_cv": cv,
-            "score_top3_mean": float(top3.mean()) if len(top3) else mean,
-            "score_bottom3_mean": float(bottom3.mean()) if len(bottom3) else mean,
+            "score_top3_mean": top3_mean,
+            "score_bottom3_mean": bottom3_mean,
+            "score_top_bottom_gap": top_bottom_gap,
         }
     )
     summary.update(
@@ -316,6 +325,21 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
         features[f"grade_{grade}_count"] = float(count)
         features[f"grade_{grade}_ratio"] = float(count / entry_count)
     summary["grade_counts"] = grade_counts
+
+    # Grade diversity (entropy)
+    grade_ratios = np.array([features[f"grade_{g}_ratio"] for g in GRADE_LEVELS], dtype=float)
+    grade_entropy = float(-np.sum(grade_ratios * np.log(grade_ratios + 1e-10)))
+    features["grade_entropy"] = grade_entropy
+
+    # Mixed grade levels (S-class and A-class together)
+    has_s_class = any(grade_counts.get(g, 0) > 0 for g in ["SS", "S1", "S2"])
+    has_a_class = any(grade_counts.get(g, 0) > 0 for g in ["A1", "A2", "A3"])
+    features["grade_has_mixed"] = float(has_s_class and has_a_class)
+
+    # Style diversity (entropy)
+    style_ratios_array = np.array([features[f"style_{s}_ratio"] for s in STYLE_FEATURES], dtype=float)
+    style_entropy = float(-np.sum(style_ratios_array * np.log(style_ratios_array + 1e-10)))
+    features["style_entropy"] = style_entropy
 
     prefecture_unique = int(rider_frame["prefecture_norm"].nunique())
     features["prefecture_unique_count"] = float(prefecture_unique)
@@ -513,6 +537,7 @@ def _default_feature_columns() -> List[str]:
         "score_cv",
         "score_top3_mean",
         "score_bottom3_mean",
+        "score_top_bottom_gap",
         "style_nige_ratio",
         "style_tsui_ratio",
         "style_ryo_ratio",
@@ -523,6 +548,7 @@ def _default_feature_columns() -> List[str]:
         "style_nige_count",
         "style_tsui_count",
         "style_ryo_count",
+        "style_entropy",
         "grade_SS_ratio",
         "grade_S1_ratio",
         "grade_S2_ratio",
@@ -537,6 +563,8 @@ def _default_feature_columns() -> List[str]:
         "grade_A2_count",
         "grade_A3_count",
         "grade_L1_count",
+        "grade_entropy",
+        "grade_has_mixed",
         "prefecture_unique_count",
     ]
 
