@@ -487,7 +487,7 @@ def get_rider_names():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """レース全体の荒れ度を予測＋買い方提案（超高速版）"""
+    """全組み合わせ予測＋レース荒れ度判定＋買い方提案"""
     try:
         data = request.json
 
@@ -497,15 +497,7 @@ def predict():
         category = data.get("category", "不明")
         meeting_day = int(data.get("meeting_day", 3))
         race_date = str(data.get("race_date", "20240101"))
-
-        # 日付情報
-        try:
-            date_obj = datetime.strptime(race_date, "%Y%m%d")
-            month = date_obj.month
-            weekday = date_obj.weekday()
-        except:
-            month = 1
-            weekday = 0
+        race_no = data.get("race_no", "1")
 
         # 全選手情報
         riders = data.get("riders", [])
@@ -520,64 +512,114 @@ def predict():
         for rider in riders:
             rider_name = rider["name"].replace(" ", "　")
             region = player_region_map.get(rider_name, "不明")
-            stats = get_player_features(rider_name, track, grade, category)
             riders_stats.append({
                 "car_no": rider["car_no"],
                 "name": rider_name,
-                "region": region,
-                "stats": stats
+                "region": region
             })
 
-        # === レース全体の荒れ度を1回だけ予測 ===
-        # 代表的な組み合わせ（上位3人）で予測
-        top3_riders = sorted(riders_stats, key=lambda x: x["stats"]["win_rate"], reverse=True)[:3]
-
-        # 代表組み合わせのデータを作成
-        representative_data = {
+        # レース共通情報
+        race_info = {
             "track": track,
             "grade": grade,
             "category": category,
-            "race_no": data.get("race_no", "1"),
+            "race_no": race_no,
             "meeting_day": meeting_day,
             "race_date": race_date,
-            "pos1_car_no": top3_riders[0]["car_no"],
-            "pos1_name": top3_riders[0]["name"],
-            "pos1_region": top3_riders[0]["region"],
-            "pos2_car_no": top3_riders[1]["car_no"],
-            "pos2_name": top3_riders[1]["name"],
-            "pos2_region": top3_riders[1]["region"],
-            "pos3_car_no": top3_riders[2]["car_no"],
-            "pos3_name": top3_riders[2]["name"],
-            "pos3_region": top3_riders[2]["region"],
         }
 
-        # 1回だけ予測実行
-        X = preprocess_input(representative_data)
-        base_probability = float(model.predict(X)[0])
+        # === 全組み合わせ（3連単）を予測 ===
+        from itertools import permutations
+        combinations = []
 
-        # レース全体の特性で補正
-        avg_win_rate = np.mean([r["stats"]["win_rate"] for r in riders_stats])
-        std_win_rate = np.std([r["stats"]["win_rate"] for r in riders_stats])
+        for pos1, pos2, pos3 in permutations(riders_stats, 3):
+            pos1_name = pos1["name"]
+            pos2_name = pos2["name"]
+            pos3_name = pos3["name"]
+            pos1_region = pos1["region"]
+            pos2_region = pos2["region"]
+            pos3_region = pos3["region"]
 
-        # 勝率のバラつきが大きい→荒れやすい
-        roughness_adjustment = std_win_rate * 0.5
-        race_roughness_probability = min(base_probability + roughness_adjustment, 0.99)
+            # この組み合わせの入力データを作成
+            combo_data = {
+                **race_info,
+                "pos1_car_no": pos1["car_no"],
+                "pos1_name": pos1_name,
+                "pos1_region": pos1_region,
+                "pos2_car_no": pos2["car_no"],
+                "pos2_name": pos2_name,
+                "pos2_region": pos2_region,
+                "pos3_car_no": pos3["car_no"],
+                "pos3_name": pos3_name,
+                "pos3_region": pos3_region,
+            }
 
-        # === 脚質・地域パターンを分析 ===
-        pattern_analysis = analyze_race_patterns(riders_stats, track)
+            # 予測
+            X = preprocess_input(combo_data)
+            probability = float(model.predict(X)[0])
+            prediction = int(probability >= model_info["optimal_threshold"])
 
-        # === 買い方を提案 ===
+            combinations.append({
+                "combination": f"{pos1['car_no']}-{pos2['car_no']}-{pos3['car_no']}",
+                "car_numbers": [pos1["car_no"], pos2["car_no"], pos3["car_no"]],
+                "riders": [pos1["name"], pos2["name"], pos3["name"]],
+                "regions": [pos1_region, pos2_region, pos3_region],
+                "probability": probability,
+                "prediction": prediction,
+                "prediction_label": "荒れる" if prediction == 1 else "堅い"
+            })
+
+        # 確率でソート
+        combinations_sorted = sorted(combinations, key=lambda x: x["probability"], reverse=True)
+
+        # === レース全体の荒れ度を計算 ===
+        all_probabilities = [c["probability"] for c in combinations]
+        avg_probability = np.mean(all_probabilities)
+        max_probability = np.max(all_probabilities)
+        high_probability_count = sum(1 for p in all_probabilities if p >= 0.6)
+        high_probability_ratio = high_probability_count / len(all_probabilities)
+
+        # 荒れ度判定（複数の指標を統合）
+        race_roughness_probability = (avg_probability * 0.4 + max_probability * 0.3 + high_probability_ratio * 0.3)
+
+        # 高配当TOP 15と本命TOP 5を抽出
+        high_payout = combinations_sorted[:15]
+        low_payout = combinations_sorted[-5:][::-1]
+
+        # ランク付け
+        for i, combo in enumerate(high_payout, 1):
+            combo["rank"] = i
+        for i, combo in enumerate(low_payout, 1):
+            combo["rank"] = i
+
+        # === パターン分析 ===
+        # 各選手の詳細統計を取得（パターン分析用）
+        riders_detailed_stats = []
+        for rider in riders_stats:
+            stats = get_player_features(rider["name"], track, grade, category)
+            riders_detailed_stats.append({
+                **rider,
+                "stats": stats
+            })
+
+        pattern_analysis = analyze_race_patterns(riders_detailed_stats, track)
+
+        # === 買い方提案 ===
         betting_suggestions = suggest_betting_strategy(
             race_roughness_probability,
             pattern_analysis,
-            riders_stats
+            riders_detailed_stats,
+            high_payout[:10]  # TOP10組み合わせも渡す
         )
 
         result = {
             "success": True,
+            "total_combinations": len(combinations),
             "race_roughness_probability": race_roughness_probability,
             "roughness_level": get_roughness_level(race_roughness_probability),
             "pattern_analysis": pattern_analysis,
+            "high_payout_combinations": high_payout,
+            "low_payout_combinations": low_payout,
             "betting_suggestions": betting_suggestions,
             "model_info": {
                 "model_type": "LightGBM Ultra",
@@ -633,9 +675,18 @@ def analyze_race_patterns(riders_stats, track):
     }
 
 
-def suggest_betting_strategy(probability, patterns, riders_stats):
-    """買い方を提案"""
+def suggest_betting_strategy(probability, patterns, riders_stats, top_combinations):
+    """買い方を提案（ML予測結果も活用）"""
     suggestions = []
+
+    # TOP組み合わせから車番を抽出
+    top_car_numbers = []
+    for combo in top_combinations[:5]:
+        top_car_numbers.extend(combo["car_numbers"])
+    # 出現頻度の高い車番
+    from collections import Counter
+    car_counter = Counter(top_car_numbers)
+    frequent_cars = [car for car, count in car_counter.most_common(5)]
 
     # 荒れる度合いで券種を決定
     if probability >= 0.7:
@@ -643,42 +694,48 @@ def suggest_betting_strategy(probability, patterns, riders_stats):
         suggestions.append({
             "ticket_type": "3連単",
             "reason": f"荒れる確率{probability*100:.1f}% - 超高配当が期待できます",
-            "strategy": "ボックス or フォーメーション",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "upset")
+            "combinations": [combo["combination"] for combo in top_combinations[:5]]
         })
         suggestions.append({
             "ticket_type": "3連複",
             "reason": "リスク分散しつつ高配当を狙う",
-            "strategy": "ボックス",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "upset")
+            "combinations": [combo["combination"] for combo in top_combinations[:3]]
         })
     elif probability >= 0.5:
         # 中程度に荒れる
         suggestions.append({
             "ticket_type": "3連複",
             "reason": f"荒れる確率{probability*100:.1f}% - 適度な配当が期待",
-            "strategy": "ボックス or フォーメーション",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "moderate")
+            "combinations": [combo["combination"] for combo in top_combinations[:5]]
         })
         suggestions.append({
             "ticket_type": "2連複",
             "reason": "的中率重視で中配当を狙う",
-            "strategy": "フォーメーション",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "moderate")
+            "combinations": [f"{combo['car_numbers'][0]}-{combo['car_numbers'][1]}" for combo in top_combinations[:5]]
+        })
+    elif probability >= 0.3:
+        # やや荒れる
+        suggestions.append({
+            "ticket_type": "3連複",
+            "reason": f"荒れる確率{probability*100:.1f}% - やや荒れる可能性",
+            "combinations": [combo["combination"] for combo in top_combinations[:3]]
+        })
+        suggestions.append({
+            "ticket_type": "2連複",
+            "reason": "堅めに的中を狙う",
+            "combinations": [f"{combo['car_numbers'][0]}-{combo['car_numbers'][1]}" for combo in top_combinations[:3]]
         })
     else:
         # 堅い
         suggestions.append({
             "ticket_type": "2連複",
             "reason": f"荒れる確率{probability*100:.1f}% - 本命決着の可能性",
-            "strategy": "軸1頭 or 軸2頭流し",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "favorite")
+            "combinations": [f"{combo['car_numbers'][0]}-{combo['car_numbers'][1]}" for combo in top_combinations[:3]]
         })
         suggestions.append({
             "ticket_type": "ワイド",
             "reason": "確実性重視",
-            "strategy": "本命サイド",
-            "recommended_combinations": get_recommended_combinations(riders_stats, patterns, "favorite")
+            "combinations": [f"{combo['car_numbers'][0]}-{combo['car_numbers'][1]}" for combo in top_combinations[:3]]
         })
 
     return suggestions

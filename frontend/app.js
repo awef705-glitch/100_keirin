@@ -186,6 +186,9 @@ async function predictRace() {
 
 // 結果の表示
 function displayResult(result) {
+    // 総組み合わせ数
+    document.getElementById('totalCombinations').textContent = result.total_combinations;
+
     // レース荒れ度
     const probability = result.race_roughness_probability;
     const probabilityPercent = (probability * 100).toFixed(1);
@@ -257,11 +260,57 @@ function displayResult(result) {
         bettingSuggestions.appendChild(div);
     });
 
+    // 高配当組み合わせリスト
+    const highPayoutList = document.getElementById('highPayoutList');
+    highPayoutList.innerHTML = '';
+    result.high_payout_combinations.forEach(combo => {
+        const item = createCombinationItem(combo);
+        highPayoutList.appendChild(item);
+    });
+
+    // 本命組み合わせリスト
+    const lowPayoutList = document.getElementById('lowPayoutList');
+    lowPayoutList.innerHTML = '';
+    result.low_payout_combinations.forEach(combo => {
+        const item = createCombinationItem(combo);
+        lowPayoutList.appendChild(item);
+    });
+
     // 結果を表示
     showResult();
 
     // 結果までスクロール
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// 組み合わせアイテムを作成
+function createCombinationItem(combo) {
+    const div = document.createElement('div');
+    div.className = 'combination-item';
+
+    const probabilityPercent = (combo.probability * 100).toFixed(1);
+    const labelClass = combo.prediction === 1 ? 'high' : 'low';
+
+    div.innerHTML = `
+        <div class="combination-header">
+            <span class="rank">#${combo.rank}</span>
+            <span class="combination">${combo.combination}</span>
+            <span class="probability">${probabilityPercent}%</span>
+            <span class="label ${labelClass}">${combo.prediction_label}</span>
+        </div>
+        <div class="combination-details">
+            <div class="riders-info">
+                ${combo.riders.map((rider, idx) => `
+                    <span class="rider">
+                        <strong>${rider}</strong>
+                        <small>(${combo.regions[idx]})</small>
+                    </span>
+                `).join(' → ')}
+            </div>
+        </div>
+    `;
+
+    return div;
 }
 
 // ローディング表示/非表示
