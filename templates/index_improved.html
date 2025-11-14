@@ -380,7 +380,7 @@
 
         const matches = ridersData.filter(r =>
           r.name && r.name.toLowerCase().includes(query)
-        ).slice(0, 10);
+        ).slice(0, 50);
 
         if (matches.length === 0) {
           suggestions.style.display = 'none';
