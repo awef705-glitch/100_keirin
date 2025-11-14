@@ -1,6 +1,8 @@
-﻿import argparse
+import argparse
 import json
 import re
+import time
+import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Iterable, List
@@ -16,6 +18,16 @@ SJ0305_PATTERN = re.compile(r"jsonData\['SJ0305'\]\s*=\s*(\{.*?\});", re.DOTALL)
 
 MAX_ENTRIES = 9
 
+# Browser-like headers to avoid 403
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/javascript, */*; q=0.01',
+    'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer': 'https://keirin.jp/sp/',
+    'X-Requested-With': 'XMLHttpRequest',
+}
+
 
 def daterange(start: datetime, end: datetime) -> Iterable[str]:
     current = start
@@ -25,14 +37,22 @@ def daterange(start: datetime, end: datetime) -> Iterable[str]:
 
 
 def fetch_meetings(session: requests.Session, race_date: str) -> List[Dict]:
-    resp = session.get(JSON_ENDPOINT, params={"type": "JSJ058", "kday": race_date}, timeout=10)
+    # Add random delay to avoid rate limiting
+    time.sleep(random.uniform(0.5, 1.5))
+
+    resp = session.get(JSON_ENDPOINT, params={"type": "JSJ058", "kday": race_date},
+                       headers=HEADERS, timeout=10)
     resp.raise_for_status()
     data = resp.json()
     return data.get("kInfo", []) or []
 
 
 def fetch_prerace(session: requests.Session, encp: str) -> Dict:
-    resp = session.post(RACELIST_ENDPOINT, data={"encp": encp, "disp": "SJ0305"}, timeout=10)
+    # Add random delay to avoid rate limiting
+    time.sleep(random.uniform(0.5, 1.5))
+
+    resp = session.post(RACELIST_ENDPOINT, data={"encp": encp, "disp": "SJ0305"},
+                        headers=HEADERS, timeout=10)
     resp.raise_for_status()
     resp.encoding = "utf-8"
     html = resp.text

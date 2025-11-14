@@ -2,6 +2,7 @@
 import json
 import re
 import time
+import random
 from pathlib import Path
 from typing import Dict, List
 
@@ -13,6 +14,14 @@ RACE_ENDPOINT = f"{BASE_URL}/sp/race"
 SP_TOP = f"{BASE_URL}/sp/"
 SJ0315_PATTERN = re.compile(r"jsonData\[\"SJ0315\"\]\s*=\s*(\{.*?\});", re.DOTALL)
 
+# Browser-like headers to avoid 403
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer': 'https://keirin.jp/sp/',
+}
 
 FIELDS_RACE = [
     "syoriKbn",
@@ -48,7 +57,11 @@ FIELDS_ENTRY = [
 
 
 def fetch_race_detail(session: requests.Session, race_encp: str) -> Dict:
-    resp = session.post(RACE_ENDPOINT, data={"encp": race_encp, "disp": "SJ0315"}, timeout=10)
+    # Add random delay to avoid rate limiting
+    time.sleep(random.uniform(0.5, 1.5))
+
+    resp = session.post(RACE_ENDPOINT, data={"encp": race_encp, "disp": "SJ0315"},
+                        headers=HEADERS, timeout=10)
     resp.raise_for_status()
     resp.encoding = "utf-8"
     html = resp.text
