@@ -184,7 +184,14 @@ async def predict(
     bundle = prerace_model.build_manual_feature_row(race_info)
     feature_frame, summary = prerace_model.align_features(bundle, METADATA["feature_columns"])
     model_for_inference = MODEL if LIGHTGBM_READY else None
-    probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA)
+
+    # Prepare race context for track/category adjustment
+    race_context = {
+        'track': race_info.get('track', ''),
+        'category': summary.get('category', ''),
+    }
+
+    probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA, race_context)
     result = prerace_model.build_prediction_response(probability, summary, METADATA)
 
     # 買い目提案を生成

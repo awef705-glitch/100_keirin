@@ -52,6 +52,17 @@ STYLE_ALIASES = {
 }
 STYLE_FEATURES = ["nige", "tsui", "ryo"]
 
+# Load track/category statistics for prediction adjustment
+STATS_PATH = MODEL_DIR / "track_category_stats.json"
+TRACK_CATEGORY_STATS = {}
+try:
+    if STATS_PATH.exists():
+        with open(STATS_PATH, 'r', encoding='utf-8') as f:
+            TRACK_CATEGORY_STATS = json.load(f)
+        print(f"[INFO] Loaded track/category statistics")
+except Exception as e:
+    print(f"[WARN] Could not load track/category statistics: {e}")
+
 # Rider grade levels that frequently appear in race cards.
 GRADE_LEVELS = ["SS", "S1", "S2", "A1", "A2", "A3", "L1"]
 
@@ -763,19 +774,66 @@ def predict_probability(
     feature_frame: pd.DataFrame,
     model: Any,
     metadata: Dict[str, Any],
+    race_context: Dict[str, Any] = None,
 ) -> float:
+    """Predict high payout probability with track/category adjustment"""
     feature_columns = metadata.get("feature_columns")
     if feature_columns is None:
         raise ValueError("metadata must contain 'feature_columns'")
     frame = feature_frame[feature_columns].astype(float)
+
+    # Get base prediction
     if model is not None:
         try:
-            return float(model.predict(frame)[0])
+            base_prob = float(model.predict(frame)[0])
         except Exception as exc:
             print("[WARN] LightGBM推論に失敗したため、ヒューリスティック推定を利用します。")
             print(f"       詳細: {exc}")
-    row = feature_frame.iloc[0]
-    return _fallback_probability(row, metadata)
+            row = feature_frame.iloc[0]
+            base_prob = _fallback_probability(row, metadata)
+    else:
+        row = feature_frame.iloc[0]
+        base_prob = _fallback_probability(row, metadata)
+
+    # Apply track/category adjustment if context provided
+    if race_context and TRACK_CATEGORY_STATS:
+        adjusted_prob = _adjust_by_track_category(base_prob, race_context)
+        return adjusted_prob
+
+    return base_prob
+
+
+def _adjust_by_track_category(base_prob: float, race_context: Dict[str, Any]) -> float:
+    """Adjust probability based on historical track and category rates"""
+    track = race_context.get('track', '')
+    category = race_context.get('category', '')
+
+    overall_rate = TRACK_CATEGORY_STATS.get('overall_high_payout_rate', 0.266)
+    track_rates = TRACK_CATEGORY_STATS.get('track_high_payout_rates', {})
+    category_rates = TRACK_CATEGORY_STATS.get('category_high_payout_rates', {})
+
+    # Calculate adjustment multipliers
+    multiplier = 1.0
+
+    # Track adjustment (weight: 0.4)
+    if track in track_rates:
+        track_rate = track_rates[track]
+        track_multiplier = track_rate / overall_rate
+        multiplier *= (1.0 + 0.4 * (track_multiplier - 1.0))
+
+    # Category adjustment (weight: 0.6)
+    if category in category_rates:
+        category_rate = category_rates[category]
+        category_multiplier = category_rate / overall_rate
+        multiplier *= (1.0 + 0.6 * (category_multiplier - 1.0))
+
+    # Apply multiplier
+    adjusted = base_prob * multiplier
+
+    # Keep in valid range [0, 1]
+    adjusted = max(0.05, min(0.95, adjusted))
+
+    return adjusted
 
 
 def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
