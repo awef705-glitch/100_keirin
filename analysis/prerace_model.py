@@ -157,6 +157,43 @@ def _normalise_prefecture(value: Any) -> str:
     return str(value).strip()
 
 
+# Regional line mapping (競輪のライン: 地域別共同作戦)
+REGIONAL_LINES = {
+    # 北日本ライン
+    "北海道": "北日本", "青森": "北日本", "岩手": "北日本", "宮城": "北日本",
+    "秋田": "北日本", "山形": "北日本", "福島": "北日本",
+
+    # 関東ライン
+    "茨城": "関東", "栃木": "関東", "群馬": "関東", "埼玉": "関東",
+    "千葉": "関東", "東京": "関東", "神奈川": "関東", "山梨": "関東",
+
+    # 北陸ライン
+    "新潟": "北陸", "富山": "北陸", "石川": "北陸", "福井": "北陸",
+
+    # 中部ライン
+    "長野": "中部", "岐阜": "中部", "静岡": "中部", "愛知": "中部",
+
+    # 近畿ライン
+    "三重": "近畿", "滋賀": "近畿", "京都": "近畿", "大阪": "近畿",
+    "兵庫": "近畿", "奈良": "近畿", "和歌山": "近畿",
+
+    # 中国ライン
+    "鳥取": "中国", "島根": "中国", "岡山": "中国", "広島": "中国", "山口": "中国",
+
+    # 四国ライン
+    "徳島": "四国", "香川": "四国", "愛媛": "四国", "高知": "四国",
+
+    # 九州ライン
+    "福岡": "九州", "佐賀": "九州", "長崎": "九州", "熊本": "九州",
+    "大分": "九州", "宮崎": "九州", "鹿児島": "九州", "沖縄": "九州",
+}
+
+
+def _get_regional_line(prefecture: str) -> str:
+    """Map prefecture to regional line"""
+    return REGIONAL_LINES.get(prefecture, "その他")
+
+
 def _calendar_features(race_date: int) -> Dict[str, int]:
     """Derive calendar features from YYYYMMDD integer."""
     try:
@@ -223,6 +260,11 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "style_entropy",
             "grade_entropy",
             "grade_has_mixed",
+            "line_count",
+            "dominant_line_ratio",
+            "line_balance_std",
+            "line_entropy",
+            "line_score_gap",
         ]:
             features[key] = 0.0
         for style in STYLE_FEATURES:
@@ -384,6 +426,63 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
     prefecture_unique = int(rider_frame["prefecture_norm"].nunique())
     features["prefecture_unique_count"] = float(prefecture_unique)
     summary["prefecture_unique_count"] = prefecture_unique
+
+    # === LINE ANALYSIS (ライン分析) ===
+    # Map each rider to their regional line
+    rider_frame["regional_line"] = rider_frame["prefecture_norm"].apply(_get_regional_line)
+
+    # Count riders per line
+    line_counts = rider_frame["regional_line"].value_counts().to_dict()
+
+    # Calculate line balance metrics
+    if len(line_counts) > 0:
+        line_sizes = list(line_counts.values())
+        max_line_size = max(line_sizes)
+        min_line_size = min(line_sizes)
+        line_count = len(line_sizes)
+
+        # Dominant line ratio (largest line / total riders)
+        dominant_line_ratio = max_line_size / entry_count if entry_count > 0 else 0.0
+
+        # Line balance (std dev of line sizes)
+        line_balance_std = float(np.std(line_sizes)) if len(line_sizes) > 1 else 0.0
+
+        # Line entropy (how evenly distributed are riders across lines)
+        line_ratios = np.array([c / entry_count for c in line_sizes], dtype=float)
+        line_entropy = float(-np.sum(line_ratios * np.log(line_ratios + 1e-10)))
+    else:
+        max_line_size = 0
+        min_line_size = 0
+        line_count = 0
+        dominant_line_ratio = 0.0
+        line_balance_std = 0.0
+        line_entropy = 0.0
+
+    # Calculate average score per line (to detect dominant line)
+    line_avg_scores = {}
+    for line_name in line_counts.keys():
+        line_riders = rider_frame[rider_frame["regional_line"] == line_name]
+        line_scores = pd.to_numeric(line_riders["score"], errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+        if len(line_scores) > 0:
+            line_avg_scores[line_name] = float(line_scores.mean())
+        else:
+            line_avg_scores[line_name] = 0.0
+
+    # Score gap between strongest and weakest line
+    if len(line_avg_scores) > 1:
+        line_score_gap = max(line_avg_scores.values()) - min(line_avg_scores.values())
+    else:
+        line_score_gap = 0.0
+
+    features["line_count"] = float(line_count)
+    features["dominant_line_ratio"] = float(dominant_line_ratio)
+    features["line_balance_std"] = float(line_balance_std)
+    features["line_entropy"] = float(line_entropy)
+    features["line_score_gap"] = float(line_score_gap)
+
+    summary["line_counts"] = line_counts
+    summary["line_avg_scores"] = line_avg_scores
+    summary["dominant_line_ratio"] = dominant_line_ratio
 
     return FeatureBundle(features, summary)
 
@@ -610,6 +709,11 @@ def _default_feature_columns() -> List[str]:
         "grade_entropy",
         "grade_has_mixed",
         "prefecture_unique_count",
+        "line_count",
+        "dominant_line_ratio",
+        "line_balance_std",
+        "line_entropy",
+        "line_score_gap",
     ]
 
 
@@ -923,6 +1027,13 @@ def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
     grade_entropy = float(row.get("grade_entropy", 0.0) or 0.0)
     prefecture_unique = float(row.get("prefecture_unique_count", 0.0) or 0.0)
 
+    # Line (regional alliance) features
+    line_count = float(row.get("line_count", 0.0) or 0.0)
+    dominant_line_ratio = float(row.get("dominant_line_ratio", 0.0) or 0.0)
+    line_balance_std = float(row.get("line_balance_std", 0.0) or 0.0)
+    line_entropy = float(row.get("line_entropy", 0.0) or 0.0)
+    line_score_gap = float(row.get("line_score_gap", 0.0) or 0.0)
+
     # Style composition
     tsui_ratio = float(row.get("style_tsui_ratio", 0.0) or 0.0)
     ryo_ratio = float(row.get("style_ryo_ratio", 0.0) or 0.0)
@@ -968,15 +1079,39 @@ def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
     elif top3_vs_others > 10.0:  # Clear tier separation
         favorite_score -= 0.6
 
-    # === RULE 3: Field Diversity ===
+    # === RULE 3: Field Diversity & Line Balance ===
     diversity_score = (
         1.5 * style_diversity
         + 1.2 * min(style_entropy / 1.5, 1.0)
         + 1.0 * min(grade_entropy / 1.8, 1.0)
+        + 0.8 * min(line_entropy / 1.5, 1.0)  # Line diversity
         + 0.6 * min(prefecture_unique / 6.0, 1.0)
         + 0.4 * tsui_ratio
         + 0.3 * ryo_ratio
     )
+
+    # === RULE 3b: Line Strength Analysis (NEW) ===
+    line_score = 0.0
+
+    # Dominant line (one line has most riders)
+    if dominant_line_ratio > 0.55:  # One line has >55% of riders
+        line_score -= 0.8  # Predictable (dominant line controls race)
+    elif dominant_line_ratio < 0.35:  # No dominant line
+        line_score += 0.6  # Chaotic (no clear alliance)
+
+    # Line balance (even distribution = chaotic)
+    if line_balance_std < 0.5 and line_count >= 3:  # Evenly distributed
+        line_score += 0.5  # Multiple balanced lines = unpredictable
+    elif line_balance_std > 1.5:  # Very unbalanced
+        line_score -= 0.4  # One line dominates
+
+    # Line strength gap (score difference between strongest/weakest line)
+    if line_score_gap > 10.0:  # Large gap
+        line_score -= 0.6  # Clear dominant line by strength
+    elif line_score_gap < 3.0:  # Small gap
+        line_score += 0.5  # All lines evenly matched
+
+    diversity_score += line_score
 
     # === RULE 4: Race Conditions ===
     condition_score = 0.0
