@@ -1005,156 +1005,98 @@ def _adjust_by_track_category(base_prob: float, race_context: Dict[str, Any]) ->
 
 def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
     """
-    Rule-based scoring using competition scores and rider characteristics.
+    Simple rule-based scoring - REALISTIC calibration based on 48k races.
 
-    This is now the PRIMARY prediction method (ML model has ROC-AUC 0.58 = useless).
-    Based on validated statistical relationships from 48k+ races.
+    Key insight from data: High payout rate ranges from 20-35%
+    - Overall average: 26.6%
+    - Most chaotic track: 30.5%
+    - Most stable track: ~25%
+
+    We should stay within 15-40% range (±14% from baseline)
     """
-    # Core score-based features (MOST IMPORTANT)
-    score_cv = float(row.get("score_cv", 0.0) or 0.0)
-    score_range = float(row.get("score_range", 0.0) or 0.0)
-    score_std = float(row.get("score_std", 0.0) or 0.0)
+    # Start with baseline (overall average)
+    base_prob = 0.266
 
-    # New score-based popularity estimation features
+    # Core score-based features
+    score_cv = float(row.get("score_cv", 0.0) or 0.0)
     favorite_gap = float(row.get("estimated_favorite_gap", 0.0) or 0.0)
     favorite_dominance = float(row.get("estimated_favorite_dominance", 1.0) or 1.0)
     top3_vs_others = float(row.get("estimated_top3_vs_others", 0.0) or 0.0)
-    score_top_bottom_gap = float(row.get("score_top_bottom_gap", 0.0) or 0.0)
 
-    # Rider diversity features
-    style_diversity = float(row.get("style_diversity", 0.0) or 0.0)
-    style_entropy = float(row.get("style_entropy", 0.0) or 0.0)
-    grade_entropy = float(row.get("grade_entropy", 0.0) or 0.0)
-    prefecture_unique = float(row.get("prefecture_unique_count", 0.0) or 0.0)
-
-    # Line (regional alliance) features
-    line_count = float(row.get("line_count", 0.0) or 0.0)
+    # Line features
     dominant_line_ratio = float(row.get("dominant_line_ratio", 0.0) or 0.0)
-    line_balance_std = float(row.get("line_balance_std", 0.0) or 0.0)
-    line_entropy = float(row.get("line_entropy", 0.0) or 0.0)
     line_score_gap = float(row.get("line_score_gap", 0.0) or 0.0)
 
-    # Style composition
-    tsui_ratio = float(row.get("style_tsui_ratio", 0.0) or 0.0)
-    ryo_ratio = float(row.get("style_ryo_ratio", 0.0) or 0.0)
-    nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
+    # Race conditions
     entry_count = float(row.get("entry_count", 0.0) or 0.0)
+    nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
+    is_final_day = row.get("is_final_day", 0)
 
-    # Grade composition
-    grade_s1 = float(row.get("grade_S1_ratio", 0.0) or 0.0)
-    grade_ss = float(row.get("grade_SS_ratio", 0.0) or 0.0)
-    grade_a3 = float(row.get("grade_A3_ratio", 0.0) or 0.0)
+    # === RULE 1: Score Coefficient of Variation (most predictive) ===
+    # Very tight race (CV < 0.03) → +10%
+    # Tight (CV < 0.05) → +5%
+    # Dispersed (CV > 0.08) → -6%
+    if score_cv < 0.03:
+        base_prob += 0.10
+    elif score_cv < 0.05:
+        base_prob += 0.05
+    elif score_cv > 0.10:
+        base_prob -= 0.06
+    elif score_cv > 0.08:
+        base_prob -= 0.03
 
-    # === RULE 1: Score Variability (HIGHEST WEIGHT) ===
-    # High CV/std = evenly matched field = high upset potential
-    score_variability_score = (
-        4.5 * min(score_cv, 0.18)          # CV is THE most predictive
-        + 2.0 * min(score_std / 5.0, 1.5)  # Standard deviation
-        + 1.5 * min(score_range / 10.0, 1.5)  # Range (less predictive than CV)
-    )
+    # === RULE 2: Favorite Gap (1st vs 2nd score) ===
+    # Very close (< 2 points) → +5%
+    # Dominant (> 15 points) → -6%
+    if favorite_gap < 2.0:
+        base_prob += 0.05
+    elif favorite_gap < 5.0:
+        base_prob += 0.02
+    elif favorite_gap > 15.0:
+        base_prob -= 0.06
+    elif favorite_gap > 10.0:
+        base_prob -= 0.03
 
-    # === RULE 2: Favorite Strength (NEW - CRITICAL) ===
-    # Weak favorite or small gap = upset likely
-    favorite_score = 0.0
+    # === RULE 3: Favorite Dominance ===
+    # Weak favorite (< 1.05) → +4%
+    # Strong favorite (> 1.20) → -5%
+    if favorite_dominance < 1.05:
+        base_prob += 0.04
+    elif favorite_dominance < 1.10:
+        base_prob += 0.02
+    elif favorite_dominance > 1.20:
+        base_prob -= 0.05
+    elif favorite_dominance > 1.15:
+        base_prob -= 0.02
 
-    # Gap between 1st and 2nd place
-    if favorite_gap < 2.0:  # Very close race
-        favorite_score += 1.2
-    elif favorite_gap < 5.0:  # Moderately competitive
-        favorite_score += 0.6
-    elif favorite_gap > 12.0:  # Dominant favorite
-        favorite_score -= 1.0
+    # === RULE 4: Line Balance ===
+    # Dominant line (> 60%) → -4% (predictable)
+    # No dominant line (< 33%) → +3% (chaotic)
+    if dominant_line_ratio > 0.60:
+        base_prob -= 0.04
+    elif dominant_line_ratio < 0.33:
+        base_prob += 0.03
 
-    # Favorite dominance ratio
-    if favorite_dominance < 1.05:  # Weak favorite (barely above average)
-        favorite_score += 1.0
-    elif favorite_dominance < 1.10:  # Moderate favorite
-        favorite_score += 0.4
-    elif favorite_dominance > 1.20:  # Strong dominant favorite
-        favorite_score -= 1.2
+    # Line strength gap
+    if line_score_gap > 12.0:
+        base_prob -= 0.03
+    elif line_score_gap < 4.0:
+        base_prob += 0.02
 
-    # Top3 vs others gap
-    if top3_vs_others < 3.0:  # Top3 not much stronger
-        favorite_score += 0.8
-    elif top3_vs_others > 10.0:  # Clear tier separation
-        favorite_score -= 0.6
-
-    # === RULE 3: Field Diversity & Line Balance ===
-    diversity_score = (
-        1.5 * style_diversity
-        + 1.2 * min(style_entropy / 1.5, 1.0)
-        + 1.0 * min(grade_entropy / 1.8, 1.0)
-        + 0.8 * min(line_entropy / 1.5, 1.0)  # Line diversity
-        + 0.6 * min(prefecture_unique / 6.0, 1.0)
-        + 0.4 * tsui_ratio
-        + 0.3 * ryo_ratio
-    )
-
-    # === RULE 3b: Line Strength Analysis (NEW) ===
-    line_score = 0.0
-
-    # Dominant line (one line has most riders)
-    if dominant_line_ratio > 0.55:  # One line has >55% of riders
-        line_score -= 0.8  # Predictable (dominant line controls race)
-    elif dominant_line_ratio < 0.35:  # No dominant line
-        line_score += 0.6  # Chaotic (no clear alliance)
-
-    # Line balance (even distribution = chaotic)
-    if line_balance_std < 0.5 and line_count >= 3:  # Evenly distributed
-        line_score += 0.5  # Multiple balanced lines = unpredictable
-    elif line_balance_std > 1.5:  # Very unbalanced
-        line_score -= 0.4  # One line dominates
-
-    # Line strength gap (score difference between strongest/weakest line)
-    if line_score_gap > 10.0:  # Large gap
-        line_score -= 0.6  # Clear dominant line by strength
-    elif line_score_gap < 3.0:  # Small gap
-        line_score += 0.5  # All lines evenly matched
-
-    diversity_score += line_score
-
-    # === RULE 4: Race Conditions ===
-    condition_score = 0.0
-
-    # Small fields are unpredictable
+    # === RULE 5: Race Conditions (minor) ===
     if entry_count <= 7:
-        condition_score += 0.35
-
-    # Few escape riders = chaotic races
+        base_prob += 0.02
     if nige_count <= 1:
-        condition_score += 0.30
+        base_prob += 0.02
+    if is_final_day:
+        base_prob += 0.01
 
-    # Meeting day effects
-    if row.get("is_final_day", 0):
-        condition_score += 0.20  # Finals are more competitive
-    if row.get("is_second_day", 0):
-        condition_score += 0.08
-    if row.get("is_first_day", 0):
-        condition_score -= 0.12  # First day more predictable
+    # Clamp to realistic range [0.10, 0.50]
+    # Note: Track/category adjustment will further refine this
+    probability = max(0.10, min(0.50, base_prob))
 
-    # === RULE 5: Grade Strength (NEGATIVE FACTOR) ===
-    # Strong riders = more predictable outcomes
-    grade_score = -0.8 * min(grade_s1 + grade_ss, 1.0)
+    return float(probability)
 
-    # All weak riders = also predictable (favorites win)
-    if grade_a3 >= 0.8:
-        grade_score -= 0.15
-
-    # === COMBINE ALL SCORES ===
-    base = (
-        score_variability_score
-        + favorite_score
-        + diversity_score
-        + condition_score
-        + grade_score
-    )
-
-    # Convert to probability (sigmoid transformation)
-    # Adjusted offset for better calibration
-    logit = base - 2.5  # Lower offset = higher base probability
-    probability = 1.0 / (1.0 + math.exp(-logit))
-
-    return float(min(0.95, max(0.05, probability)))
 
 
 def generate_reasons(summary: Dict[str, Any], probability: float, metadata: Dict[str, Any]) -> List[str]:
