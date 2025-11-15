@@ -1032,6 +1032,11 @@ def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
     nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
     is_final_day = row.get("is_final_day", 0)
 
+    # Grade composition
+    grade_ss_ratio = float(row.get("grade_SS_ratio", 0.0) or 0.0)
+    grade_s1_ratio = float(row.get("grade_S1_ratio", 0.0) or 0.0)
+    grade_a3_ratio = float(row.get("grade_A3_ratio", 0.0) or 0.0)
+
     # === RULE 1: Score Coefficient of Variation (most predictive) ===
     # Very tight race (CV < 0.03) → +10%
     # Tight (CV < 0.05) → +5%
@@ -1090,6 +1095,23 @@ def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
         base_prob += 0.02
     if is_final_day:
         base_prob += 0.01
+
+    # === RULE 6: Grade Composition ===
+    # SS級が多い = トップレベル同士 = 実力伯仲でない限り固い
+    # A3級が多い = 低レベル = 本命が勝ちやすい
+    if grade_ss_ratio >= 0.9:  # ほぼ全員SS級（GP等）
+        base_prob -= 0.10  # GPレベルでも本命寄り
+    elif grade_ss_ratio >= 0.7:  # 7割以上がSS級
+        base_prob -= 0.07
+    elif grade_ss_ratio >= 0.5:  # 半分以上がSS級
+        base_prob -= 0.04
+
+    if grade_a3_ratio >= 0.9:  # ほぼ全員A3級
+        base_prob -= 0.12  # 低レベルは確実に本命
+    elif grade_a3_ratio >= 0.7:  # 7割以上がA3級
+        base_prob -= 0.09
+    elif grade_a3_ratio >= 0.5:
+        base_prob -= 0.05
 
     # Clamp to realistic range [0.10, 0.50]
     # Note: Track/category adjustment will further refine this
