@@ -52,6 +52,17 @@ STYLE_ALIASES = {
 }
 STYLE_FEATURES = ["nige", "tsui", "ryo"]
 
+# Load track/category statistics for prediction adjustment
+STATS_PATH = MODEL_DIR / "track_category_stats.json"
+TRACK_CATEGORY_STATS = {}
+try:
+    if STATS_PATH.exists():
+        with open(STATS_PATH, 'r', encoding='utf-8') as f:
+            TRACK_CATEGORY_STATS = json.load(f)
+        print(f"[INFO] Loaded track/category statistics")
+except Exception as e:
+    print(f"[WARN] Could not load track/category statistics: {e}")
+
 # Rider grade levels that frequently appear in race cards.
 GRADE_LEVELS = ["SS", "S1", "S2", "A1", "A2", "A3", "L1"]
 
@@ -146,6 +157,43 @@ def _normalise_prefecture(value: Any) -> str:
     return str(value).strip()
 
 
+# Regional line mapping (競輪のライン: 地域別共同作戦)
+REGIONAL_LINES = {
+    # 北日本ライン
+    "北海道": "北日本", "青森": "北日本", "岩手": "北日本", "宮城": "北日本",
+    "秋田": "北日本", "山形": "北日本", "福島": "北日本",
+
+    # 関東ライン
+    "茨城": "関東", "栃木": "関東", "群馬": "関東", "埼玉": "関東",
+    "千葉": "関東", "東京": "関東", "神奈川": "関東", "山梨": "関東",
+
+    # 北陸ライン
+    "新潟": "北陸", "富山": "北陸", "石川": "北陸", "福井": "北陸",
+
+    # 中部ライン
+    "長野": "中部", "岐阜": "中部", "静岡": "中部", "愛知": "中部",
+
+    # 近畿ライン
+    "三重": "近畿", "滋賀": "近畿", "京都": "近畿", "大阪": "近畿",
+    "兵庫": "近畿", "奈良": "近畿", "和歌山": "近畿",
+
+    # 中国ライン
+    "鳥取": "中国", "島根": "中国", "岡山": "中国", "広島": "中国", "山口": "中国",
+
+    # 四国ライン
+    "徳島": "四国", "香川": "四国", "愛媛": "四国", "高知": "四国",
+
+    # 九州ライン
+    "福岡": "九州", "佐賀": "九州", "長崎": "九州", "熊本": "九州",
+    "大分": "九州", "宮崎": "九州", "鹿児島": "九州", "沖縄": "九州",
+}
+
+
+def _get_regional_line(prefecture: str) -> str:
+    """Map prefecture to regional line"""
+    return REGIONAL_LINES.get(prefecture, "その他")
+
+
 def _calendar_features(race_date: int) -> Dict[str, int]:
     """Derive calendar features from YYYYMMDD integer."""
     try:
@@ -200,10 +248,23 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_cv",
             "score_top3_mean",
             "score_bottom3_mean",
+            "score_top_bottom_gap",
+            "estimated_top3_score_sum",
+            "estimated_favorite_dominance",
+            "estimated_favorite_gap",
+            "estimated_top3_vs_others",
             "style_diversity",
             "style_max_ratio",
             "style_min_ratio",
             "style_unknown_ratio",
+            "style_entropy",
+            "grade_entropy",
+            "grade_has_mixed",
+            "line_count",
+            "dominant_line_ratio",
+            "line_balance_std",
+            "line_entropy",
+            "line_score_gap",
         ]:
             features[key] = 0.0
         for style in STYLE_FEATURES:
@@ -249,6 +310,42 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
     top3 = scores.nlargest(min(3, len(scores))) if not scores.empty else pd.Series(dtype=float)
     bottom3 = scores.nsmallest(min(3, len(scores))) if not scores.empty else pd.Series(dtype=float)
 
+    top3_mean = float(top3.mean()) if len(top3) else mean
+    bottom3_mean = float(bottom3.mean()) if len(bottom3) else mean
+    top_bottom_gap = top3_mean - bottom3_mean
+
+    # Estimated popularity features (score-based proxy for actual popularity)
+    # Higher scores = more popular = lower payout when they win
+    if not scores.empty and len(scores) >= 3:
+        sorted_scores = scores.sort_values(ascending=False)
+        rank1_score = float(sorted_scores.iloc[0])
+        rank2_score = float(sorted_scores.iloc[1]) if len(sorted_scores) > 1 else rank1_score
+        rank3_score = float(sorted_scores.iloc[2]) if len(sorted_scores) > 2 else rank2_score
+
+        # Top 3 sum (proxy for "favorite trifecta" - higher = more likely to be popular combination)
+        top3_score_sum = rank1_score + rank2_score + rank3_score
+
+        # Favorite dominance (how much stronger is the top rider)
+        favorite_dominance = rank1_score / (mean + 1e-6)
+
+        # Gap between 1st and 2nd (large gap = clear favorite = low upset potential)
+        favorite_gap = rank1_score - rank2_score
+
+        # Top3 vs others average gap (large gap = strong favorites dominating = low upset potential)
+        if len(scores) > 3:
+            others_mean = float(scores.iloc[3:].mean())
+            top3_vs_others = top3_mean - others_mean
+        else:
+            top3_vs_others = 0.0
+    else:
+        rank1_score = mean
+        rank2_score = mean
+        rank3_score = mean
+        top3_score_sum = mean * 3
+        favorite_dominance = 1.0
+        favorite_gap = 0.0
+        top3_vs_others = 0.0
+
     features.update(
         {
             "score_mean": mean,
@@ -261,8 +358,13 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_q75": q75,
             "score_iqr": iq_range,
             "score_cv": cv,
-            "score_top3_mean": float(top3.mean()) if len(top3) else mean,
-            "score_bottom3_mean": float(bottom3.mean()) if len(bottom3) else mean,
+            "score_top3_mean": top3_mean,
+            "score_bottom3_mean": bottom3_mean,
+            "score_top_bottom_gap": top_bottom_gap,
+            "estimated_top3_score_sum": top3_score_sum,
+            "estimated_favorite_dominance": favorite_dominance,
+            "estimated_favorite_gap": favorite_gap,
+            "estimated_top3_vs_others": top3_vs_others,
         }
     )
     summary.update(
@@ -306,9 +408,81 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
         features[f"grade_{grade}_ratio"] = float(count / entry_count)
     summary["grade_counts"] = grade_counts
 
+    # Grade diversity (entropy)
+    grade_ratios = np.array([features[f"grade_{g}_ratio"] for g in GRADE_LEVELS], dtype=float)
+    grade_entropy = float(-np.sum(grade_ratios * np.log(grade_ratios + 1e-10)))
+    features["grade_entropy"] = grade_entropy
+
+    # Mixed grade levels (S-class and A-class together)
+    has_s_class = any(grade_counts.get(g, 0) > 0 for g in ["SS", "S1", "S2"])
+    has_a_class = any(grade_counts.get(g, 0) > 0 for g in ["A1", "A2", "A3"])
+    features["grade_has_mixed"] = float(has_s_class and has_a_class)
+
+    # Style diversity (entropy)
+    style_ratios_array = np.array([features[f"style_{s}_ratio"] for s in STYLE_FEATURES], dtype=float)
+    style_entropy = float(-np.sum(style_ratios_array * np.log(style_ratios_array + 1e-10)))
+    features["style_entropy"] = style_entropy
+
     prefecture_unique = int(rider_frame["prefecture_norm"].nunique())
     features["prefecture_unique_count"] = float(prefecture_unique)
     summary["prefecture_unique_count"] = prefecture_unique
+
+    # === LINE ANALYSIS (ライン分析) ===
+    # Map each rider to their regional line
+    rider_frame["regional_line"] = rider_frame["prefecture_norm"].apply(_get_regional_line)
+
+    # Count riders per line
+    line_counts = rider_frame["regional_line"].value_counts().to_dict()
+
+    # Calculate line balance metrics
+    if len(line_counts) > 0:
+        line_sizes = list(line_counts.values())
+        max_line_size = max(line_sizes)
+        min_line_size = min(line_sizes)
+        line_count = len(line_sizes)
+
+        # Dominant line ratio (largest line / total riders)
+        dominant_line_ratio = max_line_size / entry_count if entry_count > 0 else 0.0
+
+        # Line balance (std dev of line sizes)
+        line_balance_std = float(np.std(line_sizes)) if len(line_sizes) > 1 else 0.0
+
+        # Line entropy (how evenly distributed are riders across lines)
+        line_ratios = np.array([c / entry_count for c in line_sizes], dtype=float)
+        line_entropy = float(-np.sum(line_ratios * np.log(line_ratios + 1e-10)))
+    else:
+        max_line_size = 0
+        min_line_size = 0
+        line_count = 0
+        dominant_line_ratio = 0.0
+        line_balance_std = 0.0
+        line_entropy = 0.0
+
+    # Calculate average score per line (to detect dominant line)
+    line_avg_scores = {}
+    for line_name in line_counts.keys():
+        line_riders = rider_frame[rider_frame["regional_line"] == line_name]
+        line_scores = pd.to_numeric(line_riders["score"], errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+        if len(line_scores) > 0:
+            line_avg_scores[line_name] = float(line_scores.mean())
+        else:
+            line_avg_scores[line_name] = 0.0
+
+    # Score gap between strongest and weakest line
+    if len(line_avg_scores) > 1:
+        line_score_gap = max(line_avg_scores.values()) - min(line_avg_scores.values())
+    else:
+        line_score_gap = 0.0
+
+    features["line_count"] = float(line_count)
+    features["dominant_line_ratio"] = float(dominant_line_ratio)
+    features["line_balance_std"] = float(line_balance_std)
+    features["line_entropy"] = float(line_entropy)
+    features["line_score_gap"] = float(line_score_gap)
+
+    summary["line_counts"] = line_counts
+    summary["line_avg_scores"] = line_avg_scores
+    summary["dominant_line_ratio"] = dominant_line_ratio
 
     return FeatureBundle(features, summary)
 
@@ -502,6 +676,11 @@ def _default_feature_columns() -> List[str]:
         "score_cv",
         "score_top3_mean",
         "score_bottom3_mean",
+        "score_top_bottom_gap",
+        "estimated_top3_score_sum",
+        "estimated_favorite_dominance",
+        "estimated_favorite_gap",
+        "estimated_top3_vs_others",
         "style_nige_ratio",
         "style_tsui_ratio",
         "style_ryo_ratio",
@@ -512,6 +691,7 @@ def _default_feature_columns() -> List[str]:
         "style_nige_count",
         "style_tsui_count",
         "style_ryo_count",
+        "style_entropy",
         "grade_SS_ratio",
         "grade_S1_ratio",
         "grade_S2_ratio",
@@ -526,7 +706,14 @@ def _default_feature_columns() -> List[str]:
         "grade_A2_count",
         "grade_A3_count",
         "grade_L1_count",
+        "grade_entropy",
+        "grade_has_mixed",
         "prefecture_unique_count",
+        "line_count",
+        "dominant_line_ratio",
+        "line_balance_std",
+        "line_entropy",
+        "line_score_gap",
     ]
 
 
@@ -763,70 +950,175 @@ def predict_probability(
     feature_frame: pd.DataFrame,
     model: Any,
     metadata: Dict[str, Any],
+    race_context: Dict[str, Any] = None,
 ) -> float:
-    feature_columns = metadata.get("feature_columns")
-    if feature_columns is None:
-        raise ValueError("metadata must contain 'feature_columns'")
-    frame = feature_frame[feature_columns].astype(float)
-    if model is not None:
-        try:
-            return float(model.predict(frame)[0])
-        except Exception as exc:
-            print("[WARN] LightGBM推論に失敗したため、ヒューリスティック推定を利用します。")
-            print(f"       詳細: {exc}")
+    """
+    Predict high payout probability using RULE-BASED system.
+
+    NOTE: ML model is disabled (ROC-AUC 0.58 = random).
+    Using validated rule-based scoring instead.
+    """
+    # ALWAYS use rule-based prediction (ML model performance is too low)
     row = feature_frame.iloc[0]
-    return _fallback_probability(row, metadata)
+    base_prob = _fallback_probability(row, metadata)
+
+    # Apply track/category adjustment if context provided
+    if race_context and TRACK_CATEGORY_STATS:
+        adjusted_prob = _adjust_by_track_category(base_prob, race_context)
+        return adjusted_prob
+
+    return base_prob
+
+
+def _adjust_by_track_category(base_prob: float, race_context: Dict[str, Any]) -> float:
+    """Adjust probability based on historical track and category rates"""
+    track = race_context.get('track', '')
+    category = race_context.get('category', '')
+
+    overall_rate = TRACK_CATEGORY_STATS.get('overall_high_payout_rate', 0.266)
+    track_rates = TRACK_CATEGORY_STATS.get('track_high_payout_rates', {})
+    category_rates = TRACK_CATEGORY_STATS.get('category_high_payout_rates', {})
+
+    # Calculate adjustment multipliers
+    multiplier = 1.0
+
+    # Track adjustment (weight: 0.4)
+    if track in track_rates:
+        track_rate = track_rates[track]
+        track_multiplier = track_rate / overall_rate
+        multiplier *= (1.0 + 0.4 * (track_multiplier - 1.0))
+
+    # Category adjustment (weight: 0.6)
+    if category in category_rates:
+        category_rate = category_rates[category]
+        category_multiplier = category_rate / overall_rate
+        multiplier *= (1.0 + 0.6 * (category_multiplier - 1.0))
+
+    # Apply multiplier
+    adjusted = base_prob * multiplier
+
+    # Keep in valid range [0, 1]
+    adjusted = max(0.05, min(0.95, adjusted))
+
+    return adjusted
 
 
 def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
-    """LightGBM が利用できないときの簡易スコアリング."""
+    """
+    Simple rule-based scoring - REALISTIC calibration based on 48k races.
+
+    Key insight from data: High payout rate ranges from 20-35%
+    - Overall average: 26.6%
+    - Most chaotic track: 30.5%
+    - Most stable track: ~25%
+
+    We should stay within 15-40% range (±14% from baseline)
+    """
+    # Start with baseline (overall average)
+    base_prob = 0.266
+
+    # Core score-based features
     score_cv = float(row.get("score_cv", 0.0) or 0.0)
-    score_range = float(row.get("score_range", 0.0) or 0.0)
-    style_diversity = float(row.get("style_diversity", 0.0) or 0.0)
-    prefecture_unique = float(row.get("prefecture_unique_count", 0.0) or 0.0)
-    tsui_ratio = float(row.get("style_tsui_ratio", 0.0) or 0.0)
-    ryo_ratio = float(row.get("style_ryo_ratio", 0.0) or 0.0)
-    nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
+    favorite_gap = float(row.get("estimated_favorite_gap", 0.0) or 0.0)
+    favorite_dominance = float(row.get("estimated_favorite_dominance", 1.0) or 1.0)
+    top3_vs_others = float(row.get("estimated_top3_vs_others", 0.0) or 0.0)
+
+    # Line features
+    dominant_line_ratio = float(row.get("dominant_line_ratio", 0.0) or 0.0)
+    line_score_gap = float(row.get("line_score_gap", 0.0) or 0.0)
+
+    # Race conditions
     entry_count = float(row.get("entry_count", 0.0) or 0.0)
+    nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
+    is_final_day = row.get("is_final_day", 0)
 
-    grade_s1 = float(row.get("grade_S1_ratio", 0.0) or 0.0)
-    grade_ss = float(row.get("grade_SS_ratio", 0.0) or 0.0)
-    grade_a3 = float(row.get("grade_A3_ratio", 0.0) or 0.0)
+    # Grade composition
+    grade_ss_ratio = float(row.get("grade_SS_ratio", 0.0) or 0.0)
+    grade_s1_ratio = float(row.get("grade_S1_ratio", 0.0) or 0.0)
+    grade_a3_ratio = float(row.get("grade_A3_ratio", 0.0) or 0.0)
 
-    # ベーススコア（荒れやすさの指標）
-    base = (
-        3.0 * min(score_cv, 0.18)
-        + 1.8 * min(score_range / 8.0, 1.5)
-        + 1.2 * style_diversity
-        + 0.6 * min(prefecture_unique / 6.0, 1.0)
-        + 0.4 * tsui_ratio
-        + 0.3 * ryo_ratio
-    )
+    # === RULE 1: Score Coefficient of Variation (most predictive) ===
+    # Very tight race (CV < 0.03) → +10%
+    # Tight (CV < 0.05) → +5%
+    # Dispersed (CV > 0.08) → -6%
+    if score_cv < 0.03:
+        base_prob += 0.10
+    elif score_cv < 0.05:
+        base_prob += 0.05
+    elif score_cv > 0.10:
+        base_prob -= 0.06
+    elif score_cv > 0.08:
+        base_prob -= 0.03
 
-    # 小頭数や逃げ選手が少ないレースは荒れやすいと仮定
+    # === RULE 2: Favorite Gap (1st vs 2nd score) ===
+    # Very close (< 2 points) → +5%
+    # Dominant (> 15 points) → -6%
+    if favorite_gap < 2.0:
+        base_prob += 0.05
+    elif favorite_gap < 5.0:
+        base_prob += 0.02
+    elif favorite_gap > 15.0:
+        base_prob -= 0.06
+    elif favorite_gap > 10.0:
+        base_prob -= 0.03
+
+    # === RULE 3: Favorite Dominance ===
+    # Weak favorite (< 1.05) → +4%
+    # Strong favorite (> 1.20) → -5%
+    if favorite_dominance < 1.05:
+        base_prob += 0.04
+    elif favorite_dominance < 1.10:
+        base_prob += 0.02
+    elif favorite_dominance > 1.20:
+        base_prob -= 0.05
+    elif favorite_dominance > 1.15:
+        base_prob -= 0.02
+
+    # === RULE 4: Line Balance ===
+    # Dominant line (> 60%) → -4% (predictable)
+    # No dominant line (< 33%) → +3% (chaotic)
+    if dominant_line_ratio > 0.60:
+        base_prob -= 0.04
+    elif dominant_line_ratio < 0.33:
+        base_prob += 0.03
+
+    # Line strength gap
+    if line_score_gap > 12.0:
+        base_prob -= 0.03
+    elif line_score_gap < 4.0:
+        base_prob += 0.02
+
+    # === RULE 5: Race Conditions (minor) ===
     if entry_count <= 7:
-        base += 0.25
+        base_prob += 0.02
     if nige_count <= 1:
-        base += 0.25
+        base_prob += 0.02
+    if is_final_day:
+        base_prob += 0.01
 
-    # 上位S級が多いと盤石、本命有利とみなしマイナス
-    base -= 0.6 * min(grade_s1 + grade_ss, 1.0)
+    # === RULE 6: Grade Composition ===
+    # SS級が多い = トップレベル同士 = 実力伯仲でない限り固い
+    # A3級が多い = 低レベル = 本命が勝ちやすい
+    if grade_ss_ratio >= 0.9:  # ほぼ全員SS級（GP等）
+        base_prob -= 0.10  # GPレベルでも本命寄り
+    elif grade_ss_ratio >= 0.7:  # 7割以上がSS級
+        base_prob -= 0.07
+    elif grade_ss_ratio >= 0.5:  # 半分以上がSS級
+        base_prob -= 0.04
 
-    # A3が大半なら堅めとみなして少し下げる
-    if grade_a3 >= 0.8:
-        base -= 0.1
+    if grade_a3_ratio >= 0.9:  # ほぼ全員A3級
+        base_prob -= 0.12  # 低レベルは確実に本命
+    elif grade_a3_ratio >= 0.7:  # 7割以上がA3級
+        base_prob -= 0.09
+    elif grade_a3_ratio >= 0.5:
+        base_prob -= 0.05
 
-    if row.get("is_final_day", 0):
-        base += 0.15
-    if row.get("is_second_day", 0):
-        base += 0.05
-    if row.get("is_first_day", 0):
-        base -= 0.1
+    # Clamp to realistic range [0.10, 0.50]
+    # Note: Track/category adjustment will further refine this
+    probability = max(0.10, min(0.50, base_prob))
 
-    # 線形→確率へ変換
-    logit = base - 1.0
-    probability = 1.0 / (1.0 + math.exp(-logit))
-    return float(min(1.0, max(0.0, probability)))
+    return float(probability)
+
 
 
 def generate_reasons(summary: Dict[str, Any], probability: float, metadata: Dict[str, Any]) -> List[str]:

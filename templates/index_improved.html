@@ -222,7 +222,7 @@
   <div class="page">
     <header>
       <h1>競輪 高配当予測</h1>
-      <p>レース前情報で荒れ度合いを推定。<strong style="color:#e74c3c;">競走得点</strong>の入力が予測精度の鍵です。</p>
+      <p>レース前情報で荒れ度合いを推定。選手名入力で自動補完します。</p>
     </header>
     {% if not model_ready %}
     <div class="model-warning">
@@ -263,44 +263,10 @@
             <option value="L">L</option>
           </select>
         </div>
-        <div>
-          <label for="category">レースカテゴリ（任意）</label>
-          <select id="category" name="category">
-            <option value="">-- 選択 --</option>
-            <optgroup label="S級（荒れやすい順）">
-              <option value="Ｓ級選抜">S級選抜 (荒れ度: 44%)</option>
-              <option value="Ｓ級特別優秀">S級特別優秀 (荒れ度: 41%)</option>
-              <option value="Ｓ級初日特選">S級初日特選 (荒れ度: 40%)</option>
-              <option value="Ｓ級特選">S級特選 (荒れ度: 37%)</option>
-              <option value="Ｓ級決勝">S級決勝 (荒れ度: 37%)</option>
-              <option value="Ｓ級準決勝">S級準決勝 (荒れ度: 31%)</option>
-              <option value="Ｓ級一般">S級一般 (荒れ度: 31%)</option>
-              <option value="Ｓ級予選">S級予選 (荒れ度: 26%)</option>
-            </optgroup>
-            <optgroup label="A級">
-              <option value="Ａ級初日特選">A級初日特選 (荒れ度: 37%)</option>
-              <option value="Ａ級選抜">A級選抜 (荒れ度: 31%)</option>
-              <option value="Ａ級特選">A級特選 (荒れ度: 29%)</option>
-              <option value="Ａ級決勝">A級決勝 (荒れ度: 29%)</option>
-              <option value="Ａ級一般">A級一般 (荒れ度: 27%)</option>
-              <option value="Ａ級準決勝">A級準決勝 (荒れ度: 27%)</option>
-              <option value="Ａ級特一般">A級特一般 (荒れ度: 26%)</option>
-              <option value="Ａ級特予選">A級特予選 (荒れ度: 22%)</option>
-            </optgroup>
-            <optgroup label="ガールズ">
-              <option value="Ｌ級ガールズ一般">L級ガールズ一般 (荒れ度: 24%)</option>
-            </optgroup>
-          </select>
-        </div>
       </div>
 
-      <div class="section-title" style="margin-top:32px;">
-        <span>2</span>選手情報（最大9名）
-        <small style="font-size:0.85em;font-weight:normal;color:#e74c3c;margin-left:8px;">
-          ※ 競走得点は公式サイトで確認して必ず入力してください
-        </small>
-      </div>
-      <p class="pill">選手名を入力すると府県・階級・脚質が自動入力されます。<strong>競走得点は手動で入力してください。</strong></p>
+      <div class="section-title" style="margin-top:32px;"><span>2</span>選手情報（最大9名）</div>
+      <p class="pill">選手名を入力すると候補が表示され、情報が自動入力されます</p>
       <div id="rider-list" class="grid" style="gap:18px; margin-top:18px;"></div>
 
       <div class="actions">
@@ -326,33 +292,19 @@
         </div>
         <div>
           <label>府県</label>
-          <input type="text" name="rider_prefectures" class="rider-prefecture" placeholder="選手選択で自動入力">
+          <input type="text" name="rider_prefectures" class="rider-prefecture" placeholder="自動入力" readonly>
         </div>
         <div>
           <label>階級</label>
-          <select name="rider_grades" class="rider-grade">
-            <option value="">選択してください</option>
-            <option value="SS">SS</option>
-            <option value="S1">S1</option>
-            <option value="S2">S2</option>
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="A3">A3</option>
-            <option value="L1">L1</option>
-          </select>
+          <input type="text" name="rider_grades" class="rider-grade" placeholder="自動入力" readonly>
         </div>
         <div>
           <label>脚質</label>
-          <select name="rider_styles" class="rider-style">
-            <option value="">選択してください</option>
-            <option value="逃">逃げ</option>
-            <option value="追">追込</option>
-            <option value="両">両</option>
-          </select>
+          <input type="text" name="rider_styles" class="rider-style" placeholder="自動入力" readonly>
         </div>
         <div>
-          <label>競走得点 <span style="color:#e74c3c;">*必須</span></label>
-          <input type="number" step="0.01" name="rider_scores" class="rider-score" placeholder="例: 115.20" required min="0" max="150">
+          <label>得点</label>
+          <input type="number" step="0.01" name="rider_scores" class="rider-score" placeholder="自動入力" readonly>
         </div>
       </div>
     </div>
@@ -448,23 +400,9 @@
             if (rider) {
               nameInput.value = rider.name;
               prefectureInput.value = rider.prefecture || '';
-
-              // Set grade (now a select)
-              if (rider.grade) {
-                gradeInput.value = rider.grade;
-              }
-
-              // Set style (now a select) - normalize values
-              if (rider.style) {
-                const styleMap = {'逃': '逃', '追': '追', '両': '両'};
-                styleInput.value = styleMap[rider.style] || '';
-              }
-
-              // Score is not auto-filled - user must enter manually
-              // (avg_score in master data is null)
-              if (rider.avg_score && rider.avg_score > 0) {
-                scoreInput.value = rider.avg_score;
-              }
+              gradeInput.value = rider.grade || '';
+              styleInput.value = rider.style || '';
+              scoreInput.value = rider.avg_score || '';
             }
 
             suggestions.style.display = 'none';
