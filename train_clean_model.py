@@ -27,7 +27,8 @@ def train_model(
     num_boost_round=2000,
     early_stopping_rounds=100,
     learning_rate=0.05,
-    verbose_eval=100
+    verbose_eval=100,
+    use_tuned_params=False,
 ):
     """
     TimeSeriesSplitでモデルを訓練し、OOF予測を生成
@@ -44,23 +45,45 @@ def train_model(
     print(f"   Positive (≥ 10,000円): {n_positive:,} ({n_positive/len(y):.1%})")
     print(f"   Scale pos weight: {scale_pos_weight:.2f}")
 
-    params = {
-        'objective': 'binary',
-        'metric': ['auc', 'average_precision'],
-        'learning_rate': learning_rate,
-        'num_leaves': 63,
-        'max_depth': -1,
-        'feature_fraction': 0.8,
-        'bagging_fraction': 0.8,
-        'bagging_freq': 1,
-        'min_data_in_leaf': 50,
-        'lambda_l1': 0.1,
-        'lambda_l2': 0.1,
-        'scale_pos_weight': scale_pos_weight,
-        'verbosity': -1,
-        'boost_from_average': True,
-        'seed': 42,
-    }
+    # Load tuned parameters if available
+    if use_tuned_params:
+        tuned_params_path = Path('analysis/model_outputs/best_hyperparameters.json')
+        if tuned_params_path.exists():
+            with open(tuned_params_path, 'r') as f:
+                tuned_data = json.load(f)
+            best_params = tuned_data['best_params']
+            print(f"\n🎯 Using Optuna-tuned hyperparameters (ROC-AUC: {tuned_data['best_score']:.4f})")
+            params = {
+                'objective': 'binary',
+                'metric': ['auc', 'average_precision'],
+                **best_params,
+                'scale_pos_weight': scale_pos_weight,
+                'verbosity': -1,
+                'boost_from_average': True,
+                'seed': 42,
+            }
+        else:
+            print(f"\n⚠️  Tuned parameters not found, using defaults")
+            use_tuned_params = False
+
+    if not use_tuned_params:
+        params = {
+            'objective': 'binary',
+            'metric': ['auc', 'average_precision'],
+            'learning_rate': learning_rate,
+            'num_leaves': 63,
+            'max_depth': -1,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'bagging_freq': 1,
+            'min_data_in_leaf': 50,
+            'lambda_l1': 0.1,
+            'lambda_l2': 0.1,
+            'scale_pos_weight': scale_pos_weight,
+            'verbosity': -1,
+            'boost_from_average': True,
+            'seed': 42,
+        }
 
     oof_pred = np.zeros(len(X), dtype=float)
     feature_gain = pd.Series(0.0, index=X.columns)
@@ -208,8 +231,13 @@ def train_model(
 
 
 def main():
+    # Parse command line arguments
+    use_tuned_params = '--use-tuned-params' in sys.argv
+
     print("=" * 80)
     print("競輪高配当予測：LightGBMモデル訓練（事前データのみ）")
+    if use_tuned_params:
+        print("Mode: Using Optuna-tuned hyperparameters")
     print("=" * 80)
 
     # Load clean dataset
@@ -257,7 +285,7 @@ def main():
     print(f"\n✅ All features are pre-race data only")
 
     # Train model
-    result = train_model(X, y)
+    result = train_model(X, y, use_tuned_params=use_tuned_params)
 
     # Save model and artifacts
     output_dir = Path('analysis/model_outputs')

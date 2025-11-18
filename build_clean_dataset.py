@@ -371,6 +371,60 @@ def aggregate_race_features(race_df):
         race_info['same_style_ratio_mean'] = 0.0
         race_info['same_style_ratio_max'] = 0.0
 
+    # === 重要特徴量の相互作用 ===
+    # Recent finish × Score features (最重要特徴量の組み合わせ)
+    if race_info['recent_finish_avg_std'] > 0 and race_info['score_cv'] > 0:
+        race_info['recent_finish_std_x_score_cv'] = race_info['recent_finish_avg_std'] * race_info['score_cv']
+    else:
+        race_info['recent_finish_std_x_score_cv'] = 0.0
+
+    if race_info['recent_finish_avg_min'] > 0 and race_info['score_mean'] > 0:
+        race_info['recent_finish_min_x_score_mean'] = race_info['recent_finish_avg_min'] * race_info['score_mean']
+    else:
+        race_info['recent_finish_min_x_score_mean'] = 0.0
+
+    # Recent finish × B features (調子 × 経験値)
+    if race_info['recent_finish_avg_std'] > 0 and race_info['sasiCnt_cv'] > 0:
+        race_info['recent_finish_std_x_sasiCnt_cv'] = race_info['recent_finish_avg_std'] * race_info['sasiCnt_cv']
+    else:
+        race_info['recent_finish_std_x_sasiCnt_cv'] = 0.0
+
+    # Entry count × Score variance (人数 × 実力差)
+    race_info['entry_count_x_score_cv'] = entry_count * race_info.get('score_cv', 0)
+
+    # Line balance × Score gap (ライン × 実力差)
+    race_info['line_balance_x_score_gap'] = race_info.get('line_balance_std', 0) * race_info.get('estimated_favorite_gap', 0)
+
+    # === 時系列トレンド特徴量 ===
+    # Recent finish trend (調子の傾向)
+    if race_info['recent_finish_avg_mean'] > 0 and race_info['recent_finish_last_mean'] > 0:
+        # Positive = 調子下降中（悪化）, Negative = 調子上昇中（改善）
+        race_info['recent_finish_trend'] = race_info['recent_finish_last_mean'] - race_info['recent_finish_avg_mean']
+    else:
+        race_info['recent_finish_trend'] = 0.0
+
+    # Recent finish volatility (直近の不安定さ)
+    if race_info['recent_finish_last_std'] > 0 or race_info['recent_finish_avg_std'] > 0:
+        race_info['recent_finish_volatility'] = (race_info['recent_finish_last_std'] + race_info['recent_finish_avg_std']) / 2.0
+    else:
+        race_info['recent_finish_volatility'] = 0.0
+
+    # === 2次特徴量（非線形変換） ===
+    # 最重要特徴量の2乗
+    race_info['recent_finish_avg_std_squared'] = race_info['recent_finish_avg_std'] ** 2
+    race_info['score_cv_squared'] = race_info.get('score_cv', 0) ** 2
+
+    # 対数変換（0を避ける）
+    if race_info['recent_finish_avg_min'] > 0:
+        race_info['recent_finish_avg_min_log'] = np.log1p(race_info['recent_finish_avg_min'])
+    else:
+        race_info['recent_finish_avg_min_log'] = 0.0
+
+    if entry_count > 0:
+        race_info['entry_count_log'] = np.log1p(entry_count)
+    else:
+        race_info['entry_count_log'] = 0.0
+
     # === レース番号（時間帯） ===
     race_info['race_no_int'] = int(race_df['race_no'].iloc[0])
 
