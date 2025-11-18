@@ -1,0 +1,64 @@
+データ読み込み中...
+/home/user/100_keirin/analysis/build_ultimate_features_v8.py:292: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
+  prerace = pd.read_csv('data/keirin_prerace_20240101_20241231_combined.csv')
+  Entries: 196,554行
+  Prerace: 27,740行
+  Results: 48,700行
+
+=== Version 8: 究極特徴量セット構築 ===
+
+1. V5ベース特徴量読み込み中...
+   V5データ: 27,711行, 72列
+
+2. 新規特徴量の作成中...
+   進捗: 1000/27717
+   進捗: 2000/27717
+   進捗: 3000/27717
+   進捗: 4000/27717
+   進捗: 5000/27717
+   進捗: 6000/27717
+   進捗: 7000/27717
+   進捗: 8000/27717
+   進捗: 9000/27717
+   進捗: 10000/27717
+   進捗: 11000/27717
+   進捗: 12000/27717
+   進捗: 13000/27717
+   進捗: 14000/27717
+   進捗: 15000/27717
+   進捗: 16000/27717
+   進捗: 17000/27717
+   進捗: 18000/27717
+   進捗: 19000/27717
+   進捗: 20000/27717
+   進捗: 21000/27717
+   進捗: 22000/27717
+   進捗: 23000/27717
+   進捗: 24000/27717
+   進捗: 25000/27717
+   進捗: 26000/27717
+   進捗: 27000/27717
+
+   新規特徴量: 24個作成
+
+3. V5データとマージ中...
+Traceback (most recent call last):
+  File "/home/user/100_keirin/analysis/build_ultimate_features_v8.py", line 319, in <module>
+    main()
+  File "/home/user/100_keirin/analysis/build_ultimate_features_v8.py", line 301, in main
+    v8_data = build_v8_features(entries, prerace, results)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/100_keirin/analysis/build_ultimate_features_v8.py", line 251, in build_v8_features
+    merged = v5_data.merge(
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/core/frame.py", line 10859, in merge
+    return merge(
+           ^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/core/reshape/merge.py", line 170, in merge
+    op = _MergeOperation(
+         ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/core/reshape/merge.py", line 807, in __init__
+    self._maybe_coerce_merge_keys()
+  File "/usr/local/lib/python3.11/dist-packages/pandas/core/reshape/merge.py", line 1509, in _maybe_coerce_merge_keys
+    raise ValueError(msg)
+ValueError: You are trying to merge on int64 and object columns for key 'track'. If you wish to proceed you should use pd.concat

@@ -244,14 +244,16 @@ def build_v8_features(entries, prerace, results):
     # V5データとマージ
     print("\n3. V5データとマージ中...")
     if v5_data is not None:
-        # race_noを文字列化してマージ
+        # race_no と track を文字列化してマージ
         v5_data['race_no_str'] = v5_data['race_no_int'].astype(str)
         v8_new_features['race_no_str'] = v8_new_features['race_no'].astype(str)
+        v5_data['track_str'] = v5_data['track'].astype(str)
+        v8_new_features['track_str'] = v8_new_features['track'].astype(str)
 
         merged = v5_data.merge(
             v8_new_features,
-            left_on=['race_date', 'track', 'race_no_str'],
-            right_on=['race_date', 'track', 'race_no_str'],
+            left_on=['race_date', 'track_str', 'race_no_str'],
+            right_on=['race_date', 'track_str', 'race_no_str'],
             how='inner',
             suffixes=('', '_v8')
         )
@@ -290,7 +292,7 @@ def main():
     print("データ読み込み中...")
     entries = pd.read_csv('data/keirin_race_detail_entries_20240101_20241231_combined.csv')
     prerace = pd.read_csv('data/keirin_prerace_20240101_20241231_combined.csv')
-    results = pd.read_csv('data/keirin_results_20240101_20241231_combined.csv')
+    results = pd.read_csv('data/keirin_results_20240101_20251004.csv')
 
     print(f"  Entries: {len(entries):,}行")
     print(f"  Prerace: {len(prerace):,}行")
