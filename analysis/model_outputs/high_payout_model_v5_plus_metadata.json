@@ -1,0 +1,54 @@
+{
+  "version": "v5_plus",
+  "n_features": 105,
+  "n_samples": 27711,
+  "positive_rate": 0.26289199234960847,
+  "params": {
+    "objective": "binary",
+    "metric": "auc",
+    "boosting_type": "gbdt",
+    "verbose": -1,
+    "seed": 42,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "max_depth": 8,
+    "min_child_samples": 30,
+    "scale_pos_weight": 2.5
+  },
+  "metrics": {
+    "oof_roc_auc": 0.5696524528570951,
+    "oof_precision_at_top_k": 0.61,
+    "folds": [
+      {
+        "fold": 1,
+        "roc_auc": 0.6169170403372892,
+        "precision_at_top_k": 0.5,
+        "best_iteration": 50
+      },
+      {
+        "fold": 2,
+        "roc_auc": 0.6151755645541336,
+        "precision_at_top_k": 0.51,
+        "best_iteration": 75
+      },
+      {
+        "fold": 3,
+        "roc_auc": 0.6033555691055426,
+        "precision_at_top_k": 0.48,
+        "best_iteration": 9
+      },
+      {
+        "fold": 4,
+        "roc_auc": 0.6510760166135421,
+        "precision_at_top_k": 0.6,
+        "best_iteration": 98
+      },
+      {
+        "fold": 5,
+        "roc_auc": 0.6516231319428927,
+        "precision_at_top_k": 0.52,
+        "best_iteration": 97
+      }
+    ]
+  }
+}

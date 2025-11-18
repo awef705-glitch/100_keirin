@@ -1,0 +1,88 @@
+=== V5 Plus 最終訓練開始 ===
+
+1. データ読み込み中...
+   27,711行, 111列
+   特徴量数: 105
+   Positive rate: 0.263
+
+2. V5ベストパラメータで訓練...
+
+  Fold 1/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.616917
+Early stopping, best iteration is:
+[50]	valid_0's auc: 0.616917
+    ROC-AUC: 0.6169, P@100: 0.50, Iter: 50
+
+  Fold 2/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.612734
+[100]	valid_0's auc: 0.614347
+Early stopping, best iteration is:
+[75]	valid_0's auc: 0.615176
+    ROC-AUC: 0.6152, P@100: 0.51, Iter: 75
+
+  Fold 3/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[9]	valid_0's auc: 0.603356
+    ROC-AUC: 0.6034, P@100: 0.48, Iter: 9
+
+  Fold 4/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.644439
+[100]	valid_0's auc: 0.650798
+Early stopping, best iteration is:
+[98]	valid_0's auc: 0.651076
+    ROC-AUC: 0.6511, P@100: 0.60, Iter: 98
+
+  Fold 5/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.648326
+[100]	valid_0's auc: 0.651424
+Early stopping, best iteration is:
+[97]	valid_0's auc: 0.651623
+    ROC-AUC: 0.6516, P@100: 0.52, Iter: 97
+
+=== OOF全体 ===
+ROC-AUC: 0.5697
+Precision@Top100: 0.6100 (61.0%)
+
+3. 最終モデル訓練中...
+   モデル保存: analysis/model_outputs/high_payout_model_v5_plus.txt
+   メタデータ保存: analysis/model_outputs/high_payout_model_v5_plus_metadata.json
+   OOF予測保存: analysis/model_outputs/high_payout_model_v5_plus_oof.csv
+   特徴量重要度保存: analysis/model_outputs/high_payout_model_v5_plus_feature_importance.csv
+
+=== Top 20 重要特徴量 ===
+  85. score_q25: 10232.4 🆕
+  4. entry_count: 5989.2
+  30. heikinTokuten_cv: 3969.7
+  66. score_concentration_x: 3444.3
+  10. nigeCnt_std: 2884.2
+  13. makuriCnt_std: 2653.0
+  64. score_gap_top3_bottom_x: 2387.5
+  65. score_dominance_x: 2246.3
+  87. category_x_month: 2211.1 🆕
+  46. heikinTokuten_cv_x_nigeCnt_cv: 1879.4
+  90. score_q75: 1873.3 🆕
+  48. heikinTokuten_std_x_sasiCnt_cv: 1736.3
+  41. style_total: 1530.7
+  40. backCnt_cv: 1528.4
+  8. heikinTokuten_max: 1484.0
+  36. sasiCnt_cv: 1460.0
+  50. heikinTokuten_range_x_backCnt_cv: 1387.7
+  91. sasiCnt_skew_proxy: 1165.2 🆕
+  92. score_kurtosis_proxy: 1024.1 🆕
+  45. race_no_norm: 913.0
+
+======================================================================
+📊 最終結果比較
+======================================================================
+バージョン                特徴量数         Precision@Top100    
+----------------------------------------------------------------------
+V5                   84           67.0                %
+V5 Plus              105          61.0                % ✅
+======================================================================
+
+✅ V5 Plus 訓練完了！

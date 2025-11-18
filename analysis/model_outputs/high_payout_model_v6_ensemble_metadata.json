@@ -1,0 +1,164 @@
+{
+  "version": "v6_ensemble",
+  "n_features": 112,
+  "n_samples": 27711,
+  "positive_rate": 0.26289199234960847,
+  "ensemble_metrics": {
+    "oof_roc_auc": 0.5816062716573498,
+    "oof_precision_at_top_k": 0.59
+  },
+  "models": [
+    {
+      "name": "Model1_Balanced",
+      "params": {
+        "objective": "binary",
+        "metric": "auc",
+        "boosting_type": "gbdt",
+        "verbose": -1,
+        "seed": 42,
+        "learning_rate": 0.03,
+        "num_leaves": 31,
+        "max_depth": 8,
+        "min_child_samples": 30,
+        "scale_pos_weight": 2.5
+      },
+      "oof_roc_auc": 0.5688036315834428,
+      "oof_precision_at_top_k": 0.59,
+      "folds": [
+        {
+          "fold": 1,
+          "roc_auc": 0.6200520937994599,
+          "precision_at_top_k": 0.52,
+          "best_iteration": 45
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.6150889419616326,
+          "precision_at_top_k": 0.59,
+          "best_iteration": 41
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.6043898306941285,
+          "precision_at_top_k": 0.48,
+          "best_iteration": 6
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.6529428668018933,
+          "precision_at_top_k": 0.58,
+          "best_iteration": 223
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.6505905131116602,
+          "precision_at_top_k": 0.52,
+          "best_iteration": 78
+        }
+      ]
+    },
+    {
+      "name": "Model2_Conservative",
+      "params": {
+        "objective": "binary",
+        "metric": "auc",
+        "boosting_type": "gbdt",
+        "verbose": -1,
+        "seed": 42,
+        "learning_rate": 0.02,
+        "num_leaves": 31,
+        "max_depth": 6,
+        "min_child_samples": 50,
+        "scale_pos_weight": 2.5,
+        "feature_fraction": 0.8,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5
+      },
+      "oof_roc_auc": 0.5854194167996553,
+      "oof_precision_at_top_k": 0.54,
+      "folds": [
+        {
+          "fold": 1,
+          "roc_auc": 0.6240320926129002,
+          "precision_at_top_k": 0.48,
+          "best_iteration": 105
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.6209413808674811,
+          "precision_at_top_k": 0.53,
+          "best_iteration": 90
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.6103034264022715,
+          "precision_at_top_k": 0.47,
+          "best_iteration": 114
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.651794165942239,
+          "precision_at_top_k": 0.56,
+          "best_iteration": 92
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.6497743217272216,
+          "precision_at_top_k": 0.54,
+          "best_iteration": 78
+        }
+      ]
+    },
+    {
+      "name": "Model3_Complex",
+      "params": {
+        "objective": "binary",
+        "metric": "auc",
+        "boosting_type": "gbdt",
+        "verbose": -1,
+        "seed": 42,
+        "learning_rate": 0.04,
+        "num_leaves": 63,
+        "max_depth": 10,
+        "min_child_samples": 20,
+        "scale_pos_weight": 2.5,
+        "lambda_l1": 0.1,
+        "lambda_l2": 0.1
+      },
+      "oof_roc_auc": 0.5778664884091029,
+      "oof_precision_at_top_k": 0.6,
+      "folds": [
+        {
+          "fold": 1,
+          "roc_auc": 0.6078174908472228,
+          "precision_at_top_k": 0.54,
+          "best_iteration": 25
+        },
+        {
+          "fold": 2,
+          "roc_auc": 0.6064611348790052,
+          "precision_at_top_k": 0.56,
+          "best_iteration": 51
+        },
+        {
+          "fold": 3,
+          "roc_auc": 0.6016995091578035,
+          "precision_at_top_k": 0.5,
+          "best_iteration": 33
+        },
+        {
+          "fold": 4,
+          "roc_auc": 0.6479617019221481,
+          "precision_at_top_k": 0.57,
+          "best_iteration": 76
+        },
+        {
+          "fold": 5,
+          "roc_auc": 0.6516062562683276,
+          "precision_at_top_k": 0.51,
+          "best_iteration": 58
+        }
+      ]
+    }
+  ]
+}

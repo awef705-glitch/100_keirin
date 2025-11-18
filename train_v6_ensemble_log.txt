@@ -1,0 +1,139 @@
+=== Version 6 アンサンブル訓練開始 ===
+
+1. データ読み込み中...
+   27,711行, 118列
+
+2. カテゴリカル組み合わせのエンコーディング中...
+   track_x_category: 1288ユニーク値
+   track_x_grade: 126ユニーク値
+   category_x_month: 478ユニーク値
+   track_x_month: 410ユニーク値
+
+3. 訓練データ準備完了
+   特徴量数: 112
+   Positive rate: 0.263
+
+4. アンサンブル訓練開始...
+
+=== アンサンブル学習開始 ===
+
+  === Model1_Balanced 訓練中 ===
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.620052
+    Fold 1: ROC-AUC=0.6201, P@100=0.52, Iter=45
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[41]	valid_0's auc: 0.615089
+    Fold 2: ROC-AUC=0.6151, P@100=0.59, Iter=41
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[6]	valid_0's auc: 0.60439
+    Fold 3: ROC-AUC=0.6044, P@100=0.48, Iter=6
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[223]	valid_0's auc: 0.652943
+    Fold 4: ROC-AUC=0.6529, P@100=0.58, Iter=223
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[78]	valid_0's auc: 0.650591
+    Fold 5: ROC-AUC=0.6506, P@100=0.52, Iter=78
+  → Model1_Balanced OOF: ROC-AUC=0.5688, P@100=0.5900
+
+  === Model2_Conservative 訓練中 ===
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[105]	valid_0's auc: 0.624032
+    Fold 1: ROC-AUC=0.6240, P@100=0.48, Iter=105
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[90]	valid_0's auc: 0.620941
+    Fold 2: ROC-AUC=0.6209, P@100=0.53, Iter=90
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[114]	valid_0's auc: 0.610303
+    Fold 3: ROC-AUC=0.6103, P@100=0.47, Iter=114
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[92]	valid_0's auc: 0.651794
+    Fold 4: ROC-AUC=0.6518, P@100=0.56, Iter=92
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[78]	valid_0's auc: 0.649774
+    Fold 5: ROC-AUC=0.6498, P@100=0.54, Iter=78
+  → Model2_Conservative OOF: ROC-AUC=0.5854, P@100=0.5400
+
+  === Model3_Complex 訓練中 ===
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[25]	valid_0's auc: 0.607817
+    Fold 1: ROC-AUC=0.6078, P@100=0.54, Iter=25
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[51]	valid_0's auc: 0.606461
+    Fold 2: ROC-AUC=0.6065, P@100=0.56, Iter=51
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[33]	valid_0's auc: 0.6017
+    Fold 3: ROC-AUC=0.6017, P@100=0.50, Iter=33
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.647962
+    Fold 4: ROC-AUC=0.6480, P@100=0.57, Iter=76
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[58]	valid_0's auc: 0.651606
+    Fold 5: ROC-AUC=0.6516, P@100=0.51, Iter=58
+  → Model3_Complex OOF: ROC-AUC=0.5779, P@100=0.6000
+
+  === アンサンブル予測の統合 ===
+  → Ensemble OOF: ROC-AUC=0.5816, P@100=0.5900
+
+  === モデル比較 ===
+    Model1_Balanced: ROC-AUC=0.5688, P@100=0.5900
+    Model2_Conservative: ROC-AUC=0.5854, P@100=0.5400
+    Model3_Complex: ROC-AUC=0.5779, P@100=0.6000
+    Ensemble:      ROC-AUC=0.5816, P@100=0.5900 ✅
+
+5. 結果保存中...
+   OOF予測保存: analysis/model_outputs/high_payout_model_v6_ensemble_oof.csv
+   メタデータ保存: analysis/model_outputs/high_payout_model_v6_ensemble_metadata.json
+   Model1_Balanced モデル保存: analysis/model_outputs/high_payout_model_v6_Model1_Balanced.txt
+   Model2_Conservative モデル保存: analysis/model_outputs/high_payout_model_v6_Model2_Conservative.txt
+   Model3_Complex モデル保存: analysis/model_outputs/high_payout_model_v6_Model3_Complex.txt
+   特徴量重要度保存: analysis/model_outputs/high_payout_model_v6_feature_importance.csv
+
+=== Top 20 重要特徴量 ===
+  entry_count: 1863.7
+  heikinTokuten_cv_x_nigeCnt_cv: 1066.2
+  score_gap_top2: 996.2
+  makuriCnt_std: 971.2
+  sasiCnt_cv: 878.8
+  heikinTokuten_min: 856.3
+  backCnt_std: 822.5
+  inner_outer_gap: 670.1
+  score_dominance: 651.6
+  makuriCnt_skew_proxy: 636.0
+  nigeCnt_cv_x_makuriCnt_cv: 618.0
+  nigeCnt_std: 609.0
+  race_no_norm: 596.6
+  heikinTokuten_std: 576.5
+  score_kurtosis_proxy: 575.6
+  markCnt_cv: 544.2
+  heikinTokuten_range_x_backCnt_cv: 517.3
+  makuriCnt_cv: 502.6
+  sasiCnt_skew_proxy: 477.7
+  score_gap_top3_bottom: 465.3
+
+✅ Version 6 アンサンブル訓練完了！
+
+============================================================
+📊 V6 アンサンブル 最終結果
+============================================================
+特徴量数: 112
+レース数: 27,711
+
+アンサンブル性能:
+  ROC-AUC (OOF):        0.5816
+  Precision@Top100:     0.5900 (59.0%)
+============================================================
