@@ -1,0 +1,25 @@
+データ読み込み中...
+/home/user/100_keirin/analysis/build_ultimate_features_v8.py:292: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
+  prerace = pd.read_csv('data/keirin_prerace_20240101_20241231_combined.csv')
+Traceback (most recent call last):
+  File "/home/user/100_keirin/analysis/build_ultimate_features_v8.py", line 319, in <module>
+    main()
+  File "/home/user/100_keirin/analysis/build_ultimate_features_v8.py", line 293, in main
+    results = pd.read_csv('data/keirin_results_20240101_20241231_combined.csv')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
+    self.handles = get_handle(
+                   ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/pandas/io/common.py", line 873, in get_handle
+    handle = open(
+             ^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/keirin_results_20240101_20241231_combined.csv'
