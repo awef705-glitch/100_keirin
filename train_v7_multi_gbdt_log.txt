@@ -1,0 +1,81 @@
+=== Version 7 マルチGBDT訓練開始 ===
+
+1. データ読み込み中...
+   27,711行, 118列
+   特徴量数: 112
+   Positive rate: 0.263
+
+2. マルチGBDT訓練開始...
+
+=== LightGBM 訓練 ===
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[58]	valid_0's auc: 0.630262
+  Fold 1: ROC-AUC=0.6303, P@100=0.52
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[41]	valid_0's auc: 0.627521
+  Fold 2: ROC-AUC=0.6275, P@100=0.56
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[38]	valid_0's auc: 0.615479
+  Fold 3: ROC-AUC=0.6155, P@100=0.49
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[83]	valid_0's auc: 0.64578
+  Fold 4: ROC-AUC=0.6458, P@100=0.58
+Training until validation scores don't improve for 30 rounds
+Early stopping, best iteration is:
+[128]	valid_0's auc: 0.652817
+  Fold 5: ROC-AUC=0.6528, P@100=0.55
+  → LightGBM OOF: ROC-AUC=0.5860, P@100=0.6100
+
+=== CatBoost 訓練 ===
+  Fold 1: ROC-AUC=0.6297, P@100=0.60
+  Fold 2: ROC-AUC=0.6259, P@100=0.55
+  Fold 3: ROC-AUC=0.6175, P@100=0.52
+  Fold 4: ROC-AUC=0.6432, P@100=0.63
+  Fold 5: ROC-AUC=0.6572, P@100=0.65
+  → CatBoost OOF: ROC-AUC=0.5861, P@100=0.6300
+
+=== XGBoost 訓練 ===
+  Fold 1: ROC-AUC=0.6295, P@100=0.51
+  Fold 2: ROC-AUC=0.6275, P@100=0.59
+  Fold 3: ROC-AUC=0.6112, P@100=0.49
+  Fold 4: ROC-AUC=0.6444, P@100=0.55
+  Fold 5: ROC-AUC=0.6568, P@100=0.63
+  → XGBoost OOF: ROC-AUC=0.5873, P@100=0.6000
+
+=== アンサンブル予測 ===
+  Ensemble (3モデル): ROC-AUC=0.5901, P@100=0.5800
+
+======================================================================
+📊 モデル比較
+======================================================================
+モデル                  ROC-AUC         Precision@Top100    
+----------------------------------------------------------------------
+lightgbm             0.5860          61.0                %
+catboost             0.5861          63.0                %
+xgboost              0.5873          60.0                %
+ensemble             0.5901          58.0                %
+======================================================================
+
+🏆 最良モデル: catboost (P@100=63.0%)
+
+3. 結果保存中...
+   OOF予測保存: analysis/model_outputs/high_payout_model_v7_oof.csv
+   メタデータ保存: analysis/model_outputs/high_payout_model_v7_metadata.json
+
+✅ Version 7 マルチGBDT訓練完了！
+
+======================================================================
+📊 V5 vs V7 比較
+======================================================================
+バージョン                特徴量数         Precision@Top100    
+----------------------------------------------------------------------
+V5 (ベスト)             84           67.0                %
+V7 (LightGBM)        112          61.0                %
+V7 (CatBoost)        112          63.0                %
+V7 (XGBoost)         112          60.0                %
+V7 (Ensemble)        112          58.0                %
+======================================================================
