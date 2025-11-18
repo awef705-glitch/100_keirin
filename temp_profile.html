@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE html>
+<html lang="ja" xmlns="http://www.w3.org/1999/xhtml"><head id="j_idt2">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+  <meta http-equiv="content-script-type" content="text/javascript" />
+  <meta http-equiv="content-style-type" content="text/css" />
+  <meta http-equiv="imagetoolbar" content="no" />
+  <meta name="author" content="JKA" />
+  <meta name="copyright" content="COPYRIGHT(C) JKA. ALL RIGHTS RESERVED." />
+  <meta name="robots" content="INDEX,FOLLOW" />
+
+  <title>選手プロフィール｜KEIRIN.JP</title>
+
+  <meta name="description" content="誕生日・血液型・師匠や練習仲間など、競輪選手の詳細な情報が入手できます。" />
+  <link rel="icon" href="/sp/static/img/common/favicon.ico" />
+  <link rel="stylesheet" href="/sp/static/css/common/bootstrap.min.css" />
+  <link rel="stylesheet" href="/sp/static/css/common/bootstrap-theme.min.css" />
+  <link rel="stylesheet" href="/sp/static/css/common/font-awesome.min.css" />
+  <link rel="stylesheet" href="/sp/static/css/common/jquery-ui.css" />
+  <link rel="stylesheet" href="/sp/static/css/S_base.css" />
+  <link rel="stylesheet" href="/sp/static/css/SJ0601_0319.css" />
+  <link rel="stylesheet" href="/sp/static/js/slick/slick.css" />
+  <link rel="stylesheet" href="/sp/static/js/slick/slick-theme.css" />
+  <link rel="stylesheet" href="/sp/static/css/subdialog.css" />
+  <script type="text/javascript" src="/sp/static/js/common/jquery-1.11.3.js"></script>
+  <script type="text/javascript" src="/sp/static/js/common/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/sp/static/js/common/jquery.cookie.js"></script>
+  <script type="text/javascript" src="/sp/static/js/common/jquery.json.min.js"></script>
+  <script type="text/javascript" src="/sp/static/js/common/jquery-ui.js"></script>
+  <script type="text/javascript" src="/sp/static/js/slick/slick.min.js"></script>
+  <script type="text/javascript" src="/sp/static/js/common/jquery.carouFredSel-6.2.1-packed.js"></script>
+  <script type="text/javascript" src="/sp/static/js/commonJSON.js"></script>
+  <script type="text/javascript" src="/sp/static/js/commonLoad.js"></script>
+  <script type="text/javascript" src="/sp/static/js/commonSubmit.js"></script>
+  <script type="text/javascript" src="/sp/static/js/S_ticker.js"></script>
+  <script type="text/javascript" src="/sp/static/js/S_footer.js"></script>
+  <script type="text/javascript" src="/sp/static/js/SJ0601.js"></script></head><body><div lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<div class="clear-fix dispoff">
+	<p class="fl-l"><img class="top_logo" alt="競輪.jp" src="/sp/static/img/topbtn.gif" /></p>
+</div>
+<div class="rainbowbar dispoff">
+</div>
+<div id="header" class="navbar" style="overflow-x: hidden">
+     <table class="w100pc">
+       <tbody>
+       <tr>
+       <td>
+       <div id="ticker_area" class="ticker_area clear-fix dispoff">
+         <div id="ticker" class="fl-l">
+           <div id="ticker_inner"> 
+				<div id="shTickerHsep" class="dispib"> </div><span class="ticker body_base_color">KEIRIN.JPインターネット・電話投票会員（CTC会員）募集中！詳しくは競輪トピックスをご覧ください。　　</span><span class="ticker body_base_color">ミッドナイト競輪は1番車から競走得点上位順に選手を並べ、より分かりやすく、よりシンプルに！　　</span>
+           </div>
+         </div>
+       </div>
+       </td>
+       </tr>
+       </tbody>
+     </table>
+</div>
+<script type="text/javascript">
+$(window).load(function() {
+	var flg = 0; 
+	var widthTckH = window.innerWidth-1;
+	var dispFlg = true;
+	if (flg == 0){
+		$('#ticker_area').css('height','32px');
+	}	
+	if (dispFlg == true) {
+		$('#ticker_area').removeClass('dispoff');
+		tickerdisp(flg,'ticker',widthTckH);
+		$('#shTickerHsep').width(widthTckH);
+	}
+});
+</script><input id="sfHdnLink_0" type="hidden" name="sfHdnLink_0" value="https://keirin.jp/sp/static/help/SU0601.html" />
+</div> 
+  <div class="btn50pv2 clear-fix" style="PADDING-TOP: 0px">
+    <table class="btn50pv2" style="TABLE-LAYOUT: fixed">
+      <tbody>
+        <tr>
+          <td>
+          <button id="btngroup1_kin" class="btn sbtn al-c" onclick="location.href='/sp/racerracentrecord?&amp;snum=014579'">近況成績</button>
+          </td>
+          <td><button id="btngroup1_puro" class="btn sbtn al-c active" onclick="location.href='/sp/racerprofile?&amp;snum=014579'">プロ<br />フィール</button></td>
+          <td>
+          <button id="btngroup1_tu" class="btn sbtn al-c" onclick="location.href='/sp/racertotalrecord?&amp;snum=014579'">通算成績</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+    <div style="PADDING: 5px 10px">
+      <p id="lblGradesNotes">※250競走の成績は、競走得点・各成績には反映されません。</p>
+    </div>
+  <div class="basewindows">
+    <p class="al-r" style="PADDING-BOTTOM: 5px">2025/11/16 02:35&nbsp;更新</p>
+    <div style="PADDING-BOTTOM: 10px">
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr>
+            <td class="tbl_header al-c" colspan="2">氏名</td>
+            <td class="tbl_header al-c">府県</td>
+            <td class="tbl_header al-c">期別</td>
+          </tr>
+          <tr>
+            <td class="al-c" colspan="2">齋藤　一茂</td>
+            <td class="al-c">群馬県</td>
+            <td class="al-c">97期</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">年齢</td>
+            <td class="tbl_header al-c">級班</td>
+            <td class="tbl_header al-c" colspan="2">登録番号</td>
+          </tr>
+          <tr>
+            <td class="al-c">36歳</td>
+            <td class="al-c">Ａ級１班</td>
+            <td id="regnum" class="al-c" colspan="2">014579</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="btn50pv2" style="PADDING-RIGHT: 0px">
+      <table class="btn50pv2">
+        <tbody>
+          <tr>
+            <td class="v-al-t" style="PADDING-BOTTOM: 0px; PADDING-TOP: 10px !important; PADDING-LEFT: 0px; PADDING-RIGHT: 0px">
+              <img id="poatrait" class="b-a" style="width:99%;" src="/sp/dfw/portal/picture/sen01/sen0145/014579_00.jpg" />
+            </td>
+            <td class="v-al-t">
+              <table>
+                <tbody>
+                  <tr>
+                    <td style="PADDING-LEFT: 0px; PADDING-RIGHT: 0px">
+                      <button id="itioshi_regist" type="button" class="btn bbtn al-c itioshi_regist " disabled="false">一押し選手登録</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="PADDING-LEFT: 0px; PADDING-RIGHT: 0px"><button class="btn bbtn al-c" onclick="window.open('/sp/static/help/SU0504.html#push','_blank'); return false;">一押し選手<br />について</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+            <td class="dispoff"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr><td class="tbl_header al-c" colspan="2">氏名 （フリガナ）</td></tr>
+          <tr><td class="al-c" colspan="2">サイトウ　カズシゲ</td></tr>
+          <tr>
+            <td class="tbl_header al-c">生年月日</td>
+            <td class="tbl_header al-c">級班所属日</td>
+          </tr>
+          <tr>
+            <td class="al-c">1988/12/07</td>
+            <td class="al-c">2024/07/01</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">今期得点</td>
+            <td class="tbl_header al-c">次期級班</td>
+          </tr>
+          <tr>
+            <td id="now_point" class="al-c">81.86</td>
+            <td class="al-c">Ａ級１班</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">脚質</td>
+            <td class="tbl_header al-c">性別</td>
+          </tr>
+          <tr>
+            <td class="al-c">逃</td>
+            <td class="al-c">男</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <p class="midasi4_fsz">■級班の履歴情報</p>
+      <table class="SJ0601_0319_table">
+        <thead>
+          <tr>
+            <td class="tbl_header al-c">級班</td>
+            <td class="tbl_header al-c">年月日</td>
+          </tr>
+        </thead>
+        <tbody class="altertable">
+          <tr>
+            <td class="al-c">Ａ級１班  <span></span></td>
+            <td class="al-c">2024/07/01</td>
+          </tr>
+          <tr>
+            <td class="al-c">Ａ級２班  <span></span></td>
+            <td class="al-c">2017/01/01</td>
+          </tr>
+          <tr>
+            <td class="al-c">Ａ級１班  <span></span></td>
+            <td class="al-c">2016/07/01</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <p class="midasi4_fsz">■身長・体重・体力等</p>
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr>
+            <td class="tbl_header al-c">星座</td>
+            <td class="tbl_header al-c">九星</td>
+            <td class="tbl_header al-c">血液型</td>
+          </tr>
+          <tr>
+            <td class="al-c">射手座</td>
+            <td class="al-c">三碧</td>
+            <td class="al-c">A </td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">身長</td>
+            <td class="tbl_header al-c">体重</td>
+            <td class="tbl_header al-c">胸囲</td>
+          </tr>
+          <tr>
+            <td class="al-c">168.0cm</td>
+            <td class="al-c">87.0kg</td>
+            <td class="al-c">100.0cm</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">太股</td>
+            <td class="tbl_header al-c">背筋力</td>
+            <td class="tbl_header al-c">肺活量</td>
+          </tr>
+          <tr>
+            <td class="al-c">65.5cm</td>
+            <td class="al-c">-</td>
+            <td class="al-c">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <p class="midasi4_fsz">■縁故・知人・仲間等</p>
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr><td class="tbl_header al-c">縁故選手</td></tr>
+          <tr><td class="al-c">-</td></tr>
+          <tr><td class="tbl_header al-c">友人</td></tr>
+          <tr>
+            <td class="al-c">-</td>
+          </tr>
+          <tr><td class="tbl_header al-c">練習仲間</td></tr>
+          <tr>
+            <td class="al-c">-</td>
+          </tr>
+          <tr><td class="tbl_header al-c">練習グループ</td></tr>
+          <tr><td class="al-c"><p>-</p></td></tr>
+          <tr><td class="tbl_header al-c">師匠</td></tr>
+          <tr>
+            <td class="al-c">
+              <table style="WIDTH: 100%">
+                <tbody>
+                  <tr>
+                    <td style="BORDER-LEFT-WIDTH: 0px !important; BORDER-RIGHT-WIDTH: 0px !important; WIDTH: 20%; BORDER-BOTTOM-WIDTH: 0px !important; BORDER-TOP-WIDTH: 0px !important"> </td>
+                    <td class="al-l nb-a" style="WIDTH: 30%">
+                      <p>山口　進一</p></td>
+                    <td class="al-l nb-a" style="WIDTH: 50%">
+                      <p>（群　馬・65期）</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+          <tr><td class="tbl_header al-c">弟子</td></tr>
+          <tr>
+            <td class="al-c">-</td>
+          </tr>
+          <tr><td class="tbl_header al-c">ニックネーム</td></tr>
+          <tr><td class="al-c"><p>カズ・シゲ・一茂</p></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr>
+            <td class="tbl_header al-c" colspan="5">ホームバンク</td>
+            <td class="tbl_header al-c" colspan="5"><span style="FONT-SIZE: 15px !important">ホーム競技場（練習地）</span></td>
+          </tr>
+          <tr>
+            <td class="al-c" colspan="5">前橋</td>
+            <td class="al-c" colspan="5">-</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c" colspan="5">得意な周長</td>
+            <td class="tbl_header al-c" colspan="5">得意な競輪場</td>
+          </tr>
+          <tr>
+            <td class="al-c" colspan="5">-</td>
+            <td class="al-c" colspan="5">-</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c" colspan="5">好きな車番</td>
+            <td class="tbl_header al-c" colspan="5">好きな食べ物</td>
+          </tr>
+          <tr>
+            <td id="car_num" class="al-c" colspan="5">７                  </td>
+            <td class="al-c" colspan="5">甘いもの</td>
+          </tr>
+          <tr><td class="tbl_header al-c" colspan="5">嫌いな食べ物</td></tr>
+          <tr><td class="al-c" colspan="5">-</td></tr>
+          <tr><td class="tbl_header al-c" colspan="10">自転車競技歴</td></tr>
+          <tr><td class="al-c" colspan="10">Ｈ１９年高校総体ケイリン第８位　Ｈ１９年都道府県チームスプリント第８位</td></tr>
+          <tr>
+            <td class="tbl_header al-c" colspan="5">中学校スポーツ歴</td>
+            <td class="tbl_header al-c" colspan="5">高校スポーツ歴</td>
+          </tr>
+          <tr>
+            <td class="al-c" colspan="5">剣道</td>
+            <td class="al-c" colspan="5">自転車競技</td>
+          </tr>
+          <tr><td class="tbl_header al-c" colspan="10">大学・社会人スポーツ歴</td></tr>
+          <tr><td class="al-c" colspan="10">-</td></tr>
+          <tr><td class="tbl_header al-c" colspan="10">他スポーツの主な成績</td></tr>
+          <tr><td class="al-c" colspan="10">-</td></tr>
+          <tr><td class="tbl_header al-c" colspan="10">JKA表彰歴</td></tr>
+          <tr><td class="al-c" colspan="10">-</td></tr>
+          <tr><td class="tbl_header al-c" colspan="10">褒章表彰</td></tr>
+          <tr><td class="al-c" colspan="10">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="PADDING-BOTTOM: 10px">
+      <p class="midasi4_fsz">■競輪学校時代</p>
+      <table class="SJ0601_0319_table">
+        <tbody>
+          <tr>
+            <td class="tbl_header al-c">受験区分</td>
+            <td class="tbl_header al-c">競輪学校1着回数</td>
+          </tr>
+          <tr>
+            <td class="al-c">技能</td>
+            <td class="al-c">17回</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">競輪学校2着回数</td>
+            <td class="tbl_header al-c">競輪学校3着回数</td>
+          </tr>
+          <tr>
+            <td class="al-c">6回</td>
+            <td class="al-c">6回</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">競輪学校着外回数</td>
+            <td class="tbl_header al-c">競輪学校順位</td>
+          </tr>
+          <tr>
+            <td class="al-c">53回</td>
+            <td class="al-c">39位</td>
+          </tr>
+          <tr><td class="tbl_header al-c" colspan="2">卒業記念レース</td></tr>
+          <tr><td class="al-c" colspan="2">-</td></tr>
+          <tr>
+            <td class="tbl_header al-c">200mタイム</td>
+            <td class="tbl_header al-c">400mタイム</td>
+          </tr>
+          <tr>
+            <td class="al-c">-</td>
+            <td class="al-c">-</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">1000mタイム</td>
+            <td class="tbl_header al-c">最高速度</td>
+          </tr>
+          <tr>
+            <td class="al-c">-</td>
+            <td class="al-c">-</td>
+          </tr>
+          <tr>
+            <td class="tbl_header al-c">ダッシュ力</td>
+            <td class="tbl_header al-c">持続時間</td>
+          </tr>
+          <tr>
+            <td class="al-c">-</td>
+            <td class="al-c">-</td>
+          </tr>
+          <tr><td class="tbl_header al-c" colspan="2">表彰</td></tr>
+          <tr><td class="al-c" colspan="2">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div><div lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<div class="rainbowbar"></div>
+<div class="copyright al-r">
+	<p>COPYRIGHT JKA. ALL RIGHTS RESERVED.</p>
+</div><div lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<link rel="stylesheet" href="/sp/static/css/common/font-awesome.min.css" />
+<link rel="stylesheet" href="/sp/static/css/sc0103.css" />
+<script type="text/javascript" src="/sp/static/js/S_footer.js"></script>
+<script type="text/javascript" src="/sp/static/js/commonSubmit.js"></script>
+<footer class="navbar navbar-fixed-bottom">
+<ul class="footer_menu">
+	<li id="fnlitop">
+		<img id="fnimgtop" alt="トップ" src="/sp/static/img/icon/footer_top_dis.png" prm="/sp/top" />
+	</li>
+	<li id="fnlibet">
+		<img id="fnimgbet" alt="投票" src="/sp/static/img/icon/footer_bet_dis.png" /><input id="fnHdnTouhyouUrl" type="hidden" name="fnHdnTouhyouUrl" value="https://keirin.jp/sp/voteselect" /><input id="fnHdnTouhyouEnc" type="hidden" name="fnHdnTouhyouEnc" value="J0qdkW5K2NBBNNnnrieX65f7C4_k_uzb0yaXVwoIWpo" />
+	</li>
+	<li id="fnlipc">
+		<img id="fnimgpc" alt="PCサイト" src="/sp/static/img/icon/footer_pc_dis.png" prm="https://keirin.jp/pc/top" />
+	</li>
+	<li id="fnlimenu" class="submenu">
+		<img id="fnimgmenu" alt="メニュー" src="/sp/static/img/icon/footer_menu_dis.png" />
+		<div class="sub-menu">
+			<table class="w-100p tbl_fixed">
+				<tbody>
+					<tr>
+						<td>
+							<button id="fnbtnKeirinTopics" class="btn onbtn" name="fnbtnKeirinTopics" jname="競輪トピックス" value="ボタン" onclick="location.href='/sp/topicslist'">競輪トピックス</button>
+						</td>
+						<td>
+							<button id="fnbtnNews" class="btn onbtn" name="fnbtnNews" jname="競輪場／場外車券売場からのお知らせ" value="ボタン" onclick="location.href='/sp/rmationlist'">競輪場／場外車券<br />売場からのお知らせ</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button id="fnbtnPlayerSearc" class="btn onbtn" name="fnbtnPlayerSearc" jname="選手検索" value="ボタン" onclick="location.href='/sp/racersearch'">選手検索</button>
+						</td>
+						<td>
+							<button id="fnbtnThedates" class="btn onbtn" name="fnbtnThedates" value="ボタン" onclick="location.href='/sp/raceschedule'">開催日程</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button id="fnbtnVelodromeList" class="btn onbtn" name="fnbtnVelodromeList" jname="競輪場一覧" value="ボタン" onclick="location.href='/sp/jyolist'">競輪場一覧</button>
+						</td>
+						<td>
+							<button id="fnbtnTicketsalesfloorList" class="btn onbtn" name="fnbtnTicketsalesfloorList" jname="場外車券売場一覧" value="ボタン" onclick="location.href='/sp/jyogailist'">場外車券売場一覧</button>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button id="fnbtnTicketsalesfloorList" class="btn onbtn" name="fnbtnTicketsalesfloorList" jname="ランキング" value="ボタン" onclick="sfRankingLinkClick()">ランキング<p class="outpage_link"><i class="fa fa-external-link"></i></p></button><input id="sfRankingUrl" type="hidden" name="sfRankingUrl" value="https://keirin.jp/pc/prizeranking" />						
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</li>
+	<li id="fnlihelp">
+       <a id="sfLinkGuideandHelp" onclick="sfHelpLinkClick()" target="_blank"><img id="fnimghelp" alt="ヘルプ" src="/sp/static/img/icon/footer_help_dis.png" /></a>
+    </li>
+</ul><input id="sfHelpLink" type="hidden" name="sfHelpLink" value="https://keirin.jp/sp/static/help/SU0601.html" />   
+</footer>
+<script type="text/javascript">
+$(window).load(function() {
+var flg = 9; 
+footerloading(flg);
+});
+sfLoadingFinalize();
+</script>
+</div>
+<script>
+//<![CDATA[
+    var anaxhr = new XMLHttpRequest();
+    var anaURL = location.protocol + '//' + location.host + '/sp' + '/ana';   
+    anaxhr.open("GET", anaURL);
+    anaxhr.setRequestHeader("X-KEIRINJP-ANA-SCREEN", screen.width+"x"+screen.height);
+    anaxhr.setRequestHeader("X-KEIRINJP-ANA-URI", window.location.href);
+    if("anaJsonType" in window){
+      anaxhr.setRequestHeader("X-KEIRINJP-ANA-JSONTYPE", anaJsonType);
+    }
+    anaxhr.send();
+   
+//]]>
+</script>
+</div>
+  <div id="conf_save" class="conf_save">
+    <div style="margin:10px 10px 10px 10px; width:270px;"><input id="itiosiUrl" type="hidden" name="itiosiUrl" />
+    </div>
+  </div><input id="codeConfError" type="hidden" name="codeConfError" /><input id="lnk_racelive" type="hidden" value="/sp/race"></body></html>
