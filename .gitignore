@@ -10,5 +10,15 @@ analysis/model_outputs/*
 !analysis/model_outputs/prerace_model_lgbm.txt
 !analysis/model_outputs/prerace_model_metadata.json
 !analysis/model_outputs/prerace_model_feature_importance.csv
+!analysis/model_outputs/high_payout_model_lgbm.txt
+!analysis/model_outputs/high_payout_model_lgbm_metadata.json
+!analysis/model_outputs/high_payout_model_lgbm_feature_importance.csv
+!analysis/model_outputs/high_payout_model_lgbm_oof.csv
+!analysis/model_outputs/high_payout_model_v5.txt
+!analysis/model_outputs/high_payout_model_v5_metadata.json
+!analysis/model_outputs/high_payout_model_v5_feature_importance.csv
+!analysis/model_outputs/high_payout_model_v5_oof.csv
+!analysis/model_outputs/rider_master.json
+!analysis/model_outputs/track_master.json
 .env
 catboost_info/

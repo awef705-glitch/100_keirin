@@ -15,11 +15,84 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 import uvicorn
 
-from analysis import prerace_model
 from analysis import betting_suggestions
+# V5モデルを直接使用
+from analysis.train_high_payout_model import add_derived_features, select_feature_columns
+import lightgbm as lgb
+import pandas as pd
+import numpy as np
 
 
 app = FastAPI(title="競輪 高配当予測ツール")
+
+
+def build_v5_features(race_info: Dict[str, Any]) -> pd.DataFrame:
+    """V5モデル用の特徴量を構築"""
+    riders = race_info.get("riders", [])
+
+    # 選手統計を計算
+    scores = [r.get("avg_score") for r in riders if r.get("avg_score") is not None]
+
+    # 脚質のカウント
+    styles = [r.get("style", "").strip() for r in riders]
+    style_counts = {
+        "逃": sum(1 for s in styles if s in ["逃", "逃げ", "先", "先行"]),
+        "捲": sum(1 for s in styles if s in ["捲", "まくり", "捲り"]),
+        "差": sum(1 for s in styles if s in ["差", "差し"]),
+        "追": sum(1 for s in styles if s in ["追", "追込", "追い込み", "マーク"]),
+    }
+
+    # 基本特徴量
+    row = {
+        "race_date": int(race_info.get("race_date", "20250101")),
+        "keirin_cd": race_info.get("keirin_cd", "01"),
+        "race_no_int": race_info.get("race_no", 1),
+        "track": race_info.get("track", "unknown"),
+        "category": race_info.get("grade", "A級"),
+        "grade": race_info.get("grade", "A級"),
+
+        # 選手得点統計
+        "heikinTokuten_mean": np.mean(scores) if scores else 0.0,
+        "heikinTokuten_std": np.std(scores) if len(scores) > 1 else 0.0,
+        "heikinTokuten_cv": np.std(scores) / np.mean(scores) if scores and np.mean(scores) > 0 else 0.0,
+
+        # 脚質カウント
+        "nigeCnt_mean": style_counts["逃"] / 9.0 if riders else 0.0,
+        "makuriCnt_mean": style_counts["捲"] / 9.0 if riders else 0.0,
+        "sashiCnt_mean": style_counts["差"] / 9.0 if riders else 0.0,
+        "tsuiCnt_mean": style_counts["追"] / 9.0 if riders else 0.0,
+
+        # 脚質のCV（バラつき）
+        "nigeCnt_cv": 0.5 if style_counts["逃"] > 0 else 0.0,
+        "makuriCnt_cv": 0.5 if style_counts["捲"] > 0 else 0.0,
+        "sashiCnt_cv": 0.5 if style_counts["差"] > 0 else 0.0,
+        "tsuiCnt_cv": 0.5 if style_counts["追"] > 0 else 0.0,
+
+        # ダミー値（手入力時は不明）
+        "trifecta_popularity": 50,  # 中位の人気と仮定
+    }
+
+    df = pd.DataFrame([row])
+
+    # V5の特徴量エンジニアリングを適用
+    df = add_derived_features(df)
+
+    # カテゴリカル特徴量を設定
+    categorical_cols = ["track", "category", "grade"]
+    for col in categorical_cols:
+        if col in df.columns:
+            df[col] = df[col].astype("category")
+
+    # V5の特徴量セットを選択
+    numeric_features, categorical_features = select_feature_columns(df)
+    all_features = numeric_features + categorical_features
+
+    # 存在しない列は0で埋める
+    for feat in all_features:
+        if feat not in df.columns:
+            df[feat] = 0
+
+    return df[all_features]
 
 # Load master data
 MASTER_DATA_DIR = Path("analysis/model_outputs")
@@ -49,30 +122,40 @@ TEMPLATES_DIR = Path("templates")
 TEMPLATES_DIR.mkdir(exist_ok=True)
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-# Load model artefacts once at startup.
+# Load V5 model artefacts once at startup.
 MODEL = None
 METADATA = {}
+FEATURE_COLUMNS = []
 MODEL_READY = False
 LIGHTGBM_READY = False
 USE_LIGHTGBM = os.getenv("KEIRIN_ENABLE_LIGHTGBM", "").strip().lower() in {"1", "true", "yes"}
 
+V5_MODEL_PATH = Path("analysis/model_outputs/high_payout_model_lgbm.txt")
+V5_METADATA_PATH = Path("analysis/model_outputs/high_payout_model_lgbm_metadata.json")
+
 try:
-    METADATA = prerace_model.load_metadata()
+    with open(V5_METADATA_PATH, 'r', encoding='utf-8') as f:
+        METADATA = json.load(f)
     MODEL_READY = True
+    print(f"✅ V5メタデータ読み込み成功: {METADATA.get('n_features')}特徴量, Precision@100={METADATA['metrics']['oof_precision_at_top_k']}")
 except FileNotFoundError:
     METADATA = {}
     MODEL_READY = False
+    print("⚠️ V5メタデータが見つかりません")
 
 if MODEL_READY and USE_LIGHTGBM:
     try:
-        MODEL = prerace_model.load_model()
+        MODEL = lgb.Booster(model_file=str(V5_MODEL_PATH))
         LIGHTGBM_READY = MODEL is not None
+        print(f"✅ V5モデル読み込み成功")
     except FileNotFoundError:
         MODEL = None
         LIGHTGBM_READY = False
-    except Exception:
+        print("⚠️ V5モデルファイルが見つかりません")
+    except Exception as e:
         MODEL = None
         LIGHTGBM_READY = False
+        print(f"⚠️ V5モデル読み込みエラー: {e}")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -182,18 +265,46 @@ async def predict(
         "riders": riders,
     }
 
-    bundle = prerace_model.build_manual_feature_row(race_info)
-    feature_frame, summary = prerace_model.align_features(bundle, METADATA["feature_columns"])
-    model_for_inference = MODEL if LIGHTGBM_READY else None
+    # V5モデルで予測
+    feature_df = build_v5_features(race_info)
 
-    # Prepare race context for track/category adjustment
-    race_context = {
-        'track': race_info.get('track', ''),
-        'category': category.strip(),
+    if LIGHTGBM_READY and MODEL is not None:
+        # V5モデルで予測
+        pred_proba = MODEL.predict(feature_df)[0]
+        probability = float(pred_proba)
+
+        # 信頼度を判定
+        if probability >= 0.7:
+            confidence = "高"
+            message = "このレースは高配当の可能性が高いです！"
+        elif probability >= 0.4:
+            confidence = "中"
+            message = "このレースは中程度の荒れが予想されます。"
+        else:
+            confidence = "低"
+            message = "このレースは堅い展開になりそうです。"
+    else:
+        # ルールベースのフォールバック
+        scores = [r.get("avg_score") for r in riders if r.get("avg_score")]
+        if scores:
+            score_cv = np.std(scores) / np.mean(scores) if np.mean(scores) > 0 else 0
+            probability = min(0.9, score_cv * 2)
+        else:
+            probability = 0.5
+        confidence = "ルールベース"
+        message = "V5モデルが利用できません。簡易予測を使用しています。"
+
+    result = {
+        "probability": probability,
+        "confidence": confidence,
+        "message": message,
+        "model": "V5 (Precision@100=67%)" if LIGHTGBM_READY else "ルールベース"
     }
 
-    probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA, race_context)
-    result = prerace_model.build_prediction_response(probability, summary, METADATA)
+    summary = {
+        "n_riders": len(riders),
+        "avg_score": np.mean([r.get("avg_score", 0) for r in riders if r.get("avg_score")]) if riders else 0,
+    }
 
     # 買い目提案を生成
     suggestions_data = betting_suggestions.generate_betting_suggestions(
