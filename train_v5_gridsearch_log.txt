@@ -1,0 +1,964 @@
+=== Version 5 訓練開始（グリッドサーチ付き）===
+
+1. データ読み込み中...
+   27,711行, 90列
+   特徴量数: 84
+   Positive rate: 0.263
+
+2. パラメータグリッド定義...
+=== ハイパーパラメータグリッドサーチ開始 ===
+
+グリッド組み合わせ数: 48
+各組み合わせで5分割CV実行
+
+[1/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[48]	valid_0's auc: 0.614242
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[72]	valid_0's auc: 0.61869
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[32]	valid_0's auc: 0.607673
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[122]	valid_0's auc: 0.647619
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[163]	valid_0's auc: 0.651258
+  → OOF ROC-AUC: 0.5810, Precision@Top100: 0.6100
+  ✅ 新ベスト！
+
+[2/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[43]	valid_0's auc: 0.617002
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[63]	valid_0's auc: 0.621759
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[38]	valid_0's auc: 0.606288
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[135]	valid_0's auc: 0.649769
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[149]	valid_0's auc: 0.650593
+  → OOF ROC-AUC: 0.5816, Precision@Top100: 0.6200
+  ✅ 新ベスト！
+
+[3/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[44]	valid_0's auc: 0.617401
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[78]	valid_0's auc: 0.617978
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[35]	valid_0's auc: 0.605775
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.647722
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[95]	valid_0's auc: 0.648899
+  → OOF ROC-AUC: 0.5792, Precision@Top100: 0.5800
+
+[4/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.619686
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[99]	valid_0's auc: 0.625111
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[36]	valid_0's auc: 0.607211
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[102]	valid_0's auc: 0.645737
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[72]	valid_0's auc: 0.650994
+  → OOF ROC-AUC: 0.5822, Precision@Top100: 0.5800
+
+[5/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[54]	valid_0's auc: 0.622425
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[78]	valid_0's auc: 0.624989
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[13]	valid_0's auc: 0.604017
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[111]	valid_0's auc: 0.644057
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[135]	valid_0's auc: 0.650591
+  → OOF ROC-AUC: 0.5723, Precision@Top100: 0.6200
+
+[6/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[57]	valid_0's auc: 0.621579
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[64]	valid_0's auc: 0.624171
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[46]	valid_0's auc: 0.604295
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[83]	valid_0's auc: 0.645363
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[110]	valid_0's auc: 0.649781
+  → OOF ROC-AUC: 0.5826, Precision@Top100: 0.5700
+
+[7/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.612356
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[71]	valid_0's auc: 0.621484
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[39]	valid_0's auc: 0.610476
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[158]	valid_0's auc: 0.647868
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.650318
+  → OOF ROC-AUC: 0.5821, Precision@Top100: 0.6400
+  ✅ 新ベスト！
+
+[8/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[65]	valid_0's auc: 0.621323
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[77]	valid_0's auc: 0.620618
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[27]	valid_0's auc: 0.604797
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.64748
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[122]	valid_0's auc: 0.650731
+  → OOF ROC-AUC: 0.5790, Precision@Top100: 0.6700
+  ✅ 新ベスト！
+
+[9/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[66]	valid_0's auc: 0.618248
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[99]	valid_0's auc: 0.618272
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[37]	valid_0's auc: 0.607348
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[79]	valid_0's auc: 0.643653
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[93]	valid_0's auc: 0.64885
+  → OOF ROC-AUC: 0.5794, Precision@Top100: 0.5600
+
+[10/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[44]	valid_0's auc: 0.616176
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.62555
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[39]	valid_0's auc: 0.608066
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.646191
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[79]	valid_0's auc: 0.65043
+  → OOF ROC-AUC: 0.5826, Precision@Top100: 0.5800
+
+[11/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[49]	valid_0's auc: 0.618493
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[79]	valid_0's auc: 0.623189
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.608425
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[82]	valid_0's auc: 0.644607
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[50]	valid_0's auc: 0.646133
+  → OOF ROC-AUC: 0.5815, Precision@Top100: 0.5900
+
+[12/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[48]	valid_0's auc: 0.619459
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[80]	valid_0's auc: 0.623296
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[16]	valid_0's auc: 0.606714
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[69]	valid_0's auc: 0.643992
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[84]	valid_0's auc: 0.651995
+  → OOF ROC-AUC: 0.5728, Precision@Top100: 0.5900
+
+[13/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[93]	valid_0's auc: 0.614168
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[73]	valid_0's auc: 0.616948
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[16]	valid_0's auc: 0.606992
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[112]	valid_0's auc: 0.644083
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[108]	valid_0's auc: 0.646548
+  → OOF ROC-AUC: 0.5746, Precision@Top100: 0.5400
+
+[14/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[90]	valid_0's auc: 0.615185
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[64]	valid_0's auc: 0.61611
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[24]	valid_0's auc: 0.602686
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[57]	valid_0's auc: 0.64431
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[72]	valid_0's auc: 0.647403
+  → OOF ROC-AUC: 0.5750, Precision@Top100: 0.5600
+
+[15/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[60]	valid_0's auc: 0.614919
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.618688
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.603191
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[80]	valid_0's auc: 0.644216
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[125]	valid_0's auc: 0.649091
+  → OOF ROC-AUC: 0.5773, Precision@Top100: 0.6000
+
+[16/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[60]	valid_0's auc: 0.618218
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[72]	valid_0's auc: 0.621999
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[18]	valid_0's auc: 0.605686
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[113]	valid_0's auc: 0.643791
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[100]	valid_0's auc: 0.651654
+  → OOF ROC-AUC: 0.5768, Precision@Top100: 0.6200
+
+[17/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.620634
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.623677
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[14]	valid_0's auc: 0.603354
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[63]	valid_0's auc: 0.644764
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[99]	valid_0's auc: 0.649395
+  → OOF ROC-AUC: 0.5724, Precision@Top100: 0.6300
+
+[18/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[55]	valid_0's auc: 0.619169
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[68]	valid_0's auc: 0.621608
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[44]	valid_0's auc: 0.602215
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[73]	valid_0's auc: 0.642327
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[97]	valid_0's auc: 0.648274
+  → OOF ROC-AUC: 0.5808, Precision@Top100: 0.5900
+
+[19/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[82]	valid_0's auc: 0.613024
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.613597
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[21]	valid_0's auc: 0.607844
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[58]	valid_0's auc: 0.642245
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[56]	valid_0's auc: 0.646674
+  → OOF ROC-AUC: 0.5769, Precision@Top100: 0.4900
+
+[20/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[55]	valid_0's auc: 0.610841
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[74]	valid_0's auc: 0.613303
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[20]	valid_0's auc: 0.602619
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[69]	valid_0's auc: 0.646072
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[104]	valid_0's auc: 0.6468
+  → OOF ROC-AUC: 0.5747, Precision@Top100: 0.5500
+
+[21/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.609942
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[40]	valid_0's auc: 0.61352
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[18]	valid_0's auc: 0.60486
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[60]	valid_0's auc: 0.645495
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.649037
+  → OOF ROC-AUC: 0.5736, Precision@Top100: 0.5300
+
+[22/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[54]	valid_0's auc: 0.616777
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[82]	valid_0's auc: 0.621789
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[17]	valid_0's auc: 0.605147
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[120]	valid_0's auc: 0.642287
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[83]	valid_0's auc: 0.651345
+  → OOF ROC-AUC: 0.5774, Precision@Top100: 0.6200
+
+[23/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.614582
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.619343
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[19]	valid_0's auc: 0.602383
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[62]	valid_0's auc: 0.643012
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[43]	valid_0's auc: 0.647362
+  → OOF ROC-AUC: 0.5751, Precision@Top100: 0.5600
+
+[24/48] 試行中: {'learning_rate': 0.03, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.611003
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.621342
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[20]	valid_0's auc: 0.601345
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[75]	valid_0's auc: 0.643994
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[56]	valid_0's auc: 0.647373
+  → OOF ROC-AUC: 0.5748, Precision@Top100: 0.5800
+
+[25/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[28]	valid_0's auc: 0.615304
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[25]	valid_0's auc: 0.618144
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[18]	valid_0's auc: 0.610173
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[67]	valid_0's auc: 0.645795
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[58]	valid_0's auc: 0.651333
+  → OOF ROC-AUC: 0.5808, Precision@Top100: 0.5300
+
+[26/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[27]	valid_0's auc: 0.612669
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.619154
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[15]	valid_0's auc: 0.606342
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[29]	valid_0's auc: 0.646143
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[69]	valid_0's auc: 0.650637
+  → OOF ROC-AUC: 0.5773, Precision@Top100: 0.5700
+
+[27/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[26]	valid_0's auc: 0.618306
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[26]	valid_0's auc: 0.619758
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[16]	valid_0's auc: 0.604056
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[74]	valid_0's auc: 0.649047
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[86]	valid_0's auc: 0.650779
+  → OOF ROC-AUC: 0.5778, Precision@Top100: 0.5700
+
+[28/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.616574
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[50]	valid_0's auc: 0.625752
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[24]	valid_0's auc: 0.606736
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[50]	valid_0's auc: 0.645651
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.649715
+  → OOF ROC-AUC: 0.5824, Precision@Top100: 0.5700
+
+[29/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.618735
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[36]	valid_0's auc: 0.62413
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[22]	valid_0's auc: 0.604149
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[76]	valid_0's auc: 0.646313
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[81]	valid_0's auc: 0.648732
+  → OOF ROC-AUC: 0.5814, Precision@Top100: 0.5700
+
+[30/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[32]	valid_0's auc: 0.622053
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.625636
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[62]	valid_0's auc: 0.604469
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[67]	valid_0's auc: 0.645469
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[59]	valid_0's auc: 0.649853
+  → OOF ROC-AUC: 0.5845, Precision@Top100: 0.5700
+
+[31/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[39]	valid_0's auc: 0.614186
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[40]	valid_0's auc: 0.620073
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[22]	valid_0's auc: 0.606914
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[61]	valid_0's auc: 0.646953
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[82]	valid_0's auc: 0.651437
+  → OOF ROC-AUC: 0.5816, Precision@Top100: 0.5600
+
+[32/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.618858
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.61876
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[21]	valid_0's auc: 0.607443
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[44]	valid_0's auc: 0.644231
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[72]	valid_0's auc: 0.648958
+  → OOF ROC-AUC: 0.5800, Precision@Top100: 0.5900
+
+[33/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.615047
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[38]	valid_0's auc: 0.621283
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[22]	valid_0's auc: 0.609625
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[40]	valid_0's auc: 0.646956
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[52]	valid_0's auc: 0.652208
+  → OOF ROC-AUC: 0.5809, Precision@Top100: 0.5200
+
+[34/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.61567
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.622386
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[23]	valid_0's auc: 0.611056
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.644486
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.649524
+  → OOF ROC-AUC: 0.5820, Precision@Top100: 0.5500
+
+[35/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.619523
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[65]	valid_0's auc: 0.62501
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[38]	valid_0's auc: 0.607158
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[49]	valid_0's auc: 0.646613
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[37]	valid_0's auc: 0.646439
+  → OOF ROC-AUC: 0.5832, Precision@Top100: 0.5600
+
+[36/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[31]	valid_0's auc: 0.619305
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[65]	valid_0's auc: 0.626025
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[37]	valid_0's auc: 0.607656
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[65]	valid_0's auc: 0.645832
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[21]	valid_0's auc: 0.646107
+  → OOF ROC-AUC: 0.5811, Precision@Top100: 0.5700
+
+[37/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[33]	valid_0's auc: 0.61288
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[41]	valid_0's auc: 0.616851
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[16]	valid_0's auc: 0.606042
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[64]	valid_0's auc: 0.643955
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[69]	valid_0's auc: 0.646141
+  → OOF ROC-AUC: 0.5783, Precision@Top100: 0.5400
+
+[38/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[113]	valid_0's auc: 0.616503
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[36]	valid_0's auc: 0.614301
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[10]	valid_0's auc: 0.601154
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[48]	valid_0's auc: 0.645967
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[79]	valid_0's auc: 0.645976
+  → OOF ROC-AUC: 0.5727, Precision@Top100: 0.5000
+
+[39/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.615564
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.618039
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[11]	valid_0's auc: 0.600462
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[70]	valid_0's auc: 0.645254
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[84]	valid_0's auc: 0.64911
+  → OOF ROC-AUC: 0.5729, Precision@Top100: 0.5700
+
+[40/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[29]	valid_0's auc: 0.615865
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[43]	valid_0's auc: 0.624338
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[11]	valid_0's auc: 0.604831
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[33]	valid_0's auc: 0.641632
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[84]	valid_0's auc: 0.652221
+  → OOF ROC-AUC: 0.5768, Precision@Top100: 0.6200
+
+[41/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[27]	valid_0's auc: 0.618375
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.6268
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[11]	valid_0's auc: 0.603677
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[37]	valid_0's auc: 0.642279
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[52]	valid_0's auc: 0.645883
+  → OOF ROC-AUC: 0.5742, Precision@Top100: 0.6100
+
+[42/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[35]	valid_0's auc: 0.618847
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[50]	valid_0's auc: 0.625068
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[18]	valid_0's auc: 0.601586
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[54]	valid_0's auc: 0.642895
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[48]	valid_0's auc: 0.646814
+  → OOF ROC-AUC: 0.5780, Precision@Top100: 0.5900
+
+[43/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[67]	valid_0's auc: 0.611944
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[58]	valid_0's auc: 0.612857
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[10]	valid_0's auc: 0.609123
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[61]	valid_0's auc: 0.644325
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[20]	valid_0's auc: 0.647635
+  → OOF ROC-AUC: 0.5742, Precision@Top100: 0.5500
+
+[44/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.609469
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[31]	valid_0's auc: 0.611892
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[24]	valid_0's auc: 0.601962
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.643344
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[33]	valid_0's auc: 0.650922
+  → OOF ROC-AUC: 0.5789, Precision@Top100: 0.5100
+
+[45/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[26]	valid_0's auc: 0.603978
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[53]	valid_0's auc: 0.615946
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[14]	valid_0's auc: 0.604966
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[41]	valid_0's auc: 0.643491
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[44]	valid_0's auc: 0.648878
+  → OOF ROC-AUC: 0.5745, Precision@Top100: 0.5200
+
+[46/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.0}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[30]	valid_0's auc: 0.616276
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[64]	valid_0's auc: 0.618616
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[25]	valid_0's auc: 0.606447
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[71]	valid_0's auc: 0.641472
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.651724
+  → OOF ROC-AUC: 0.5814, Precision@Top100: 0.5800
+
+[47/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.5}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[36]	valid_0's auc: 0.61678
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[59]	valid_0's auc: 0.622592
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[10]	valid_0's auc: 0.602666
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[59]	valid_0's auc: 0.643866
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[28]	valid_0's auc: 0.645159
+  → OOF ROC-AUC: 0.5744, Precision@Top100: 0.5800
+
+[48/48] 試行中: {'learning_rate': 0.05, 'num_leaves': 63, 'max_depth': 8, 'min_child_samples': 50, 'scale_pos_weight': 2.8}
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[34]	valid_0's auc: 0.612578
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[49]	valid_0's auc: 0.620657
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[10]	valid_0's auc: 0.602533
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[45]	valid_0's auc: 0.637408
+Training until validation scores don't improve for 20 rounds
+Early stopping, best iteration is:
+[42]	valid_0's auc: 0.647139
+  → OOF ROC-AUC: 0.5721, Precision@Top100: 0.5600
+
+
+=== グリッドサーチ完了 ===
+ベストスコア（Precision@Top100）: 0.6700
+ベストパラメータ: {'objective': 'binary', 'metric': 'auc', 'boosting_type': 'gbdt', 'verbose': -1, 'seed': 42, 'learning_rate': 0.03, 'num_leaves': 31, 'max_depth': 8, 'min_child_samples': 30, 'scale_pos_weight': 2.5}
+
+
+3. グリッドサーチ結果を保存中...
+   保存完了: analysis/model_outputs/v5_gridsearch_results.json
+
+4. ベストパラメータで最終訓練中...
+
+  Fold 1/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.617905
+Early stopping, best iteration is:
+[65]	valid_0's auc: 0.621323
+  → ROC-AUC: 0.6213, Precision@Top100: 0.52, Best iteration: 65
+
+  Fold 2/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.618244
+[100]	valid_0's auc: 0.61972
+Early stopping, best iteration is:
+[77]	valid_0's auc: 0.620618
+  → ROC-AUC: 0.6206, Precision@Top100: 0.59, Best iteration: 77
+
+  Fold 3/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.604303
+Early stopping, best iteration is:
+[27]	valid_0's auc: 0.604797
+  → ROC-AUC: 0.6048, Precision@Top100: 0.49, Best iteration: 27
+
+  Fold 4/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.644552
+[100]	valid_0's auc: 0.646656
+Early stopping, best iteration is:
+[85]	valid_0's auc: 0.64748
+  → ROC-AUC: 0.6475, Precision@Top100: 0.58, Best iteration: 85
+
+  Fold 5/5 訓練中...
+Training until validation scores don't improve for 30 rounds
+[50]	valid_0's auc: 0.647124
+[100]	valid_0's auc: 0.64974
+[150]	valid_0's auc: 0.650344
+Early stopping, best iteration is:
+[122]	valid_0's auc: 0.650731
+  → ROC-AUC: 0.6507, Precision@Top100: 0.53, Best iteration: 122
+
+=== OOF全体のパフォーマンス ===
+ROC-AUC: 0.5790
+Precision@Top100: 0.6700
+
+5. 最終モデルを全データで訓練中...
+   モデル保存: analysis/model_outputs/high_payout_model_v5.txt
+   メタデータ保存: analysis/model_outputs/high_payout_model_v5_metadata.json
+   OOF予測保存: analysis/model_outputs/high_payout_model_v5_oof.csv
+   特徴量重要度保存: analysis/model_outputs/high_payout_model_v5_feature_importance.csv
+
+=== Top 20 重要特徴量 ===
+  entry_count: 6855.8
+  heikinTokuten_cv: 6466.7
+  heikinTokuten_mean: 5406.5
+  heikinTokuten_min: 4784.0
+  makuriCnt_std: 3458.9
+  nigeCnt_std: 3193.2
+  heikinTokuten_max: 3080.1
+  score_dominance: 2715.3
+  score_gap_top3_bottom: 2580.0
+  heikinTokuten_cv_x_nigeCnt_cv: 2260.1
+  score_concentration: 2139.2
+  sasiCnt_cv: 1865.2
+  heikinTokuten_std_x_sasiCnt_cv: 1802.3
+  backCnt_cv: 1793.2
+  style_total: 1772.9
+  heikinTokuten_range_x_backCnt_cv: 1538.8
+  sasiCnt_mean: 1241.5
+  score_gap_top2: 1214.2
+  markCnt_cv: 1162.9
+  month: 1072.7
+
+✅ Version 5 訓練完了！
