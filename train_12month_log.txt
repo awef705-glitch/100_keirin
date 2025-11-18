@@ -1,0 +1,14 @@
+================================================================================
+競輪高配当予測：LightGBMモデル訓練（事前データのみ）
+================================================================================
+
+📂 Loading data from: data/clean_training_dataset.csv
+✓ Loaded 27,722 races, 90 columns
+
+📋 Feature Set:
+   Total features: 84
+   Target: target_high_payout
+
+⚠️  WARNING: Potentially post-race features detected:
+   - trifecta_payout_value
+   These should be excluded before training!
