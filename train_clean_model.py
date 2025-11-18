@@ -240,9 +240,13 @@ def main():
     print(f"   Target: {target_col}")
 
     # Check for any remaining post-race data
-    suspicious_cols = [c for c in feature_cols if any(
-        word in c.lower() for word in ['finish', 'result', 'payout', 'popularity']
-    )]
+    # Note: 'recent_finish' columns are PRE-race data (from prior races, not current race)
+    allowed_prefixes = ['recent_finish']
+    suspicious_cols = [
+        c for c in feature_cols
+        if any(word in c.lower() for word in ['finish', 'result', 'payout', 'popularity'])
+        and not any(c.startswith(prefix) for prefix in allowed_prefixes)
+    ]
     if suspicious_cols:
         print(f"\n⚠️  WARNING: Potentially post-race features detected:")
         for col in suspicious_cols:

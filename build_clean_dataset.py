@@ -242,6 +242,135 @@ def aggregate_race_features(race_df):
     else:
         race_info['b_experience_entropy'] = 0.0
 
+    # === 前期級班（prevKyuhan）の分析 ===
+    # 前期の級班変化は選手の調子・昇降を示す事前データ
+    if 'prevKyuhan' in race_df.columns:
+        prev_grades = race_df['prevKyuhan'].fillna('unknown').astype(str)
+        prev_grade_counts = prev_grades.value_counts().to_dict()
+
+        # 前期級班の多様性
+        race_info['prev_grade_entropy'] = calculate_entropy(prev_grade_counts)
+
+        # 級班変化数（前期と現在の級班が異なる選手の数）
+        if 'kyuhan' in race_df.columns:
+            current_grades = race_df['kyuhan'].fillna('unknown').astype(str)
+            grade_changes = (prev_grades != current_grades).sum()
+            race_info['grade_change_count'] = int(grade_changes)
+            race_info['grade_change_ratio'] = grade_changes / entry_count if entry_count > 0 else 0.0
+        else:
+            race_info['grade_change_count'] = 0
+            race_info['grade_change_ratio'] = 0.0
+    else:
+        race_info['prev_grade_entropy'] = 0.0
+        race_info['grade_change_count'] = 0
+        race_info['grade_change_ratio'] = 0.0
+
+    # === 最近の成績（recent_finish）の分析 ===
+    # 直近レースの着順は選手の調子を示す事前データ
+    if 'recent_finish_avg' in race_df.columns:
+        recent_avg = pd.to_numeric(race_df['recent_finish_avg'], errors='coerce').dropna()
+        if len(recent_avg) > 0:
+            race_info['recent_finish_avg_mean'] = float(recent_avg.mean())
+            race_info['recent_finish_avg_std'] = float(recent_avg.std()) if len(recent_avg) > 1 else 0.0
+            race_info['recent_finish_avg_min'] = float(recent_avg.min())
+            race_info['recent_finish_avg_max'] = float(recent_avg.max())
+        else:
+            for suffix in ['mean', 'std', 'min', 'max']:
+                race_info[f'recent_finish_avg_{suffix}'] = 0.0
+    else:
+        for suffix in ['mean', 'std', 'min', 'max']:
+            race_info[f'recent_finish_avg_{suffix}'] = 0.0
+
+    if 'recent_finish_last' in race_df.columns:
+        recent_last = pd.to_numeric(race_df['recent_finish_last'], errors='coerce').dropna()
+        if len(recent_last) > 0:
+            race_info['recent_finish_last_mean'] = float(recent_last.mean())
+            race_info['recent_finish_last_std'] = float(recent_last.std()) if len(recent_last) > 1 else 0.0
+            race_info['recent_finish_last_min'] = float(recent_last.min())
+            race_info['recent_finish_last_max'] = float(recent_last.max())
+        else:
+            for suffix in ['mean', 'std', 'min', 'max']:
+                race_info[f'recent_finish_last_{suffix}'] = 0.0
+    else:
+        for suffix in ['mean', 'std', 'min', 'max']:
+            race_info[f'recent_finish_last_{suffix}'] = 0.0
+
+    # === レース内競争力指標（score_rank, score_percentile等）の分析 ===
+    # これらはレース内での相対的な競走得点位置を示す
+    if 'score_rank' in race_df.columns:
+        score_ranks = pd.to_numeric(race_df['score_rank'], errors='coerce').dropna()
+        if len(score_ranks) > 0:
+            race_info['score_rank_mean'] = float(score_ranks.mean())
+            race_info['score_rank_std'] = float(score_ranks.std()) if len(score_ranks) > 1 else 0.0
+        else:
+            race_info['score_rank_mean'] = 0.0
+            race_info['score_rank_std'] = 0.0
+    else:
+        race_info['score_rank_mean'] = 0.0
+        race_info['score_rank_std'] = 0.0
+
+    if 'score_percentile' in race_df.columns:
+        score_pct = pd.to_numeric(race_df['score_percentile'], errors='coerce').dropna()
+        if len(score_pct) > 0:
+            race_info['score_percentile_mean'] = float(score_pct.mean())
+            race_info['score_percentile_std'] = float(score_pct.std()) if len(score_pct) > 1 else 0.0
+        else:
+            race_info['score_percentile_mean'] = 0.0
+            race_info['score_percentile_std'] = 0.0
+    else:
+        race_info['score_percentile_mean'] = 0.0
+        race_info['score_percentile_std'] = 0.0
+
+    if 'score_diff' in race_df.columns:
+        score_diff = pd.to_numeric(race_df['score_diff'], errors='coerce').dropna()
+        if len(score_diff) > 0:
+            race_info['score_diff_mean'] = float(score_diff.mean())
+            race_info['score_diff_std'] = float(score_diff.std()) if len(score_diff) > 1 else 0.0
+        else:
+            race_info['score_diff_mean'] = 0.0
+            race_info['score_diff_std'] = 0.0
+    else:
+        race_info['score_diff_mean'] = 0.0
+        race_info['score_diff_std'] = 0.0
+
+    if 'score_z' in race_df.columns:
+        score_z = pd.to_numeric(race_df['score_z'], errors='coerce').dropna()
+        if len(score_z) > 0:
+            race_info['score_z_mean'] = float(score_z.mean())
+            race_info['score_z_std'] = float(score_z.std()) if len(score_z) > 1 else 0.0
+        else:
+            race_info['score_z_mean'] = 0.0
+            race_info['score_z_std'] = 0.0
+    else:
+        race_info['score_z_mean'] = 0.0
+        race_info['score_z_std'] = 0.0
+
+    # === レース構成指標（同郷率・同脚質率）===
+    # レース全体の同質性を示す
+    if 'same_prefecture_ratio' in race_df.columns:
+        same_pref = pd.to_numeric(race_df['same_prefecture_ratio'], errors='coerce').dropna()
+        if len(same_pref) > 0:
+            race_info['same_prefecture_ratio_mean'] = float(same_pref.mean())
+            race_info['same_prefecture_ratio_max'] = float(same_pref.max())
+        else:
+            race_info['same_prefecture_ratio_mean'] = 0.0
+            race_info['same_prefecture_ratio_max'] = 0.0
+    else:
+        race_info['same_prefecture_ratio_mean'] = 0.0
+        race_info['same_prefecture_ratio_max'] = 0.0
+
+    if 'same_style_ratio' in race_df.columns:
+        same_style = pd.to_numeric(race_df['same_style_ratio'], errors='coerce').dropna()
+        if len(same_style) > 0:
+            race_info['same_style_ratio_mean'] = float(same_style.mean())
+            race_info['same_style_ratio_max'] = float(same_style.max())
+        else:
+            race_info['same_style_ratio_mean'] = 0.0
+            race_info['same_style_ratio_max'] = 0.0
+    else:
+        race_info['same_style_ratio_mean'] = 0.0
+        race_info['same_style_ratio_max'] = 0.0
+
     # === レース番号（時間帯） ===
     race_info['race_no_int'] = int(race_df['race_no'].iloc[0])
 
