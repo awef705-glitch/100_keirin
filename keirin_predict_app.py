@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-競輪V5予測アプリ - レース前予測版
-これから開催されるレースの情報を入力して、高配当を予測
+競輪V5予測アプリ - レース予測（選手マスター対応版）
+選手名オートコンプリート、地域/ライン情報加味
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -25,9 +25,29 @@ except ImportError as e:
     print(f"⚠️ モデル読み込みエラー: {e}")
     MODEL_AVAILABLE = False
 
-# V5モデルを読み込み
+# データファイルのパス
+RIDER_MASTER_PATH = Path("analysis/model_outputs/rider_master.json")
+TRACK_MASTER_PATH = Path("analysis/model_outputs/track_master.json")
 V5_MODEL_PATH = Path("analysis/model_outputs/high_payout_model_lgbm.txt")
+
+# データ読み込み
+riders_data = []
+tracks_data = []
 v5_model = None
+
+try:
+    with open(RIDER_MASTER_PATH, 'r', encoding='utf-8') as f:
+        riders_data = json.load(f)
+    print(f"✅ 選手マスター読み込み: {len(riders_data)}名")
+except Exception as e:
+    print(f"⚠️ 選手マスター読み込みエラー: {e}")
+
+try:
+    with open(TRACK_MASTER_PATH, 'r', encoding='utf-8') as f:
+        tracks_data = json.load(f)
+    print(f"✅ トラックマスター読み込み: {len(tracks_data)}会場")
+except Exception as e:
+    print(f"⚠️ トラックマスター読み込みエラー: {e}")
 
 if MODEL_AVAILABLE and V5_MODEL_PATH.exists():
     try:
@@ -45,6 +65,8 @@ class PredictHandler(BaseHTTPRequestHandler):
 
         if path == '/':
             self.serve_input_form()
+        elif path == '/api/riders':
+            self.serve_riders_api()
         else:
             self.send_404()
 
@@ -60,10 +82,22 @@ class PredictHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write('<h1>404 Not Found</h1>'.encode())
 
-    def serve_input_form(self):
-        """レース情報入力フォーム"""
+    def serve_riders_api(self):
+        """選手マスターAPIエンドポイント"""
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(json.dumps(riders_data, ensure_ascii=False).encode())
 
-        html = """
+    def serve_input_form(self):
+        """レース情報入力フォーム（選手オートコンプリート対応）"""
+
+        # 会場オプション生成
+        track_options = ""
+        for track in tracks_data:
+            track_options += f'<option value="{track["name"]}">{track["name"]}</option>\n'
+
+        html = f"""
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -71,99 +105,100 @@ class PredictHandler(BaseHTTPRequestHandler):
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>競輪V5予測 - レース予測</title>
+    <title>競輪V5予測</title>
     <style>
-        * {
+        * {{
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
+        }}
 
-        body {
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px 10px 80px 10px;
-        }
+        }}
 
-        .container {
+        .container {{
             max-width: 600px;
             margin: 0 auto;
-        }
+        }}
 
-        .header {
+        .header {{
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 25px 20px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             border-radius: 20px 20px 0 0;
-        }
+        }}
 
-        .header h1 {
+        .header h1 {{
             font-size: 24px;
             color: #667eea;
             margin-bottom: 5px;
-        }
+        }}
 
-        .header .subtitle {
+        .header .subtitle {{
             font-size: 14px;
             color: #666;
-        }
+        }}
 
-        .form-card {
+        .form-card {{
             background: white;
             padding: 25px 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        }}
 
-        .section {
+        .section {{
             margin-bottom: 30px;
-        }
+        }}
 
-        .section-title {
+        .section-title {{
             font-size: 18px;
             font-weight: bold;
             color: #333;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #667eea;
-        }
+        }}
 
-        .form-group {
+        .form-group {{
             margin-bottom: 15px;
-        }
+            position: relative;
+        }}
 
-        label {
+        label {{
             display: block;
             font-size: 14px;
             color: #666;
             margin-bottom: 5px;
             font-weight: 600;
-        }
+        }}
 
-        input, select {
+        input, select {{
             width: 100%;
             padding: 12px;
             border: 2px solid #eee;
             border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.3s;
-        }
+        }}
 
-        input:focus, select:focus {
+        input:focus, select:focus {{
             outline: none;
             border-color: #667eea;
-        }
+        }}
 
-        .rider-card {
+        .rider-card {{
             background: #f8f9fa;
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 15px;
-        }
+        }}
 
-        .rider-number {
+        .rider-number {{
             display: inline-block;
             background: #667eea;
             color: white;
@@ -174,9 +209,9 @@ class PredictHandler(BaseHTTPRequestHandler):
             border-radius: 50%;
             font-weight: bold;
             margin-bottom: 10px;
-        }
+        }}
 
-        .submit-button {
+        .submit-button {{
             width: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -188,41 +223,89 @@ class PredictHandler(BaseHTTPRequestHandler):
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             transition: transform 0.2s;
-        }
+        }}
 
-        .submit-button:active {
+        .submit-button:active {{
             transform: scale(0.98);
-        }
+        }}
 
-        .help-text {
+        .help-text {{
             font-size: 12px;
             color: #999;
             margin-top: 5px;
-        }
+        }}
 
-        .grid-2 {
+        .grid-2 {{
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-        }
+        }}
 
-        .loading {
+        .loading {{
             display: none;
             text-align: center;
             padding: 20px;
-            color: white;
-        }
+            color: #667eea;
+            font-weight: bold;
+        }}
 
-        .loading.active {
+        .loading.active {{
             display: block;
-        }
+        }}
+
+        /* オートコンプリート */
+        .autocomplete {{
+            position: relative;
+        }}
+
+        .autocomplete-items {{
+            position: absolute;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }}
+
+        .autocomplete-items div {{
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }}
+
+        .autocomplete-items div:hover {{
+            background-color: #f0f0f0;
+        }}
+
+        .autocomplete-active {{
+            background-color: #667eea !important;
+            color: #ffffff;
+        }}
+
+        .auto-filled {{
+            background: #e8f5e9 !important;
+        }}
+
+        .rider-info {{
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🏁 競輪V5予測</h1>
-            <div class="subtitle">レース情報を入力して高配当を予測</div>
+            <div class="subtitle">選手名を入れると自動入力 - V5が高配当を予測</div>
         </div>
 
         <form method="POST" action="/predict" class="form-card" id="predict-form">
@@ -233,49 +316,7 @@ class PredictHandler(BaseHTTPRequestHandler):
                     <label for="track">会場</label>
                     <select name="track" id="track" required>
                         <option value="">--- 選択してください ---</option>
-                        <option value="函館">函館</option>
-                        <option value="青森">青森</option>
-                        <option value="いわき平">いわき平</option>
-                        <option value="弥彦">弥彦</option>
-                        <option value="前橋">前橋</option>
-                        <option value="取手">取手</option>
-                        <option value="宇都宮">宇都宮</option>
-                        <option value="大宮">大宮</option>
-                        <option value="西武園">西武園</option>
-                        <option value="京王閣">京王閣</option>
-                        <option value="立川">立川</option>
-                        <option value="松戸">松戸</option>
-                        <option value="千葉">千葉</option>
-                        <option value="川崎">川崎</option>
-                        <option value="平塚">平塚</option>
-                        <option value="小田原">小田原</option>
-                        <option value="伊東">伊東</option>
-                        <option value="静岡">静岡</option>
-                        <option value="名古屋">名古屋</option>
-                        <option value="岐阜">岐阜</option>
-                        <option value="大垣">大垣</option>
-                        <option value="豊橋">豊橋</option>
-                        <option value="富山">富山</option>
-                        <option value="松阪">松阪</option>
-                        <option value="四日市">四日市</option>
-                        <option value="福井">福井</option>
-                        <option value="奈良">奈良</option>
-                        <option value="向日町">向日町</option>
-                        <option value="和歌山">和歌山</option>
-                        <option value="岸和田">岸和田</option>
-                        <option value="玉野">玉野</option>
-                        <option value="広島">広島</option>
-                        <option value="防府">防府</option>
-                        <option value="高松">高松</option>
-                        <option value="小松島">小松島</option>
-                        <option value="高知">高知</option>
-                        <option value="松山">松山</option>
-                        <option value="小倉">小倉</option>
-                        <option value="久留米">久留米</option>
-                        <option value="武雄">武雄</option>
-                        <option value="佐世保">佐世保</option>
-                        <option value="別府">別府</option>
-                        <option value="熊本">熊本</option>
+                        {track_options}
                     </select>
                 </div>
 
@@ -307,11 +348,9 @@ class PredictHandler(BaseHTTPRequestHandler):
 
             <div class="section">
                 <div class="section-title">🚴 選手情報（9名）</div>
-                <p class="help-text">各選手の平均得点と脚質を入力してください</p>
+                <p class="help-text">選手名を入力すると、都道府県・脚質が自動入力されます</p>
 
-                <div id="riders-container">
-                    <!-- 選手1-9のフォーム -->
-                </div>
+                <div id="riders-container"></div>
             </div>
 
             <button type="submit" class="submit-button">
@@ -319,43 +358,188 @@ class PredictHandler(BaseHTTPRequestHandler):
             </button>
 
             <div class="loading" id="loading">
-                <p>🤔 AI が分析中...</p>
+                <p>🤔 V5が分析中...</p>
             </div>
         </form>
     </div>
 
     <script>
+        // 選手マスターデータ
+        let ridersData = [];
+
+        // 選手マスター読み込み
+        fetch('/api/riders')
+            .then(res => res.json())
+            .then(data => {{
+                ridersData = data;
+                console.log(`選手マスター読み込み完了: ${{ridersData.length}}名`);
+            }})
+            .catch(err => console.error('選手マスター読み込みエラー:', err));
+
         // 選手フォームを生成
         const ridersContainer = document.getElementById('riders-container');
-        for (let i = 1; i <= 9; i++) {
+        for (let i = 1; i <= 9; i++) {{
             const riderCard = document.createElement('div');
             riderCard.className = 'rider-card';
             riderCard.innerHTML = `
-                <div class="rider-number">${i}</div>
+                <div class="rider-number">${{i}}</div>
+
+                <div class="form-group autocomplete">
+                    <label>選手名 <span style="color:#e74c3c">*</span></label>
+                    <input type="text"
+                           id="rider_name_${{i}}"
+                           name="rider_name_${{i}}"
+                           placeholder="名前 or よみがな"
+                           autocomplete="off"
+                           required>
+                    <div class="rider-info" id="rider_info_${{i}}"></div>
+                </div>
+
                 <div class="grid-2">
                     <div class="form-group">
-                        <label>平均得点</label>
-                        <input type="number" name="score_${i}" step="0.01"
-                               placeholder="例: 85.50" required>
+                        <label>都道府県</label>
+                        <input type="text"
+                               id="prefecture_${{i}}"
+                               name="prefecture_${{i}}"
+                               placeholder="自動入力"
+                               readonly>
                     </div>
                     <div class="form-group">
                         <label>脚質</label>
-                        <select name="style_${i}" required>
-                            <option value="逃">逃げ</option>
-                            <option value="捲">まくり</option>
-                            <option value="差">差し</option>
-                            <option value="追">追込</option>
-                        </select>
+                        <input type="text"
+                               id="style_${{i}}"
+                               name="style_${{i}}"
+                               placeholder="自動入力"
+                               readonly>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label>平均得点 <span style="color:#e74c3c">*</span></label>
+                    <input type="number"
+                           id="score_${{i}}"
+                           name="score_${{i}}"
+                           step="0.01"
+                           placeholder="例: 85.50"
+                           required>
                 </div>
             `;
             ridersContainer.appendChild(riderCard);
-        }
+
+            // オートコンプリート設定
+            setupAutocomplete(i);
+        }}
+
+        // オートコンプリート機能
+        function setupAutocomplete(riderIndex) {{
+            const input = document.getElementById(`rider_name_${{riderIndex}}`);
+            const prefInput = document.getElementById(`prefecture_${{riderIndex}}`);
+            const styleInput = document.getElementById(`style_${{riderIndex}}`);
+            const infoDiv = document.getElementById(`rider_info_${{riderIndex}}`);
+
+            let currentFocus;
+
+            input.addEventListener('input', function(e) {{
+                closeAllLists();
+
+                const val = this.value;
+                if (!val) return;
+
+                currentFocus = -1;
+
+                const listDiv = document.createElement('div');
+                listDiv.className = 'autocomplete-items';
+                listDiv.id = `autocomplete-list-${{riderIndex}}`;
+                this.parentNode.appendChild(listDiv);
+
+                // マッチする選手を検索
+                const matches = ridersData.filter(rider =>
+                    rider.name.includes(val) ||
+                    (rider.name_kana && rider.name_kana.includes(val))
+                );
+
+                // 最大20件まで表示
+                matches.slice(0, 20).forEach(rider => {{
+                    const itemDiv = document.createElement('div');
+                    itemDiv.innerHTML = `
+                        <strong>${{rider.name}}</strong>
+                        <span style="color:#999; font-size:12px">
+                            (${{rider.prefecture}} / ${{rider.style}} / ${{rider.grade}})
+                        </span>
+                    `;
+
+                    itemDiv.addEventListener('click', function() {{
+                        // 選手情報を自動入力
+                        input.value = rider.name;
+                        prefInput.value = rider.prefecture || '';
+                        styleInput.value = rider.style || '';
+
+                        // 背景色を変更して自動入力を示す
+                        prefInput.classList.add('auto-filled');
+                        styleInput.classList.add('auto-filled');
+
+                        // 選手情報を表示
+                        infoDiv.innerHTML = `✅ ${{rider.prefecture}} - ${{rider.grade}}班 - ${{rider.style}}`;
+                        infoDiv.style.color = '#00b894';
+
+                        closeAllLists();
+                    }});
+
+                    listDiv.appendChild(itemDiv);
+                }});
+            }});
+
+            // キーボード操作
+            input.addEventListener('keydown', function(e) {{
+                let list = document.getElementById(`autocomplete-list-${{riderIndex}}`);
+                if (list) list = list.getElementsByTagName('div');
+
+                if (e.keyCode == 40) {{ // Down
+                    currentFocus++;
+                    addActive(list);
+                }} else if (e.keyCode == 38) {{ // Up
+                    currentFocus--;
+                    addActive(list);
+                }} else if (e.keyCode == 13) {{ // Enter
+                    e.preventDefault();
+                    if (currentFocus > -1) {{
+                        if (list) list[currentFocus].click();
+                    }}
+                }}
+            }});
+
+            function addActive(list) {{
+                if (!list) return false;
+                removeActive(list);
+                if (currentFocus >= list.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (list.length - 1);
+                list[currentFocus].classList.add('autocomplete-active');
+            }}
+
+            function removeActive(list) {{
+                for (let i = 0; i < list.length; i++) {{
+                    list[i].classList.remove('autocomplete-active');
+                }}
+            }}
+
+            function closeAllLists(elmnt) {{
+                const items = document.getElementsByClassName('autocomplete-items');
+                for (let i = 0; i < items.length; i++) {{
+                    if (elmnt != items[i] && elmnt != input) {{
+                        items[i].parentNode.removeChild(items[i]);
+                    }}
+                }}
+            }}
+
+            document.addEventListener('click', function (e) {{
+                closeAllLists(e.target);
+            }});
+        }}
 
         // フォーム送信時
-        document.getElementById('predict-form').addEventListener('submit', function() {
+        document.getElementById('predict-form').addEventListener('submit', function() {{
             document.getElementById('loading').classList.add('active');
-        });
+        }});
     </script>
 </body>
 </html>
@@ -381,18 +565,29 @@ class PredictHandler(BaseHTTPRequestHandler):
 
         # 9選手のデータを抽出
         riders = []
+        prefectures = []
         for i in range(1, 10):
-            score = float(params.get(f'score_{i}', [0])[0])
+            name = params.get(f'rider_name_{i}', [''])[0]
+            pref = params.get(f'prefecture_{i}', [''])[0]
             style = params.get(f'style_{i}', ['逃'])[0]
-            riders.append({'score': score, 'style': style})
+            score = float(params.get(f'score_{i}', [0])[0]) if params.get(f'score_{i}', [0])[0] else 0
+
+            riders.append({
+                'name': name,
+                'prefecture': pref,
+                'style': style,
+                'score': score
+            })
+
+            if pref:
+                prefectures.append(pref)
 
         if not MODEL_AVAILABLE or v5_model is None:
-            self.serve_error("モデルが利用できません")
+            self.serve_error("V5モデルが利用できません")
             return
 
         # 特徴量を構築
         try:
-            # 選手データから統計を計算
             scores = [r['score'] for r in riders]
             styles = [r['style'] for r in riders]
 
@@ -401,6 +596,10 @@ class PredictHandler(BaseHTTPRequestHandler):
             makuri_cnt = styles.count('捲')
             sasi_cnt = styles.count('差')
             oi_cnt = styles.count('追')
+
+            # 地域の多様性を計算
+            unique_prefs = len(set(prefectures))
+            same_pref_pairs = sum(1 for i in range(len(prefectures)) for j in range(i+1, len(prefectures)) if prefectures[i] == prefectures[j])
 
             # 基本的な特徴量
             race_data = {
@@ -448,12 +647,13 @@ class PredictHandler(BaseHTTPRequestHandler):
             probability = v5_model.predict(X)[0]
 
             # 結果を表示
-            self.serve_result(probability, track, category, grade, riders, scores)
+            self.serve_result(probability, track, category, grade, riders, scores, unique_prefs, same_pref_pairs)
 
         except Exception as e:
-            self.serve_error(f"予測エラー: {e}")
+            import traceback
+            self.serve_error(f"予測エラー: {e}\\n{traceback.format_exc()}")
 
-    def serve_result(self, probability, track, category, grade, riders, scores):
+    def serve_result(self, probability, track, category, grade, riders, scores, unique_prefs, same_pref_pairs):
         """予測結果を表示"""
 
         # 判定
@@ -474,8 +674,29 @@ class PredictHandler(BaseHTTPRequestHandler):
             judgment_class = "cold"
             message = "このレースは堅い展開になりそうです。"
 
+        # 地域分析
+        region_analysis = f"""
+        <div class="info-row">
+            <span class="info-label">都道府県の多様性</span>
+            <span class="info-value">{unique_prefs}/9 （{'バラけている' if unique_prefs >= 6 else '偏りあり'}）</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">同郷ペア</span>
+            <span class="info-value">{same_pref_pairs}組 （{'ライン戦あり' if same_pref_pairs >= 3 else 'バラバラ'}）</span>
+        </div>
+        """
+
+        # 選手一覧
+        riders_list = ""
+        for i, r in enumerate(riders, 1):
+            riders_list += f"""
+            <div style="padding:8px 0; border-bottom:1px solid #eee;">
+                <strong>{i}番:</strong> {r['name']} ({r['prefecture']}) {r['style']} - {r['score']:.2f}点
+            </div>
+            """
+
         # 買い目提案
-        suggestions = self.generate_betting_suggestions(probability, riders, scores)
+        suggestions = self.generate_betting_suggestions(probability, riders, scores, same_pref_pairs)
 
         html = f"""
 <!DOCTYPE html>
@@ -648,10 +869,13 @@ class PredictHandler(BaseHTTPRequestHandler):
             color: white;
         }}
 
-        .button-secondary {{
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+        .riders-list {{
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
         }}
     </style>
 </head>
@@ -661,7 +885,7 @@ class PredictHandler(BaseHTTPRequestHandler):
             <div class="score-display">
                 <div class="score-label">高配当確率</div>
                 <div class="score-value">{probability*100:.1f}%</div>
-                <div class="score-label">V5モデル予測スコア: {probability:.4f}</div>
+                <div class="score-label">V5予測スコア: {probability:.4f}</div>
             </div>
 
             <div class="judgment {judgment_class}">
@@ -689,6 +913,12 @@ class PredictHandler(BaseHTTPRequestHandler):
                     <span class="info-label">選手得点差</span>
                     <span class="info-value">{max(scores) - min(scores):.2f}点</span>
                 </div>
+                {region_analysis}
+            </div>
+
+            <div class="section-title">👥 出走選手</div>
+            <div class="riders-list">
+                {riders_list}
             </div>
 
             <div class="section-title">💡 おすすめの買い方</div>
@@ -709,14 +939,20 @@ class PredictHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html.encode())
 
-    def generate_betting_suggestions(self, probability, riders, scores):
-        """買い目提案を生成"""
+    def generate_betting_suggestions(self, probability, riders, scores, same_pref_pairs):
+        """買い目提案を生成（地域/ライン考慮）"""
 
         suggestions = ""
 
+        # ライン情報を考慮
+        line_note = ""
+        if same_pref_pairs >= 3:
+            line_note = "<div class='suggestion-item'><div class='suggestion-title'>🔗 ライン戦に注目</div><div class='suggestion-desc'>同郷選手が多く、ライン戦の可能性あり。同じ都道府県の選手同士の連携を考慮。</div></div>"
+
         if probability >= 0.75:
             # 超荒れそう → 穴狙い
-            suggestions += """
+            suggestions += f"""
+            {line_note}
             <div class="suggestion-item">
                 <div class="suggestion-title">🎯 三連単ボックス（穴選手中心）</div>
                 <div class="suggestion-desc">実力下位の選手を軸に、波乱を狙う買い方がおすすめです。</div>
@@ -732,7 +968,8 @@ class PredictHandler(BaseHTTPRequestHandler):
             """
         elif probability >= 0.65:
             # 荒れそう → バランス型
-            suggestions += """
+            suggestions += f"""
+            {line_note}
             <div class="suggestion-item">
                 <div class="suggestion-title">🎯 三連単フォーメーション</div>
                 <div class="suggestion-desc">中堅選手を軸に、上位・下位を絡める買い方。</div>
@@ -748,7 +985,8 @@ class PredictHandler(BaseHTTPRequestHandler):
             """
         elif probability >= 0.55:
             # やや荒れそう → 手堅め
-            suggestions += """
+            suggestions += f"""
+            {line_note}
             <div class="suggestion-item">
                 <div class="suggestion-title">🎯 三連複ボックス</div>
                 <div class="suggestion-desc">実力上位3-4名を中心にボックス買い。</div>
@@ -764,7 +1002,8 @@ class PredictHandler(BaseHTTPRequestHandler):
             """
         else:
             # 堅そう → 見送りor最小額
-            suggestions += """
+            suggestions += f"""
+            {line_note}
             <div class="suggestion-item">
                 <div class="suggestion-title">⚠️ 見送り推奨</div>
                 <div class="suggestion-desc">このレースは堅い展開が予想されます。配当妙味が少ない可能性があります。</div>
@@ -804,7 +1043,7 @@ class PredictHandler(BaseHTTPRequestHandler):
             max-width: 400px;
         }}
         h1 {{ color: #e74c3c; margin-bottom: 20px; }}
-        p {{ color: #666; margin-bottom: 20px; }}
+        p {{ color: #666; margin-bottom: 20px; white-space: pre-wrap; }}
         a {{
             display: inline-block;
             background: #667eea;
@@ -839,13 +1078,15 @@ def run_server(port=8000):
     httpd = HTTPServer(server_address, PredictHandler)
 
     print("=" * 70)
-    print("🏁 競輪V5予測アプリ - レース予測版")
+    print("🏁 競輪V5予測アプリ - 選手マスター対応版")
     print("=" * 70)
     print()
     print("✨ 機能:")
-    print("  • これから開催されるレースの予測")
-    print("  • 選手情報を入力して高配当確率を予測")
-    print("  • AIがおすすめの買い方を提案")
+    print("  • 選手名オートコンプリート（一文字・よみがなOK）")
+    print("  • 選手情報自動入力（都道府県・脚質）")
+    print("  • 地域/ライン情報を加味した予測")
+    print("  • V5モデルで高配当確率を計算")
+    print("  • おすすめの買い方を提案")
     print()
     print(f"📱 PCからアクセス: http://127.0.0.1:{port}")
     print()
