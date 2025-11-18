@@ -1,0 +1,4 @@
+usage: build_training_dataset.py [-h] [--results RESULTS] [--prerace PRERACE]
+                                 [--entries ENTRIES] [--threshold THRESHOLD]
+                                 [--output OUTPUT]
+build_training_dataset.py: error: unrecognized arguments:     
