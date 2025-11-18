@@ -208,6 +208,40 @@ def aggregate_race_features(race_df):
     # === 府県の多様性 ===
     race_info['prefecture_unique_count'] = race_df['entry_prefecture'].nunique()
 
+    # === 脚質カウント（B関連）の分析 ===
+    # 逃げ、捲り、差し、マーク、バックの勝利回数は選手の戦績（事前データ）
+    b_columns = ['nigeCnt', 'makuriCnt', 'sasiCnt', 'markCnt', 'backCnt']
+
+    for b_col in b_columns:
+        if b_col in race_df.columns:
+            b_values = pd.to_numeric(race_df[b_col], errors='coerce').fillna(0)
+
+            race_info[f'{b_col}_mean'] = float(b_values.mean())
+            race_info[f'{b_col}_std'] = float(b_values.std()) if len(b_values) > 1 else 0.0
+            race_info[f'{b_col}_max'] = float(b_values.max())
+            race_info[f'{b_col}_sum'] = float(b_values.sum())
+
+            # CV (coefficient of variation)
+            if race_info[f'{b_col}_mean'] > 0:
+                race_info[f'{b_col}_cv'] = race_info[f'{b_col}_std'] / race_info[f'{b_col}_mean']
+            else:
+                race_info[f'{b_col}_cv'] = 0.0
+        else:
+            # Default values if column doesn't exist
+            for suffix in ['mean', 'std', 'max', 'sum', 'cv']:
+                race_info[f'{b_col}_{suffix}'] = 0.0
+
+    # 合計経験値（全脚質の合計）
+    total_b_experience = sum([race_info[f'{b}_sum'] for b in b_columns])
+    race_info['total_b_experience'] = total_b_experience
+
+    # 経験値の多様性（どの脚質が強いか）
+    if total_b_experience > 0:
+        b_distribution = {b: race_info[f'{b}_sum'] for b in b_columns}
+        race_info['b_experience_entropy'] = calculate_entropy(b_distribution)
+    else:
+        race_info['b_experience_entropy'] = 0.0
+
     # === レース番号（時間帯） ===
     race_info['race_no_int'] = int(race_df['race_no'].iloc[0])
 
