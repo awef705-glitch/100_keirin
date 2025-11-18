@@ -11,3 +11,4 @@ analysis/model_outputs/*
 !analysis/model_outputs/prerace_model_metadata.json
 !analysis/model_outputs/prerace_model_feature_importance.csv
 .env
+catboost_info/
