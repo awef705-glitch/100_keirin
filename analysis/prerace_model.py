@@ -265,6 +265,11 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "line_balance_std",
             "line_entropy",
             "line_score_gap",
+            "back_count_mean",
+            "back_count_std",
+            "back_count_max",
+            "back_count_top3_mean",
+            "back_count_top3_sum",
         ]:
             features[key] = 0.0
         for style in STYLE_FEATURES:
@@ -286,12 +291,15 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
                 "unknown_style_count": 0,
                 "grade_counts": {grade: 0 for grade in GRADE_LEVELS},
                 "prefecture_unique_count": 0,
+                "back_count_mean": 0.0,
             }
         )
         return FeatureBundle(features, summary)
 
     scores = pd.to_numeric(rider_frame["score"], errors="coerce")
     scores = scores.replace([np.inf, -np.inf], np.nan).dropna()
+    
+    back_counts = pd.to_numeric(rider_frame["back_count"], errors="coerce").fillna(0.0)
 
     if scores.empty:
         mean = std = min_score = max_score = median = q25 = q75 = 0.0
@@ -346,6 +354,29 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
         favorite_gap = 0.0
         top3_vs_others = 0.0
 
+    # Back count features
+    if not back_counts.empty:
+        back_mean = float(back_counts.mean())
+        back_std = float(back_counts.std(ddof=0)) if len(back_counts) > 1 else 0.0
+        back_max = float(back_counts.max())
+        
+        # Top 3 riders by score - their B counts
+        # (Are the strong riders also the ones who run at the back/front?)
+        if not scores.empty:
+            top3_indices = scores.nlargest(min(3, len(scores))).index
+            back_top3 = back_counts.loc[top3_indices]
+            back_top3_mean = float(back_top3.mean()) if not back_top3.empty else 0.0
+            back_top3_sum = float(back_top3.sum())
+        else:
+            back_top3_mean = 0.0
+            back_top3_sum = 0.0
+    else:
+        back_mean = 0.0
+        back_std = 0.0
+        back_max = 0.0
+        back_top3_mean = 0.0
+        back_top3_sum = 0.0
+
     features.update(
         {
             "score_mean": mean,
@@ -364,9 +395,43 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "estimated_top3_score_sum": top3_score_sum,
             "estimated_favorite_dominance": favorite_dominance,
             "estimated_favorite_gap": favorite_gap,
+            "estimated_favorite_gap": favorite_gap,
             "estimated_top3_vs_others": top3_vs_others,
+            "back_count_mean": back_mean,
+            "back_count_std": back_std,
+            "back_count_max": back_max,
+            "back_count_top3_mean": back_top3_mean,
+            "back_count_top3_sum": back_top3_sum,
         }
     )
+
+    # Process tactical counts (nige, makuri, sasi, mark)
+    for tact in ["nige", "makuri", "sasi", "mark"]:
+        col = f"{tact}_count"
+        vals = pd.to_numeric(rider_frame[col], errors="coerce").fillna(0.0)
+        
+        if not vals.empty:
+            t_mean = float(vals.mean())
+            t_max = float(vals.max())
+            
+            # Top 3 riders by score - their tactical counts
+            if not scores.empty:
+                top3_indices = scores.nlargest(min(3, len(scores))).index
+                t_top3 = vals.loc[top3_indices]
+                t_top3_sum = float(t_top3.sum())
+            else:
+                t_top3_sum = 0.0
+        else:
+            t_mean = 0.0
+            t_max = 0.0
+            t_top3_sum = 0.0
+            
+        features.update({
+            f"{col}_mean": t_mean,
+            f"{col}_max": t_max,
+            f"{col}_top3_sum": t_top3_sum,
+        })
+
     summary.update(
         {
             "score_mean": mean,
@@ -491,6 +556,11 @@ def _prepare_rider_frame_from_entries(entries: pd.DataFrame) -> pd.DataFrame:
     """Rename columns of the raw entries table for aggregation."""
     frame = entries.copy()
     frame["score"] = frame["heikinTokuten"].apply(_safe_float)
+    frame["back_count"] = frame["backCnt"].apply(_safe_float)
+    frame["nige_count"] = frame["nigeCnt"].apply(_safe_float)
+    frame["makuri_count"] = frame["makuriCnt"].apply(_safe_float)
+    frame["sasi_count"] = frame["sasiCnt"].apply(_safe_float)
+    frame["mark_count"] = frame["markCnt"].apply(_safe_float)
     frame["style_norm"] = frame["kyakusitu"].apply(_normalise_style)
     frame["grade_norm"] = frame["kyuhan"].apply(_normalise_grade)
     frame["prefecture_norm"] = frame["huKen"].apply(_normalise_prefecture)
@@ -507,6 +577,11 @@ def _prepare_rider_frame_from_entries(entries: pd.DataFrame) -> pd.DataFrame:
             "track",
             "race_no",
             "score",
+            "back_count",
+            "nige_count",
+            "makuri_count",
+            "sasi_count",
+            "mark_count",
             "style_norm",
             "grade_norm",
             "prefecture_norm",
@@ -522,6 +597,11 @@ def aggregate_rider_features(entries_path: Path) -> pd.DataFrame:
         "track",
         "race_no",
         "heikinTokuten",
+        "backCnt",
+        "nigeCnt",
+        "makuriCnt",
+        "sasiCnt",
+        "markCnt",
         "kyakusitu",
         "kyuhan",
         "huKen",
@@ -532,10 +612,32 @@ def aggregate_rider_features(entries_path: Path) -> pd.DataFrame:
     entries = _read_csv(entries_path, usecols=list(usecols), dtype=dtype_map)
     entries["race_date"] = entries["race_date"].astype(int)
     entries["race_no"] = entries["race_no"].astype(int)
+    
+    # Use full dataset for better model generalization
+    # entries = entries[entries["race_date"] >= 20250101]  # Removed filter
+    
+    # Load track master to map track names to keirin_cd if needed
+    if "keirin_cd" not in entries.columns or entries["keirin_cd"].isna().all():
+        track_master_path = Path("analysis/model_outputs/track_master.json")
+        if track_master_path.exists():
+            import json
+            with open(track_master_path, "r", encoding="utf-8") as f:
+                track_master = json.load(f)
+            # Create track name -> code mapping
+            track_to_code = {track["name"]: track["code"] for track in track_master}
+            # Map track names to keirin_cd
+            if "track" in entries.columns:
+                entries["keirin_cd"] = entries["track"].map(track_to_code).fillna("00")
+            else:
+                entries["keirin_cd"] = "00"
+        else:
+            entries["keirin_cd"] = "00"
+    
     if "keirin_cd" in entries.columns:
-        entries["keirin_cd"] = entries["keirin_cd"].astype(str).str.zfill(2)
+        entries["keirin_cd"] = pd.to_numeric(entries["keirin_cd"], errors="coerce").fillna(0).astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(2)
     else:
-        entries["keirin_cd"] = ""
+        entries["keirin_cd"] = "00"
+        
     if "track" in entries.columns:
         entries["track"] = entries["track"].astype(str)
     else:
@@ -572,10 +674,10 @@ def load_results_table(results_path: Path, payout_threshold: int) -> pd.DataFram
         "trifecta_payout",
     ]
     results = _read_csv(results_path, usecols=usecols, dtype={"keirin_cd": str})
-    results["race_date"] = results["race_date"].astype(int)
+    results["race_date"] = pd.to_numeric(results["race_date"], errors="coerce").fillna(0).astype(int)
     results["race_no"] = results["race_no"].astype(str)
     results["race_no"] = results["race_no"].str.extract(r"(\d+)", expand=False).fillna("0").astype(int)
-    results["keirin_cd"] = results["keirin_cd"].str.zfill(2)
+    results["keirin_cd"] = pd.to_numeric(results["keirin_cd"], errors="coerce").fillna(0).astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(2)
 
     payout = (
         results["trifecta_payout"]
@@ -585,7 +687,7 @@ def load_results_table(results_path: Path, payout_threshold: int) -> pd.DataFram
         .astype(float)
     )
     results["target_high_payout"] = (payout >= float(payout_threshold)).astype(int)
-    results["keirin_cd_num"] = results["keirin_cd"].astype(int)
+    results["keirin_cd_num"] = pd.to_numeric(results["keirin_cd"], errors="coerce").fillna(0).astype(int)
 
     grade_flags = results["grade"].fillna("").apply(_grade_flag_features)
     grade_flag_df = pd.DataFrame(list(grade_flags))
@@ -609,9 +711,9 @@ def load_prerace_calendar(prerace_path: Path) -> pd.DataFrame:
     """Extract calendar features from the prerace table."""
     usecols = ["race_date", "keirin_cd", "race_no", "nitiji"]
     prerace = _read_csv(prerace_path, usecols=usecols, dtype={"keirin_cd": str})
-    prerace["race_date"] = prerace["race_date"].astype(int)
-    prerace["keirin_cd"] = prerace["keirin_cd"].str.zfill(2)
-    prerace["race_no"] = prerace["race_no"].astype(int)
+    prerace["race_date"] = pd.to_numeric(prerace["race_date"], errors="coerce").fillna(0).astype(int)
+    prerace["keirin_cd"] = pd.to_numeric(prerace["keirin_cd"], errors="coerce").fillna(0).astype(str).str.replace(r"\.0$", "", regex=True).str.zfill(2)
+    prerace["race_no"] = pd.to_numeric(prerace["race_no"], errors="coerce").fillna(0).astype(int)
 
     cal_rows: List[Dict[str, Any]] = []
     for _, row in prerace.iterrows():
@@ -714,6 +816,23 @@ def _default_feature_columns() -> List[str]:
         "line_balance_std",
         "line_entropy",
         "line_score_gap",
+        "back_count_mean",
+        "back_count_std",
+        "back_count_max",
+        "back_count_top3_mean",
+        "back_count_top3_sum",
+        "nige_count_mean",
+        "nige_count_max",
+        "nige_count_top3_sum",
+        "makuri_count_mean",
+        "makuri_count_max",
+        "makuri_count_top3_sum",
+        "sasi_count_mean",
+        "sasi_count_max",
+        "sasi_count_top3_sum",
+        "mark_count_mean",
+        "mark_count_max",
+        "mark_count_top3_sum",
     ]
 
 
@@ -724,21 +843,26 @@ def build_training_dataset(
     payout_threshold: int = 10000,
 ) -> Tuple[pd.DataFrame, List[str]]:
     """Construct the training dataset that uses only pre-race information."""
+    print(f"Loading results from {results_path}...", flush=True)
     results = load_results_table(results_path, payout_threshold)
+    print(f"Loaded {len(results)} results.", flush=True)
+    
+    print(f"Loading calendar from {prerace_path}...", flush=True)
     calendar = load_prerace_calendar(prerace_path)
+    print(f"Loaded {len(calendar)} calendar entries.", flush=True)
+    
+    print(f"Loading rider features from {entries_path}...", flush=True)
     rider_features = aggregate_rider_features(entries_path)
+    print(f"Loaded {len(rider_features)} rider feature rows.", flush=True)
 
+    print("Merging results and calendar...", flush=True)
     dataset = results.merge(calendar, on=["race_date", "keirin_cd", "race_no"], how="inner")
-
-    if "keirin_cd" in rider_features.columns and rider_features["keirin_cd"].str.strip().any():
-        dataset = dataset.merge(rider_features, on=["race_date", "keirin_cd", "race_no"], how="inner")
-    else:
-        dataset = dataset.merge(
-            rider_features.drop(columns=["keirin_cd"], errors="ignore"),
-            on=["race_date", "race_no", "track"],
-            how="inner",
-        )
-        dataset["keirin_cd"] = dataset["keirin_cd"]
+    print(f"Merged dataset size: {len(dataset)}", flush=True)
+    
+    # Always merge using keirin_cd (track names may not match between datasets)
+    print("Merging rider features...", flush=True)
+    dataset = dataset.merge(rider_features, on=["race_date", "keirin_cd", "race_no"], how="inner")
+    print(f"Final dataset size: {len(dataset)}", flush=True)
 
     dataset = dataset.sort_values(["race_date", "keirin_cd", "race_no"]).reset_index(drop=True)
 
@@ -771,6 +895,11 @@ def manual_riders_to_frame(riders: Iterable[Dict[str, Any]]) -> pd.DataFrame:
         rows.append(
             {
                 "score": _safe_float(rider.get("avg_score")),
+                "back_count": _safe_float(rider.get("back_count")),
+                "nige_count": _safe_float(rider.get("nige_count")),
+                "makuri_count": _safe_float(rider.get("makuri_count")),
+                "sasi_count": _safe_float(rider.get("sasi_count")),
+                "mark_count": _safe_float(rider.get("mark_count")),
                 "style_norm": _normalise_style(rider.get("style")),
                 "grade_norm": _normalise_grade(rider.get("grade")),
                 "prefecture_norm": _normalise_prefecture(rider.get("prefecture")),

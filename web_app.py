@@ -131,6 +131,11 @@ async def predict(
     rider_grades: List[str] = Form([]),
     rider_styles: List[str] = Form([]),
     rider_scores: List[str] = Form([]),
+    rider_back_counts: List[str] = Form([]),
+    rider_nige_counts: List[str] = Form([]),
+    rider_makuri_counts: List[str] = Form([]),
+    rider_sasi_counts: List[str] = Form([]),
+    rider_mark_counts: List[str] = Form([]),
 ) -> HTMLResponse:
     if not MODEL_READY:
         return templates.TemplateResponse(
@@ -143,8 +148,13 @@ async def predict(
 
     race_date_digits = race_date.replace("-", "")
     riders = []
-    for name, pref, grade_val, style, score in zip(
-        rider_names, rider_prefectures, rider_grades, rider_styles, rider_scores
+    
+    # Ensure all lists are the same length to avoid zip truncation issues
+    # (In a perfect world, the form guarantees this, but let's be safe or just trust zip for now as they are all in the same DOM node)
+    
+    for name, pref, grade_val, style, score, back, nige, makuri, sasi, mark in zip(
+        rider_names, rider_prefectures, rider_grades, rider_styles, rider_scores,
+        rider_back_counts, rider_nige_counts, rider_makuri_counts, rider_sasi_counts, rider_mark_counts
     ):
         if not name.strip():
             continue
@@ -152,6 +162,13 @@ async def predict(
             avg_score = float(score) if score else None
         except ValueError:
             avg_score = None
+            
+        def _parse_float(val):
+            try:
+                return float(val) if val else 0.0
+            except ValueError:
+                return 0.0
+
         riders.append(
             {
                 "name": name.strip(),
@@ -159,6 +176,11 @@ async def predict(
                 "grade": grade_val.strip().upper(),
                 "style": style.strip(),
                 "avg_score": avg_score,
+                "back_count": _parse_float(back),
+                "nige_count": _parse_float(nige),
+                "makuri_count": _parse_float(makuri),
+                "sasi_count": _parse_float(sasi),
+                "mark_count": _parse_float(mark),
             }
         )
 

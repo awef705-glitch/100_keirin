@@ -1,7 +1,7 @@
 {
   "payout_threshold": 10000,
-  "n_samples": 48692,
-  "positive_rate": 0.2655672389714943,
+  "n_samples": 49721,
+  "positive_rate": 0.2686792301039802,
   "folds": 5,
   "params": {
     "objective": "binary",
@@ -18,49 +18,50 @@
     "min_data_in_leaf": 50.0,
     "lambda_l1": 0.1,
     "lambda_l2": 0.1,
+    "scale_pos_weight": 2.7219103226289394,
     "verbosity": -1.0,
     "boost_from_average": 1.0,
     "seed": 42.0
   },
-  "roc_auc": 0.5806813113163781,
-  "average_precision": 0.3513514668621258,
-  "best_threshold": 0.0,
-  "best_f1": 0.4196809629450837,
-  "precision_at_top_k": 0.68,
+  "roc_auc": 0.5720610322516538,
+  "average_precision": 0.3380462721731089,
+  "best_threshold": 0.4,
+  "best_f1": 0.42355738711065793,
+  "precision_at_top_k": 0.6,
   "top_k": 100,
   "classification_report": {
     "0": {
       "precision": 0.0,
       "recall": 0.0,
       "f1-score": 0.0,
-      "support": 35761.0
+      "support": 36362.0
     },
     "1": {
-      "precision": 0.2655672389714943,
+      "precision": 0.2686792301039802,
       "recall": 1.0,
-      "f1-score": 0.4196809632766986,
-      "support": 12931.0
+      "f1-score": 0.4235573874445149,
+      "support": 13359.0
     },
-    "accuracy": 0.2655672389714943,
+    "accuracy": 0.2686792301039802,
     "macro avg": {
-      "precision": 0.13278361948574716,
+      "precision": 0.1343396150519901,
       "recall": 0.5,
-      "f1-score": 0.2098404816383493,
-      "support": 48692.0
+      "f1-score": 0.21177869372225744,
+      "support": 49721.0
     },
     "weighted avg": {
-      "precision": 0.07052595841494276,
-      "recall": 0.2655672389714943,
-      "f1-score": 0.11145351466628994,
-      "support": 48692.0
+      "precision": 0.07218852868926755,
+      "recall": 0.2686792301039802,
+      "f1-score": 0.11380107276344552,
+      "support": 49721.0
     }
   },
   "best_iterations": [
-    3,
-    21,
-    18,
-    28,
-    30
+    39,
+    20,
+    32,
+    63,
+    72
   ],
   "final_iteration": 50,
   "feature_columns": [
@@ -95,6 +96,11 @@
     "score_cv",
     "score_top3_mean",
     "score_bottom3_mean",
+    "score_top_bottom_gap",
+    "estimated_top3_score_sum",
+    "estimated_favorite_dominance",
+    "estimated_favorite_gap",
+    "estimated_top3_vs_others",
     "style_nige_ratio",
     "style_tsui_ratio",
     "style_ryo_ratio",
@@ -105,6 +111,7 @@
     "style_nige_count",
     "style_tsui_count",
     "style_ryo_count",
+    "style_entropy",
     "grade_SS_ratio",
     "grade_S1_ratio",
     "grade_S2_ratio",
@@ -119,7 +126,36 @@
     "grade_A2_count",
     "grade_A3_count",
     "grade_L1_count",
-    "prefecture_unique_count"
+    "grade_entropy",
+    "grade_has_mixed",
+    "prefecture_unique_count",
+    "line_count",
+    "dominant_line_ratio",
+    "line_balance_std",
+    "line_entropy",
+    "line_score_gap",
+    "back_count_mean",
+    "back_count_std",
+    "back_count_max",
+    "back_count_top3_mean",
+    "back_count_top3_sum",
+    "nige_count_mean",
+    "nige_count_max",
+    "nige_count_top3_sum",
+    "makuri_count_mean",
+    "makuri_count_max",
+    "makuri_count_top3_sum",
+    "sasi_count_mean",
+    "sasi_count_max",
+    "sasi_count_top3_sum",
+    "mark_count_mean",
+    "mark_count_max",
+    "mark_count_top3_sum"
   ],
-  "high_confidence_threshold": 0.1
+  "high_confidence_threshold": 0.5,
+  "threshold_analysis": {
+    "optimal_threshold": 0.4,
+    "expected_hit_rate": 0.366,
+    "analysis_date": "2025-11-24"
+  }
 }

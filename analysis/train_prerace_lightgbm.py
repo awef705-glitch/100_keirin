@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Train the LightGBM model that predicts high payouts using pre-race data."""
-
-from __future__ import annotations
 
 import argparse
 import json
+import pickle
+import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 
 import lightgbm as lgb
 import numpy as np
@@ -21,7 +20,12 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import TimeSeriesSplit
 
-from . import prerace_model
+# Ensure project root is in PYTHONPATH
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from analysis import prerace_model
+
+print("Starting training script...", flush=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,8 +93,12 @@ def train_lightgbm(
     feature_columns: List[str],
     args: argparse.Namespace,
 ) -> Dict[str, object]:
-    X = dataset[feature_columns].astype(float)
-    y = dataset["target_high_payout"].astype(int)
+    # Workaround for NumPy 2.0 copy=False issue in pandas astype
+    X = dataset[feature_columns].copy()
+    for col in feature_columns:
+        X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0.0)
+    
+    y = dataset["target_high_payout"].copy().astype(int)
 
     tscv = TimeSeriesSplit(n_splits=args.folds)
 
@@ -123,8 +131,19 @@ def train_lightgbm(
     models: List[lgb.Booster] = []
 
     for fold, (train_idx, valid_idx) in enumerate(tscv.split(X), start=1):
-        train_data = lgb.Dataset(X.iloc[train_idx], label=y.iloc[train_idx])
-        valid_data = lgb.Dataset(X.iloc[valid_idx], label=y.iloc[valid_idx])
+        print(f"Starting fold {fold}...")
+        try:
+            # NumPy 2.0 Fix: Explicitly convert to contiguous arrays
+            X_train = np.ascontiguousarray(X.iloc[train_idx].values, dtype=np.float32)
+            y_train = np.ascontiguousarray(y.iloc[train_idx].values, dtype=np.int32)
+            X_valid = np.ascontiguousarray(X.iloc[valid_idx].values, dtype=np.float32)
+            y_valid = np.ascontiguousarray(y.iloc[valid_idx].values, dtype=np.int32)
+
+            train_data = lgb.Dataset(X_train, label=y_train, feature_name=feature_columns)
+            valid_data = lgb.Dataset(X_valid, label=y_valid, feature_name=feature_columns, reference=train_data)
+        except Exception as e:
+            print(f"Error creating lgb.Dataset: {e}")
+            raise e
 
         callbacks = []
         if args.early_stopping_rounds:
@@ -167,7 +186,12 @@ def train_lightgbm(
 
     # Retrain on the full dataset with the average best iteration.
     final_iter = max(50, int(np.mean(best_iterations)))
-    full_data = lgb.Dataset(X, label=y)
+    
+    # NumPy 2.0 Fix: Convert full dataset to contiguous arrays
+    X_full = np.ascontiguousarray(X.values, dtype=np.float32)
+    y_full = np.ascontiguousarray(y.values, dtype=np.int32)
+    
+    full_data = lgb.Dataset(X_full, label=y_full, feature_name=feature_columns)
     final_callbacks = []
     if args.verbose_eval:
         final_callbacks.append(lgb.log_evaluation(period=args.verbose_eval))

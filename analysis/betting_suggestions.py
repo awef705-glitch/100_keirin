@@ -35,6 +35,58 @@ def calculate_rider_strength(rider: Dict[str, Any], index: int) -> float:
         score += 5
     elif '両' in style:
         score += 3
+        
+    # B回数（バック回数）による評価
+    # 積極的な選手は展開を作れるので加点
+    back_count = rider.get('back_count', 0)
+    if back_count:
+        try:
+            bc = float(back_count)
+            if bc >= 20:
+                score += 5
+            elif bc >= 10:
+                score += 3
+            elif bc >= 5:
+                score += 1
+        except (ValueError, TypeError):
+            pass
+    
+    # 戦術履歴による評価（新規追加）
+    # 逃げ回数：積極的な展開を作れる
+    nige_count = rider.get('nige_count', 0)
+    if nige_count:
+        try:
+            nc = float(nige_count)
+            if nc >= 10:
+                score += 4
+            elif nc >= 5:
+                score += 2
+        except (ValueError, TypeError):
+            pass
+    
+    # 捲り回数：強力な決め手
+    makuri_count = rider.get('makuri_count', 0)
+    if makuri_count:
+        try:
+            mc = float(makuri_count)
+            if mc >= 10:
+                score += 6  # 捲りは強力
+            elif mc >= 5:
+                score += 3
+        except (ValueError, TypeError):
+            pass
+    
+    # 差し回数：安定した決め手
+    sasi_count = rider.get('sasi_count', 0)
+    if sasi_count:
+        try:
+            sc = float(sasi_count)
+            if sc >= 10:
+                score += 5
+            elif sc >= 5:
+                score += 2
+        except (ValueError, TypeError):
+            pass
 
     return score
 
@@ -78,99 +130,105 @@ def generate_betting_suggestions(
     suggestions = []
     strategy = ""
 
-    # 確率に応じて買い目を変える
-    if probability >= 0.7:  # 高確率で荒れる
-        strategy = "穴狙い戦略"
+    # 新戦略：1着予測精度（50%）を活かす
+    # 予測上位を1着に固定し、2-3着を手広く流す
+    
+    if probability >= 0.5:  # 高確率レース
+        strategy = "勝者固定・大流し"
+        
+        # 上位7名まで使用
+        top7 = [r[0] for r in ranked[:min(7, len(ranked))]]
+        
+        # パターン1: 1着本命（rank 1）固定、2-3着フルカバー（最大42点）
+        winner = top3[0]
+        others = top7[1:]
+        for second, third in itertools.permutations(others, 2):
+            suggestions.append({
+                'combination': f'{winner}-{second}-{third}',
+                'type': '勝者軸・全流し',
+                'points': 1
+            })
+        
+        # パターン2: 1着2番手固定、2-3着流し（バックアップ、最大20点）
+        if len(top3) >= 2:
+            winner2 = top3[1]
+            for second, third in itertools.permutations(top5[1:], 2):
+                if second != winner2:
+                    suggestions.append({
+                        'combination': f'{winner2}-{second}-{third}',
+                        'type': '2番手軸',
+                        'points': 1
+                    })
 
-        # パターン1: 中穴を絡める
-        if len(mid) >= 1:
-            for third in mid[:2]:
-                suggestions.append({
-                    'combination': f'{top3[0]}-{top3[1]}-{third}',
-                    'type': '本命軸で中穴を3着に',
-                    'points': 1
-                })
-                suggestions.append({
-                    'combination': f'{top3[0]}-{third}-{top3[1]}',
-                    'type': '本命1着、穴2着',
-                    'points': 1
-                })
-
-        # パターン2: 上位で流す
+    elif probability >= 0.3:  # 中確率
+        strategy = "勝者固定・手堅く流し"
+        
+        # パターン1: 1着本命固定、2-3着上位5名で流し（最大20点）
+        winner = top3[0]
+        for second, third in itertools.permutations(top5[1:], 2):
+            suggestions.append({
+                'combination': f'{winner}-{second}-{third}',
+                'type': '勝者軸',
+                'points': 2
+            })
+        
+        # パターン2: 上位3名ボックス（保険、6点）
         for combo in itertools.permutations(top3, 3):
             suggestions.append({
                 'combination': f'{combo[0]}-{combo[1]}-{combo[2]}',
-                'type': '上位3名のボックス',
+                'type': '上位BOX',
                 'points': 1
             })
 
-        # パターン3: 大穴狙い
-        if len(ranked) >= 7:
-            dark_horses = [r[0] for r in ranked[5:min(8, len(ranked))]]
-            for dark in dark_horses[:2]:
-                suggestions.append({
-                    'combination': f'{top3[0]}-{dark}-{top3[1]}',
-                    'type': '大穴を2着に',
-                    'points': 1
-                })
-
-    elif probability >= 0.5:  # 中確率
-        strategy = "堅め軸穴流し"
-
-        # パターン1: 本命-2,3着流し
-        for second, third in itertools.permutations(top5[1:], 2):
+    else:  # 低確率（混戦・荒れ予想）
+        strategy = "穴狙い・広角流し"
+        
+        # 上位7名まで使用
+        top7 = [r[0] for r in ranked[:min(7, len(ranked))]]
+        
+        # パターン1: 1着（評価1位）から手広く流す（最大30点）
+        winner = top3[0]
+        others = top7[1:]
+        for second, third in itertools.permutations(others, 2):
             suggestions.append({
-                'combination': f'{top3[0]}-{second}-{third}',
-                'type': '本命1着固定',
-                'points': 2
+                'combination': f'{winner}-{second}-{third}',
+                'type': '軸1頭流し',
+                'points': 1
             })
-
-        # パターン2: 上位2名軸
-        for first, second in [(top3[0], top3[1]), (top3[1], top3[0])]:
-            for third in top5[2:]:
-                suggestions.append({
-                    'combination': f'{first}-{second}-{third}',
-                    'type': '上位2名軸',
-                    'points': 1
-                })
-
-    else:  # 低確率（堅い展開）
-        strategy = "堅め本命勝負"
-
-        # パターン1: 上位3名のボックス（重点）
-        for combo in itertools.permutations(top3, 3):
+        
+        # パターン2: 上位4名ボックス（24点）- 混戦用
+        # top3 + 4th ranked rider
+        box_members = top3 + [ranked[3][0]] if len(ranked) > 3 else top3
+        for combo in itertools.permutations(box_members, 3):
             suggestions.append({
                 'combination': f'{combo[0]}-{combo[1]}-{combo[2]}',
-                'type': '上位3名ボックス',
-                'points': 3
+                'type': '上位BOX',
+                'points': 1
             })
 
-        # パターン2: 本命1着固定
-        for second, third in itertools.permutations(top3[1:], 2):
-            suggestions.append({
-                'combination': f'{top3[0]}-{second}-{third}',
-                'type': '本命1着固定',
-                'points': 2
-            })
-
-    # 重複を削除して点数を合計
-    unique_suggestions = {}
-    for sug in suggestions:
-        combo = sug['combination']
-        if combo in unique_suggestions:
-            unique_suggestions[combo]['points'] += sug['points']
-        else:
-            unique_suggestions[combo] = sug
+    # 重複削除
+    seen = set()
+    final_suggestions = []
+    for s in suggestions:
+        combo = s['combination']
+        if combo not in seen:
+            seen.add(combo)
+            final_suggestions.append(s)
 
     # 点数順にソート
-    final_suggestions = sorted(
-        unique_suggestions.values(),
-        key=lambda x: x['points'],
-        reverse=True
-    )
+    final_suggestions.sort(key=lambda x: x['points'], reverse=True)
 
-    # 上位10-15点に絞る
-    final_suggestions = final_suggestions[:15]
+    # 確率に応じて買い目数を調整
+    # 低確率（荒れそう）な場合こそ、点数を増やして網を広げる
+    # 的中率向上のため、全体的に買い目数を大幅に増加
+    if probability >= 0.5:
+        max_suggestions = 60  # 超高確率: 60点（フルカバー）
+    elif probability >= 0.3:
+        max_suggestions = 48  # 中穴: 48点（広めカバー）
+    else:
+        max_suggestions = 54  # 大穴: 54点（超広角流し）
+    
+    final_suggestions = final_suggestions[:max_suggestions]
     total_points = sum(s['points'] for s in final_suggestions)
 
     # 選手情報を追加
