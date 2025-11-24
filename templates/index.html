@@ -388,127 +388,148 @@
           <select name="rider_styles" class="rider-style">
             <option value="逃">逃</option>
             <option value="追">追</option>
+            <option value="両">両</option>
+          </select>
+        </div>
+      </div>
 
-            async function loadMasterData() {
-            try {
-            const [ridersRes, tracksRes] = await Promise.all([
-            fetch('/api/riders'),
-            fetch('/api/tracks')
-            ]);
-            ridersData = await ridersRes.json();
-            tracksData = await tracksRes.json();
+      <!-- Hidden fields for auto-filled data -->
+      <input type="hidden" name="rider_prefectures" class="rider-prefecture">
+      <input type="hidden" name="rider_grades" class="rider-grade">
+      <input type="hidden" name="rider_nige_counts" class="rider-nige-count">
+      <input type="hidden" name="rider_makuri_counts" class="rider-makuri-count">
+      <input type="hidden" name="rider_sasi_counts" class="rider-sasi-count">
+      <input type="hidden" name="rider_mark_counts" class="rider-mark-count">
+    </div>
+  </template>
 
-            const trackList = document.getElementById('track-list');
-            tracksData.forEach(track => {
-            const option = document.createElement('option');
-            option.value = track.name;
-            trackList.appendChild(option);
-            });
-            } catch (e) {
-            console.error("Data load error", e);
-            }
-            }
+  <script>
+    let ridersData = [];
+    let tracksData = [];
 
-            document.getElementById('track').addEventListener('input', function () {
-            const track = tracksData.find(t => t.name === this.value);
-            if (track) document.getElementById('keirin_cd').value = track.code;
-            });
+    async function loadMasterData() {
+      try {
+        const [ridersRes, tracksRes] = await Promise.all([
+          fetch('/api/riders'),
+          fetch('/api/tracks')
+        ]);
+        ridersData = await ridersRes.json();
+        tracksData = await tracksRes.json();
 
-            const riderList = document.getElementById("rider-list");
-            const template = document.getElementById("rider-template");
-            const MAX_RIDERS = 9;
+        const trackList = document.getElementById('track-list');
+        tracksData.forEach(track => {
+          const option = document.createElement('option');
+          option.value = track.name;
+          trackList.appendChild(option);
+        });
+      } catch (e) {
+        console.error("Data load error", e);
+      }
+    }
 
-            function addRider() {
-            if (riderList.children.length >= MAX_RIDERS) return;
+    document.getElementById('track').addEventListener('input', function () {
+      const track = tracksData.find(t => t.name === this.value);
+      if (track) document.getElementById('keirin_cd').value = track.code;
+    });
 
-            const clone = template.content.cloneNode(true);
-            const card = clone.querySelector(".rider-card");
+    const riderList = document.getElementById("rider-list");
+    const template = document.getElementById("rider-template");
+    const MAX_RIDERS = 9;
 
-            card.querySelector(".rider-remove").addEventListener("click", () => {
-            card.remove();
-            updateIndices();
-            });
+    function addRider() {
+      if (riderList.children.length >= MAX_RIDERS) return;
 
-            setupAutocomplete(card);
-            riderList.appendChild(card);
-            updateIndices();
-            }
+      const clone = template.content.cloneNode(true);
+      const card = clone.querySelector(".rider-card");
 
-            function updateIndices() {
-            riderList.querySelectorAll(".rider-index").forEach((el, i) => el.textContent = i + 1);
-            }
+      card.querySelector(".rider-remove").addEventListener("click", () => {
+        card.remove();
+        updateIndices();
+      });
 
-            function setupAutocomplete(card) {
-            const input = card.querySelector('.rider-name-input');
-            const suggestions = card.querySelector('.autocomplete-suggestions');
+      setupAutocomplete(card);
+      riderList.appendChild(card);
+      updateIndices();
+    }
 
-            input.addEventListener('input', function () {
-            const val = this.value.toLowerCase();
-            if (!val) {
-            suggestions.style.display = 'none';
-            return;
-            }
+    function updateIndices() {
+      riderList.querySelectorAll(".rider-index").forEach((el, i) => el.textContent = i + 1);
+    }
 
-            const matches = ridersData.filter(r => r.name.includes(val)).slice(0, 10);
+    function setupAutocomplete(card) {
+      const input = card.querySelector('.rider-name-input');
+      const suggestions = card.querySelector('.autocomplete-suggestions');
 
-            if (matches.length) {
-            suggestions.innerHTML = matches.map(r => `
+      input.addEventListener('input', function () {
+        const val = this.value.toLowerCase();
+        if (!val) {
+          suggestions.style.display = 'none';
+          return;
+        }
+
+        const matches = ridersData.filter(r => r.name.includes(val)).slice(0, 10);
+
+        if (matches.length) {
+          suggestions.innerHTML = matches.map(r => `
             <div class="autocomplete-item" data-name="${r.name}">
               <div style="font-weight:600">${r.name}</div>
               <div class="autocomplete-meta">${r.prefecture} / ${r.grade} / Avg: ${r.avg_score}</div>
             </div>
-            `).join('');
-            suggestions.style.display = 'block';
+          `).join('');
+          suggestions.style.display = 'block';
 
-            suggestions.querySelectorAll('.autocomplete-item').forEach(item => {
+          suggestions.querySelectorAll('.autocomplete-item').forEach(item => {
             item.addEventListener('click', () => {
-            const r = ridersData.find(d => d.name === item.dataset.name);
-            if (r) fillRiderData(card, r);
-            suggestions.style.display = 'none';
+              const r = ridersData.find(d => d.name === item.dataset.name);
+              if (r) fillRiderData(card, r);
+              suggestions.style.display = 'none';
             });
-            });
-            } else {
-            suggestions.style.display = 'none';
-            }
-            });
+          });
+        } else {
+          suggestions.style.display = 'none';
+        }
+      });
 
-            document.addEventListener('click', e => {
-            if (!card.contains(e.target)) suggestions.style.display = 'none';
-            });
-            }
+      document.addEventListener('click', e => {
+        if (!card.contains(e.target)) suggestions.style.display = 'none';
+      });
+    }
 
-            function fillRiderData(card, r) {
-            card.querySelector('.rider-name-input').value = r.name;
-            card.querySelector('.rider-score').value = r.avg_score || '';
-            card.querySelector('.rider-back-count').value = r.back_count || 0;
-            card.querySelector('.rider-prefecture').value = r.prefecture || '';
-            card.querySelector('.rider-grade').value = r.grade || '';
+    function fillRiderData(card, r) {
+      card.querySelector('.rider-name-input').value = r.name;
+      card.querySelector('.rider-score').value = r.avg_score || '';
+      card.querySelector('.rider-back-count').value = r.back_count || 0;
+      card.querySelector('.rider-prefecture').value = r.prefecture || '';
+      card.querySelector('.rider-grade').value = r.grade || '';
 
-            // 戦術カウント（追加）
-            if (card.querySelector('.rider-nige-count')) {
-            card.querySelector('.rider-nige-count').value = r.nige_count || 0;
-            }
-            if (card.querySelector('.rider-makuri-count')) {
-            card.querySelector('.rider-makuri-count').value = r.makuri_count || 0;
-            }
-            if (card.querySelector('.rider-sasi-count')) {
-            card.querySelector('.rider-sasi-count').value = r.sasi_count || 0;
-            }
-            if (card.querySelector('.rider-mark-count')) {
-            card.querySelector('.rider-mark-count').value = r.mark_count || 0;
-            }
+      // 戦術カウント（追加）
+      if (card.querySelector('.rider-nige-count')) {
+        card.querySelector('.rider-nige-count').value = r.nige_count || 0;
+      }
+      if (card.querySelector('.rider-makuri-count')) {
+        card.querySelector('.rider-makuri-count').value = r.makuri_count || 0;
+      }
+      if (card.querySelector('.rider-sasi-count')) {
+        card.querySelector('.rider-sasi-count').value = r.sasi_count || 0;
+      }
+      if (card.querySelector('.rider-mark-count')) {
+        card.querySelector('.rider-mark-count').value = r.mark_count || 0;
+      }
 
-            const styleSelect = card.querySelector('.rider-style');
-            if (r.style && ['逃', '追', '両'].includes(r.style)) {
-            styleSelect.value = r.style;
-            }
-            }
+      const styleSelect = card.querySelector('.rider-style');
+      if (r.style && ['逃', '追', '両'].includes(r.style)) {
+        styleSelect.value = r.style;
+      }
+    }
 
-            document.getElementById('add-rider').addEventListener('click', addRider);
-            document.getElementById('race_date').valueAsDate = new Date();
+    document.getElementById('add-rider').addEventListener('click', addRider);
+    document.getElementById('race_date').valueAsDate = new Date();
 
-            // Init with 7 riders
-            for (let i = 0; i < 7; i++) addRider(); loadMasterData(); </script>
+    // Init with 7 riders
+    for (let i = 0; i < 7; i++) addRider();
+
+    loadMasterData();
+  </script>
 </body>
 
 </html>
