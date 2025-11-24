@@ -216,6 +216,12 @@ async def predict(
 
 
 if __name__ == "__main__":
+    import os
+    
+    # クラウド環境対応（Railway等）
+    port = int(os.getenv("PORT", 8000))
+    host = "0.0.0.0"  # クラウド必須
+    
     print("=" * 70)
     print("競輪 高配当予測 Web アプリ")
     print("=" * 70)
