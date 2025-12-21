@@ -1245,6 +1245,47 @@ def calculate_roughness_score(row: pd.Series, metadata: Dict[str, Any]) -> float
     if has_mixed > 0.5:
         score -= 15  # Mixed race is usually predictable (S beats A)
 
+    # === FACTOR 6: Line Score Gap (NEW) ===
+    # Large gap between strongest and weakest line -> Predictable
+    # Small gap -> Any line can win -> Chaotic
+    if line_score_gap < 3.0:
+        score += 10  # Lines are evenly matched
+    elif line_score_gap > 10.0:
+        score -= 10  # One line dominates
+
+    # === FACTOR 7: Score Range (NEW - BALANCED) ===
+    # Total spread of abilities in the race
+    # More gradual adjustments for balanced scoring
+    score_range = float(row.get("score_range", 0.0) or 0.0)
+    if score_range < 5.0:
+        score += 15  # Very tight field
+    elif score_range < 10.0:
+        score += 8   # Tight field
+    elif score_range < 15.0:
+        score += 0   # Normal field - no adjustment
+    elif score_range < 20.0:
+        score -= 8   # Wide field
+    elif score_range < 25.0:
+        score -= 12  # Very wide field
+    else:
+        score -= 18  # Extremely wide = favorites dominate
+
+    # === FACTOR 8: Entry Count (NEW) ===
+    # Smaller fields tend to be more chaotic
+    entry_count = float(row.get("entry_count", 9.0) or 9.0)
+    if entry_count <= 6:
+        score += 10  # Small field = harder to predict
+    elif entry_count <= 7:
+        score += 5
+
+    # === FACTOR 9: Style Diversity (NEW) ===
+    # High diversity = unpredictable tactics
+    style_diversity = float(row.get("style_diversity", 0.0) or 0.0)
+    if style_diversity > 0.7:
+        score += 10  # Very diverse styles = tactical chaos
+    elif style_diversity < 0.3:
+        score -= 5  # Homogeneous styles = predictable
+
     # Clamp to 0-100
     return max(0.0, min(100.0, score))
 
