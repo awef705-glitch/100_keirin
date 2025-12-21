@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Keirin AI Predictor</title>
+  <title>競輪 高配当予測AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -56,6 +56,7 @@
       margin: 0;
       background: linear-gradient(to right, #818cf8, #c084fc);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.02em;
     }
@@ -297,33 +298,33 @@
 <body>
   <div class="container">
     <header>
-      <h1>Keirin AI Predictor</h1>
-      <p class="subtitle">High Dividend Strategy & Roughness Score</p>
+      <h1>🎯 競輪 高配当予測AI</h1>
+      <p class="subtitle">荒れ度スコア × 松竹梅買い目提案</p>
     </header>
 
     <form action="/predict" method="post" class="card">
       <div class="section-header">
         <div class="section-icon">🏁</div>
-        <div>Race Details</div>
+        <div>レース情報</div>
       </div>
 
       <div class="form-grid">
         <div class="form-group">
-          <label>Date</label>
+          <label>日付</label>
           <input type="date" name="race_date" id="race_date" required>
         </div>
         <div class="form-group">
-          <label>Track</label>
-          <input list="track-list" name="track" id="track" placeholder="Select Track" required>
+          <label>競輪場</label>
+          <input list="track-list" name="track" id="track" placeholder="競輪場を選択" required>
           <datalist id="track-list"></datalist>
           <input type="hidden" name="keirin_cd" id="keirin_cd">
         </div>
         <div class="form-group">
-          <label>Race No</label>
+          <label>レース番号</label>
           <input type="number" name="race_no" value="1" min="1" max="12" required>
         </div>
         <div class="form-group">
-          <label>Grade</label>
+          <label>グレード</label>
           <select name="grade">
             <option value="F1">F1</option>
             <option value="F2">F2</option>
@@ -337,17 +338,17 @@
 
       <div class="section-header" style="margin-top: 24px;">
         <div class="section-icon">🚴</div>
-        <div>Riders <span id="data-status"
-            style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(Loading
-            data...)</span></div>
+        <div>選手情報 <span id="data-status"
+            style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(データ読込中...)</span>
+        </div>
       </div>
 
       <div id="rider-list"></div>
 
-      <button type="button" id="add-rider" class="btn-secondary" style="margin-bottom: 60px;">+ Add Rider</button>
+      <button type="button" id="add-rider" class="btn-secondary" style="margin-bottom: 60px;">+ 選手を追加</button>
 
       <div class="floating-action">
-        <button type="submit" class="btn-primary">Predict High Payout</button>
+        <button type="submit" class="btn-primary">🎯 高配当予測を実行</button>
       </div>
     </form>
   </div>
@@ -453,11 +454,11 @@
           trackList.appendChild(option);
         });
 
-        statusEl.textContent = `(Ready: ${ridersData.length} riders)`;
+        statusEl.textContent = `(読込完了: ${ridersData.length}名)`;
         statusEl.style.color = '#4ade80'; // Green
       } catch (e) {
         console.error("Data load error", e);
-        statusEl.textContent = "(Data Load Error)";
+        statusEl.textContent = "(データ読込エラー)";
         statusEl.style.color = '#f43f5e'; // Red
       }
     }

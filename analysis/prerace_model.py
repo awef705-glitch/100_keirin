@@ -1294,33 +1294,72 @@ def generate_reasons(summary: Dict[str, Any], roughness_score: float, metadata: 
     """Create lightweight human readable hints based on feature summary."""
     reasons: List[str] = []
 
+    # Score-based reasons
     score_range = summary.get("score_range", 0.0)
-    if score_range >= 15:
-        reasons.append(f"実力差が大きく（{score_range:.1f}点差）、本命が堅い傾向です。")
-    elif score_range <= 5:
-        reasons.append(f"実力が拮抗しており（{score_range:.1f}点差）、誰が勝ってもおかしくありません。")
-
-    diversity = summary.get("style_diversity", 0.0)
-    if diversity >= 0.6:
-        reasons.append("脚質が分散しており、展開が読みづらい混戦模様です。")
+    score_cv = summary.get("score_cv", 0.0)
+    favorite_gap = summary.get("estimated_favorite_gap", 0.0)
     
+    if score_range <= 5:
+        reasons.append(f"🔥 実力が超拮抗（{score_range:.1f}点差）。誰が勝ってもおかしくない超混戦！")
+    elif score_range <= 10:
+        reasons.append(f"⚡ 実力差が小さく（{score_range:.1f}点差）、展開次第で逆転も十分。")
+    elif score_range >= 25:
+        reasons.append(f"📊 実力差が大きく（{score_range:.1f}点差）、本命が堅い傾向です。")
+    elif score_range >= 15:
+        reasons.append(f"📉 中程度の実力差（{score_range:.1f}点差）。上位陣を中心に組み立てを。")
+
+    # Favorite gap
+    if favorite_gap <= 2.0:
+        reasons.append("👥 1番人気と2番人気の差がほぼなく、どちらが来てもおかしくない。")
+    elif favorite_gap >= 15.0:
+        reasons.append("🎯 トップ選手が圧倒的。本命を軸に少点数で手堅く。")
+
+    # Style diversity
+    diversity = summary.get("style_diversity", 0.0)
+    if diversity >= 0.7:
+        reasons.append("🌀 脚質がバラバラで展開が読みづらい。波乱含みの混戦模様。")
+    elif diversity <= 0.3:
+        reasons.append("📋 脚質が偏っており、展開は読みやすい。")
+    
+    # Nige count
     nige_count = summary.get("style_nige_count", 0)
     if nige_count >= 4:
-        reasons.append("先行選手が多く、激しい主導権争いで波乱の可能性があります。")
+        reasons.append("💨 先行選手が多すぎ！激しい主導権争いで番狂わせも。")
+    elif nige_count == 0:
+        reasons.append("🛑 先行選手がおらず、スローペースで差し追込が有利か。")
 
+    # Entry count
+    entry_count = summary.get("entry_count", 9)
+    if entry_count and entry_count <= 6:
+        reasons.append(f"📢 少頭数（{entry_count}名）レースは波乱が起きやすい傾向。")
+    elif entry_count and entry_count <= 7:
+        reasons.append(f"⚠️ 7名レースは通常より荒れやすい傾向があります。")
+
+    # Line balance
+    dominant_line_ratio = summary.get("dominant_line_ratio", 0.0)
+    if dominant_line_ratio and dominant_line_ratio < 0.3:
+        reasons.append("🔄 ラインの力が均等。どのラインが主導権を取るか不透明。")
+    elif dominant_line_ratio and dominant_line_ratio > 0.6:
+        reasons.append("📈 強力なラインが存在。ライン決着の可能性大。")
+
+    # Overall verdict based on roughness
     if roughness_score >= 80:
-        reasons.append("【激荒れ注意】過去データでも高配当が頻発するパターンです。")
+        reasons.insert(0, "🚨【激荒れ警報】過去データでも高配当が頻発するパターン！穴党の出番です。")
+    elif roughness_score >= 60:
+        reasons.insert(0, "⚡【波乱含み】手広く構えて中穴を狙う局面。")
     elif roughness_score <= 20:
-        reasons.append("【本命党推奨】順当な決着が期待できる条件が揃っています。")
+        reasons.insert(0, "✅【本命党推奨】順当決着が期待できる鉄板レース。")
+    elif roughness_score <= 40:
+        reasons.insert(0, "📊【やや堅め】本命軸で少点数勝負が有効。")
 
-    # Remove duplicates while preserving order.
+    # Remove duplicates while preserving order
     seen = set()
     deduped: List[str] = []
     for reason in reasons:
         if reason not in seen:
             seen.add(reason)
             deduped.append(reason)
-    return deduped[:4]
+    return deduped[:6]  # Return up to 6 reasons
 
 
 def build_betting_plan(
