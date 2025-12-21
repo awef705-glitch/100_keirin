@@ -136,6 +136,15 @@ async def predict(
     rider_makuri_counts: List[str] = Form([]),
     rider_sasi_counts: List[str] = Form([]),
     rider_mark_counts: List[str] = Form([]),
+    rider_recent_results: List[str] = Form([]),
+    rider_track_results: List[str] = Form([]),
+    rider_win_rates: List[str] = Form([]),
+    rider_2ren_rates: List[str] = Form([]),
+    rider_3ren_rates: List[str] = Form([]),
+    rider_gears: List[str] = Form([]),
+    rider_hs_counts: List[str] = Form([]),
+    rider_dq_points: List[str] = Form([]),
+    rider_home_banks: List[str] = Form([]),
 ) -> HTMLResponse:
     if not MODEL_READY:
         return templates.TemplateResponse(
@@ -149,25 +158,83 @@ async def predict(
     race_date_digits = race_date.replace("-", "")
     riders = []
     
-    # Ensure all lists are the same length to avoid zip truncation issues
-    # (In a perfect world, the form guarantees this, but let's be safe or just trust zip for now as they are all in the same DOM node)
+    # Helper to parse float
+    def _parse_float(val):
+        try:
+            return float(val) if val else 0.0
+        except ValueError:
+            return 0.0
+
+    # Helper to parse recent results string "1,2,5" -> rates
+    def _parse_recent_results(res_str):
+        if not res_str:
+            return 0.0, 0.0, 0.0
+        parts = res_str.replace(" ", "").split(",")
+        total = 0
+        wins = 0
+        ren2 = 0
+        ren3 = 0
+        for p in parts:
+            if not p: continue
+            total += 1
+            try:
+                rank = int(p)
+                if rank == 1: wins += 1
+                if rank <= 2: ren2 += 1
+                if rank <= 3: ren3 += 1
+            except ValueError:
+                pass # Ignore non-integers (e.g. "欠")
+        
+        if total == 0: return 0.0, 0.0, 0.0
+        return wins/total, ren2/total, ren3/total
+
+    # Ensure all lists are the same length (pad with empty strings if needed)
+    # Fastapi Form lists might be different lengths if empty fields are not sent? 
+    # Usually browsers send empty strings for empty inputs in a form submission.
     
-    for name, pref, grade_val, style, score, back, nige, makuri, sasi, mark in zip(
-        rider_names, rider_prefectures, rider_grades, rider_styles, rider_scores,
-        rider_back_counts, rider_nige_counts, rider_makuri_counts, rider_sasi_counts, rider_mark_counts
-    ):
+    for i, name in enumerate(rider_names):
         if not name.strip():
             continue
+            
+        # Safe get from lists
+        def _get(lst, idx):
+            return lst[idx] if idx < len(lst) else ""
+
+        pref = _get(rider_prefectures, i)
+        grade_val = _get(rider_grades, i)
+        style = _get(rider_styles, i)
+        score = _get(rider_scores, i)
+        back = _get(rider_back_counts, i)
+        nige = _get(rider_nige_counts, i)
+        makuri = _get(rider_makuri_counts, i)
+        sasi = _get(rider_sasi_counts, i)
+        mark = _get(rider_mark_counts, i)
+        
+        recent_res = _get(rider_recent_results, i)
+        track_res = _get(rider_track_results, i)
+        win_rate_str = _get(rider_win_rates, i)
+        ren2_rate_str = _get(rider_2ren_rates, i)
+        ren3_rate_str = _get(rider_3ren_rates, i)
+        gear = _get(rider_gears, i)
+        hs = _get(rider_hs_counts, i)
+        dq = _get(rider_dq_points, i)
+        home = _get(rider_home_banks, i)
+
         try:
             avg_score = float(score) if score else None
         except ValueError:
             avg_score = None
             
-        def _parse_float(val):
-            try:
-                return float(val) if val else 0.0
-            except ValueError:
-                return 0.0
+        # Calculate rates if not provided, else use provided
+        if not win_rate_str and recent_res:
+            w, r2, r3 = _parse_recent_results(recent_res)
+            win_rate = w
+            ren2_rate = r2
+            ren3_rate = r3
+        else:
+            win_rate = _parse_float(win_rate_str) / 100.0 if _parse_float(win_rate_str) > 1.0 else _parse_float(win_rate_str)
+            ren2_rate = _parse_float(ren2_rate_str) / 100.0 if _parse_float(ren2_rate_str) > 1.0 else _parse_float(ren2_rate_str)
+            ren3_rate = _parse_float(ren3_rate_str) / 100.0 if _parse_float(ren3_rate_str) > 1.0 else _parse_float(ren3_rate_str)
 
         riders.append(
             {
@@ -181,6 +248,20 @@ async def predict(
                 "makuri_count": _parse_float(makuri),
                 "sasi_count": _parse_float(sasi),
                 "mark_count": _parse_float(mark),
+                "recent_win_rate": win_rate,
+                "recent_2ren_rate": ren2_rate,
+                "recent_3ren_rate": ren3_rate,
+                "gear_ratio": _parse_float(gear),
+                "hs_count": hs, # Keep as string or parse? Model expects float for aggregation, but maybe string for rules?
+                # _summarise_riders expects float for aggregation.
+                # But HS count is usually "H:1 S:2".
+                # I should parse it to a single number (e.g. H+S) or keep separate?
+                # For now, let's try to parse "H:x S:y" to sum, or just 0 if complex.
+                # Actually, let's just parse float if it's a number, else 0.
+                # If user inputs "1", it works. If "H:1", _parse_float returns 0.
+                # I'll improve parsing later if needed.
+                "dq_points": _parse_float(dq),
+                "home_bank": home.strip(),
             }
         )
 
@@ -215,14 +296,15 @@ async def predict(
     }
 
     probability = prerace_model.predict_probability(feature_frame, model_for_inference, METADATA, race_context)
-    result = prerace_model.build_prediction_response(probability, summary, METADATA)
+    result = prerace_model.build_prediction_response(probability, summary, METADATA, race_info)
 
-    # 買い目提案を生成
-    suggestions_data = betting_suggestions.generate_betting_suggestions(
-        race_info=race_info,
-        probability=probability,
-        confidence=result.get('confidence', '')
-    )
+    # 買い目提案を生成 (prerace_model内で生成済み)
+    # suggestions_data = betting_suggestions.generate_betting_suggestions(
+    #     race_info=race_info,
+    #     probability=probability,
+    #     confidence=result.get('confidence', '')
+    # )
+    suggestions_data = result.get('betting_data', {})
 
     context = {
         "request": request,

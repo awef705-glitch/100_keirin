@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""具体的な買い目提案を生成するモジュール"""
+"""具体的な買い目提案を生成するモジュール (Tiered Strategy)"""
 
 from typing import Dict, List, Any, Tuple
 import itertools
@@ -37,7 +37,6 @@ def calculate_rider_strength(rider: Dict[str, Any], index: int) -> float:
         score += 3
         
     # B回数（バック回数）による評価
-    # 積極的な選手は展開を作れるので加点
     back_count = rider.get('back_count', 0)
     if back_count:
         try:
@@ -51,51 +50,83 @@ def calculate_rider_strength(rider: Dict[str, Any], index: int) -> float:
         except (ValueError, TypeError):
             pass
     
-    # 戦術履歴による評価（新規追加）
-    # 逃げ回数：積極的な展開を作れる
+    # 戦術履歴による評価
     nige_count = rider.get('nige_count', 0)
     if nige_count:
         try:
             nc = float(nige_count)
-            if nc >= 10:
-                score += 4
-            elif nc >= 5:
-                score += 2
-        except (ValueError, TypeError):
-            pass
+            if nc >= 10: score += 4
+            elif nc >= 5: score += 2
+        except (ValueError, TypeError): pass
     
-    # 捲り回数：強力な決め手
     makuri_count = rider.get('makuri_count', 0)
     if makuri_count:
         try:
             mc = float(makuri_count)
-            if mc >= 10:
-                score += 6  # 捲りは強力
-            elif mc >= 5:
-                score += 3
-        except (ValueError, TypeError):
-            pass
+            if mc >= 10: score += 6
+            elif mc >= 5: score += 3
+        except (ValueError, TypeError): pass
     
-    # 差し回数：安定した決め手
     sasi_count = rider.get('sasi_count', 0)
     if sasi_count:
         try:
             sc = float(sasi_count)
-            if sc >= 10:
-                score += 5
-            elif sc >= 5:
-                score += 2
-        except (ValueError, TypeError):
-            pass
+            if sc >= 10: score += 5
+            elif sc >= 5: score += 2
+        except (ValueError, TypeError): pass
 
+    # Recent Win Rate
+    recent_win_rate = rider.get('recent_win_rate', 0.0)
+    if recent_win_rate:
+        try:
+            wr = float(recent_win_rate)
+            if wr >= 0.3: score += 5
+            elif wr >= 0.1: score += 2
+        except (ValueError, TypeError): pass
+
+    # Gear Ratio (Higher gear = more power/makuri potential?)
+    gear = rider.get('gear_ratio', 0.0)
+    if gear:
+        try:
+            g = float(gear)
+            if g >= 3.92: score += 2 # Slight bonus for heavy gear
+        except (ValueError, TypeError): pass
+
+    # H/S Count (Active racer)
+    hs = rider.get('hs_count', 0) # Could be string "H:1 S:2" or float
+    # If float/int
+    if isinstance(hs, (int, float)) and hs > 0:
+         score += 2
+         if hs >= 5: score += 3
+    
+    return score
+
+def calculate_rider_strength_v2(rider: Dict[str, Any], index: int, track_name: str = None) -> float:
+    score = calculate_rider_strength(rider, index)
+    
+    # Home Bank Bonus
+    home_bank = rider.get('home_bank')
+    # If home_bank is explicitly 1 (int/str), it means "Yes" (already checked by caller)
+    # If it's a string name, check if it matches track_name
+    is_home = False
+    if str(home_bank) == "1":
+        is_home = True
+    elif isinstance(home_bank, str) and track_name and home_bank in track_name:
+        is_home = True
+    elif isinstance(home_bank, str) and track_name and track_name in home_bank:
+        is_home = True
+        
+    if is_home:
+        score += 5.0
+        
     return score
 
 
-def rank_riders(riders: List[Dict[str, Any]]) -> List[Tuple[int, float, Dict[str, Any]]]:
+def rank_riders(riders: List[Dict[str, Any]], track_name: str = None) -> List[Tuple[int, float, Dict[str, Any]]]:
     """選手を強さ順にランク付け"""
     ranked = []
     for i, rider in enumerate(riders):
-        strength = calculate_rider_strength(rider, i)
+        strength = calculate_rider_strength_v2(rider, i, track_name)
         car_no = i + 1  # 車番は1から
         ranked.append((car_no, strength, rider))
 
@@ -104,132 +135,186 @@ def rank_riders(riders: List[Dict[str, Any]]) -> List[Tuple[int, float, Dict[str
     return ranked
 
 
-def generate_betting_suggestions(
+def generate_tiered_suggestions(
     race_info: Dict[str, Any],
-    probability: float,
+    roughness_score: float,
     confidence: str
 ) -> Dict[str, Any]:
-    """具体的な買い目を生成"""
+    """
+    荒れ度スコアに基づき、松・竹・梅の3パターンの買い目を提案する。
+    """
+    if not isinstance(roughness_score, (int, float)):
+        try:
+            roughness_score = float(roughness_score)
+        except:
+            roughness_score = 50.0
 
     riders = race_info.get('riders', [])
+    track_name = race_info.get('track', '')
+    
     if len(riders) < 3:
-        return {
-            'error': '選手が3名未満のため買い目を生成できません'
-        }
+        return {'error': '選手が3名未満のため買い目を生成できません'}
 
     # 選手をランク付け
-    ranked = rank_riders(riders)
-
-    # 上位3名
-    top3 = [r[0] for r in ranked[:3]]
-    # 上位5名
-    top5 = [r[0] for r in ranked[:min(5, len(ranked))]]
-    # 中位（4-6位）
-    mid = [r[0] for r in ranked[3:min(6, len(ranked))]]
-
-    suggestions = []
-    strategy = ""
-
-    # 新戦略：1着予測精度（50%）を活かす
-    # 予測上位を1着に固定し、2-3着を手広く流す
+    ranked = rank_riders(riders, track_name)
     
-    if probability >= 0.5:  # 高確率レース
-        strategy = "勝者固定・大流し"
+    # ランク順の車番リスト
+    r_order = [r[0] for r in ranked]
+    
+    # 上位選手
+    top1 = r_order[0]
+    top2 = r_order[1]
+    top3 = r_order[:3]
+    top4 = r_order[:4]
+    top5 = r_order[:5]
+    top6 = r_order[:6]
+
+    suggestions = {
+        "low_cost": [],   # 梅: 少額 (5-10点)
+        "mid_cost": [],   # 竹: 中額 (10-30点)
+        "high_cost": [],  # 松: 高額 (30-60+点)
+        "high_cost_reduced": [] # 松・絞り
+    }
+    
+    strategies = {
+        "low_cost": "",
+        "mid_cost": "",
+        "high_cost": "",
+        "high_cost_reduced": ""
+    }
+
+    # === ロジック分岐 ===
+    
+    # 1. 鉄板レース (Score 0-20)
+    if roughness_score <= 20:
+        # 梅: ワイド1点 (本命-対抗)
+        strategies["low_cost"] = "ワイド1点勝負"
+        suggestions["low_cost"].append({
+            "combination": f"{top1}={top2}", "type": "ワイド", "points": 1
+        })
         
-        # 上位7名まで使用
-        top7 = [r[0] for r in ranked[:min(7, len(ranked))]]
-        
-        # パターン1: 1着本命（rank 1）固定、2-3着フルカバー（最大42点）
-        winner = top3[0]
-        others = top7[1:]
-        for second, third in itertools.permutations(others, 2):
-            suggestions.append({
-                'combination': f'{winner}-{second}-{third}',
-                'type': '勝者軸・全流し',
-                'points': 1
+        # 竹: 3連単 上位3名BOX (6点)
+        strategies["mid_cost"] = "上位3名BOX"
+        for p in itertools.permutations(top3, 3):
+            suggestions["mid_cost"].append({
+                "combination": f"{p[0]}-{p[1]}-{p[2]}", "type": "3連単BOX", "points": 1
             })
-        
-        # パターン2: 1着2番手固定、2-3着流し（バックアップ、最大20点）
-        if len(top3) >= 2:
-            winner2 = top3[1]
-            for second, third in itertools.permutations(top5[1:], 2):
-                if second != winner2:
-                    suggestions.append({
-                        'combination': f'{winner2}-{second}-{third}',
-                        'type': '2番手軸',
-                        'points': 1
+            
+        # 松: 3連単 1着固定流し (12点)
+        strategies["high_cost"] = "本命軸・相手4名"
+        others = r_order[1:5] # 2-5位
+        for s, t in itertools.permutations(others, 2):
+            suggestions["high_cost"].append({
+                "combination": f"{top1}-{s}-{t}", "type": "3連単流し", "points": 1
+            })
+
+    # 2. 堅い〜標準 (Score 20-60)
+    elif roughness_score <= 60:
+        # 梅: 2車単 上位3名BOX (6点)
+        strategies["low_cost"] = "2車単 上位BOX"
+        for p in itertools.permutations(top3, 2):
+            suggestions["low_cost"].append({
+                "combination": f"{p[0]}-{p[1]}", "type": "2車単BOX", "points": 1
+            })
+            
+        # 竹: 3連単 フォーメーション (12点)
+        # 1着: 1,2位 -> 2着: 1,2,3位 -> 3着: 1,2,3,4位
+        strategies["mid_cost"] = "本命・対抗フォーメーション"
+        w_list = r_order[:2] # 1st and 2nd riders
+        s_list = top3
+        t_list = top4
+        for w in w_list:
+            for s in s_list:
+                if w == s: continue
+                for t in t_list:
+                    if t == w or t == s: continue
+                    suggestions["mid_cost"].append({
+                        "combination": f"{w}-{s}-{t}", "type": "フォーメーション", "points": 1
                     })
-
-    elif probability >= 0.3:  # 中確率
-        strategy = "勝者固定・手堅く流し"
-        
-        # パターン1: 1着本命固定、2-3着上位5名で流し（最大20点）
-        winner = top3[0]
-        for second, third in itertools.permutations(top5[1:], 2):
-            suggestions.append({
-                'combination': f'{winner}-{second}-{third}',
-                'type': '勝者軸',
-                'points': 2
-            })
-        
-        # パターン2: 上位3名ボックス（保険、6点）
-        for combo in itertools.permutations(top3, 3):
-            suggestions.append({
-                'combination': f'{combo[0]}-{combo[1]}-{combo[2]}',
-                'type': '上位BOX',
-                'points': 1
+                    
+        # 松: 3連単 上位4名BOX (24点)
+        strategies["high_cost"] = "上位4名BOX"
+        for p in itertools.permutations(top4, 3):
+            suggestions["high_cost"].append({
+                "combination": f"{p[0]}-{p[1]}-{p[2]}", "type": "3連単BOX", "points": 1
             })
 
-    else:  # 低確率（混戦・荒れ予想）
-        strategy = "穴狙い・広角流し"
-        
-        # 上位7名まで使用
-        top7 = [r[0] for r in ranked[:min(7, len(ranked))]]
-        
-        # パターン1: 1着（評価1位）から手広く流す（最大30点）
-        winner = top3[0]
-        others = top7[1:]
-        for second, third in itertools.permutations(others, 2):
-            suggestions.append({
-                'combination': f'{winner}-{second}-{third}',
-                'type': '軸1頭流し',
-                'points': 1
+    # 3. 波乱含み (Score 60-80)
+    elif roughness_score <= 80:
+        # 梅: ワイドBOX 上位4名 (6点)
+        strategies["low_cost"] = "ワイドBOX"
+        for p in itertools.combinations(top4, 2):
+            suggestions["low_cost"].append({
+                "combination": f"{p[0]}={p[1]}", "type": "ワイドBOX", "points": 1
             })
-        
-        # パターン2: 上位4名ボックス（24点）- 混戦用
-        # top3 + 4th ranked rider
-        box_members = top3 + [ranked[3][0]] if len(ranked) > 3 else top3
-        for combo in itertools.permutations(box_members, 3):
-            suggestions.append({
-                'combination': f'{combo[0]}-{combo[1]}-{combo[2]}',
-                'type': '上位BOX',
-                'points': 1
+            
+        # 竹: 2車単 上位5名BOX (20点)
+        strategies["mid_cost"] = "2車単 上位5名BOX"
+        for p in itertools.permutations(top5, 2):
+            suggestions["mid_cost"].append({
+                "combination": f"{p[0]}-{p[1]}", "type": "2車単BOX", "points": 1
             })
+            
+        # 松: 穴軸マルチ (60点) - 4番人気を軸に手広く
+        strategies["high_cost"] = "穴軸マルチ (高配当)"
+        axis = top4[3] # Rank 4
+        partners = top3 + top6[4:6] # 1,2,3,5,6
+        for p1, p2 in itertools.permutations(partners, 2):
+            suggestions["high_cost"].append({"combination": f"{axis}-{p1}-{p2}", "type": "穴軸マルチ", "points": 1})
+            suggestions["high_cost"].append({"combination": f"{p1}-{axis}-{p2}", "type": "穴軸マルチ", "points": 1})
+            suggestions["high_cost"].append({"combination": f"{p1}-{p2}-{axis}", "type": "穴軸マルチ", "points": 1})
 
-    # 重複削除
-    seen = set()
-    final_suggestions = []
-    for s in suggestions:
-        combo = s['combination']
-        if combo not in seen:
-            seen.add(combo)
-            final_suggestions.append(s)
+        # 松・絞り: 穴軸マルチ・絞り (18点)
+        strategies["high_cost_reduced"] = "穴軸マルチ・絞り"
+        partners_reduced = top3
+        for p1, p2 in itertools.permutations(partners_reduced, 2):
+            suggestions["high_cost_reduced"].append({"combination": f"{axis}-{p1}-{p2}", "type": "穴軸マルチ絞", "points": 1})
+            suggestions["high_cost_reduced"].append({"combination": f"{p1}-{axis}-{p2}", "type": "穴軸マルチ絞", "points": 1})
+            suggestions["high_cost_reduced"].append({"combination": f"{p1}-{p2}-{axis}", "type": "穴軸マルチ絞", "points": 1})
 
-    # 点数順にソート
-    final_suggestions.sort(key=lambda x: x['points'], reverse=True)
-
-    # 確率に応じて買い目数を調整
-    # 低確率（荒れそう）な場合こそ、点数を増やして網を広げる
-    # 的中率向上のため、全体的に買い目数を大幅に増加
-    if probability >= 0.5:
-        max_suggestions = 60  # 超高確率: 60点（フルカバー）
-    elif probability >= 0.3:
-        max_suggestions = 48  # 中穴: 48点（広めカバー）
+    # 4. 激荒れ (Score 80-100)
     else:
-        max_suggestions = 54  # 大穴: 54点（超広角流し）
-    
-    final_suggestions = final_suggestions[:max_suggestions]
-    total_points = sum(s['points'] for s in final_suggestions)
+        # 梅: ワイドBOX 上位5名 (10点)
+        strategies["low_cost"] = "ワイドBOX広め"
+        for p in itertools.combinations(top5, 2):
+            suggestions["low_cost"].append({
+                "combination": f"{p[0]}={p[1]}", "type": "ワイドBOX", "points": 1
+            })
+            
+        # 竹: 3連複BOX 上位6名 (20点)
+        strategies["mid_cost"] = "3連複 上位6名BOX"
+        for p in itertools.combinations(top6, 3):
+            suggestions["mid_cost"].append({
+                "combination": f"{p[0]}={p[1]}={p[2]}", "type": "3連複BOX", "points": 1
+            })
+            
+        # 松: 大穴BOX (60点)
+        strategies["high_cost"] = "大穴BOX (超高配当)"
+        target_indices = [2, 3, 4, 5, 6]
+        chaos_members = []
+        for idx in target_indices:
+            if idx < len(r_order):
+                chaos_members.append(r_order[idx])
+        
+        if len(chaos_members) >= 3:
+            for p in itertools.permutations(chaos_members, 3):
+                suggestions["high_cost"].append({
+                    "combination": f"{p[0]}-{p[1]}-{p[2]}", "type": "大穴BOX", "points": 1
+                })
+        
+        # 松・絞り: 大穴BOX・絞り (24点)
+        strategies["high_cost_reduced"] = "大穴BOX・絞り"
+        target_indices_reduced = [2, 3, 4, 5]
+        chaos_members_reduced = []
+        for idx in target_indices_reduced:
+            if idx < len(r_order):
+                chaos_members_reduced.append(r_order[idx])
+                
+        if len(chaos_members_reduced) >= 3:
+            for p in itertools.permutations(chaos_members_reduced, 3):
+                suggestions["high_cost_reduced"].append({
+                    "combination": f"{p[0]}-{p[1]}-{p[2]}", "type": "大穴BOX絞", "points": 1
+                })
 
     # 選手情報を追加
     rider_info = []
@@ -244,13 +329,11 @@ def generate_betting_suggestions(
         })
 
     return {
-        'strategy': strategy,
-        'probability': probability,
+        'roughness_score': roughness_score,
         'confidence': confidence,
-        'suggestions': final_suggestions,
-        'total_points': total_points,
+        'suggestions': suggestions,
+        'strategies': strategies,
         'rider_ranking': rider_info,
-        'summary': f'{strategy}で{total_points}点（{len(final_suggestions)}通り）を推奨'
     }
 
 
@@ -262,16 +345,11 @@ def format_betting_suggestions(suggestions_data: Dict[str, Any]) -> str:
 
     output = []
     output.append("=" * 70)
-    output.append("💰 具体的な買い目提案")
+    output.append(f"💰 買い目提案 (荒れ度: {suggestions_data['roughness_score']:.1f})")
     output.append("=" * 70)
-    output.append(f"戦略: {suggestions_data['strategy']}")
-    output.append(f"荒れる確率: {suggestions_data['probability']:.1%}")
-    output.append(f"信頼度: {suggestions_data['confidence']}")
-    output.append(f"\n{suggestions_data['summary']}")
-    output.append("")
 
     # 選手ランキング
-    output.append("【選手評価ランキング】")
+    output.append("【AI評価ランキング】")
     for i, rider in enumerate(suggestions_data['rider_ranking'][:6], 1):
         score_str = f"{rider['avg_score']:.1f}" if rider['avg_score'] else '-'
         output.append(
@@ -279,18 +357,39 @@ def format_betting_suggestions(suggestions_data: Dict[str, Any]) -> str:
             f"({rider['grade']}/{rider['style']}/得点:{score_str}) "
             f"評価:{rider['strength']:.1f}"
         )
-    output.append("")
+    output.append("-" * 70)
 
-    # 買い目リスト
-    output.append("【推奨買い目】")
-    for i, sug in enumerate(suggestions_data['suggestions'], 1):
-        output.append(
-            f"{i:2d}. {sug['combination']:10s}  "
-            f"{sug['points']}点  ({sug['type']})"
-        )
+    # 松竹梅の提案
+    tiers = [
+        ("梅 (少額・手堅く)", "low_cost"),
+        ("竹 (中額・バランス)", "mid_cost"),
+        ("松 (高額・高配当)", "high_cost"),
+        ("松・絞り (高配当・厳選)", "high_cost_reduced"),
+    ]
 
-    output.append("")
-    output.append(f"合計: {suggestions_data['total_points']}点 × 100円 = {suggestions_data['total_points'] * 100}円")
+    for label, key in tiers:
+        sug_list = suggestions_data['suggestions'].get(key, [])
+        strategy_name = suggestions_data['strategies'].get(key, "")
+        
+        if not sug_list and not strategy_name:
+            continue
+            
+        points = len(sug_list)
+        cost = points * 100
+        
+        output.append(f"■ {label}: {strategy_name}")
+        output.append(f"   点数: {points}点 (¥{cost:,})")
+        
+        # 買い目をコンパクトに表示 (最初の5つ + 残り)
+        if points > 0:
+            preview = [s['combination'] for s in sug_list[:5]]
+            preview_str = ", ".join(preview)
+            if points > 5:
+                preview_str += f" ...他{points-5}点"
+            output.append(f"   買い目: {preview_str}")
+        else:
+            output.append("   (提案なし)")
+        output.append("")
+
     output.append("=" * 70)
-
     return "\n".join(output)

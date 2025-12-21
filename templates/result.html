@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,20 +15,26 @@
       --text: #1f2933;
       --muted: #6b7280;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: linear-gradient(180deg, #dde7ff, #f6f7fb 45%);
       color: var(--text);
     }
+
     .page {
       max-width: 960px;
       margin: 0 auto;
       padding: 32px 18px 80px;
     }
+
     .notice {
-      background: rgba(249,115,22,0.12);
+      background: rgba(249, 115, 22, 0.12);
       color: var(--accent);
       border-radius: 12px;
       padding: 14px;
@@ -35,98 +42,114 @@
       text-align: center;
       font-weight: 600;
     }
+
     .score-card {
       background: linear-gradient(135deg, #2b59c3, #4f8ae2);
       border-radius: 18px;
       padding: 24px;
       color: #fff;
       text-align: center;
-      box-shadow: 0 18px 48px rgba(43,89,195,0.28);
+      box-shadow: 0 18px 48px rgba(43, 89, 195, 0.28);
     }
+
     .score-card h2 {
       margin: 0;
       font-size: 1rem;
       letter-spacing: 0.08em;
       opacity: 0.85;
     }
+
     .probability {
       font-size: 3.2rem;
       margin: 12px 0 6px;
       font-weight: 700;
     }
+
     .confidence {
       font-size: 1rem;
       opacity: 0.85;
     }
+
     .recommendation {
       margin-top: 12px;
       display: inline-block;
       padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.18);
+      background: rgba(255, 255, 255, 0.18);
       font-size: 0.9rem;
     }
+
     .risk-chip {
       display: inline-flex;
       align-items: center;
       padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(249,115,22,0.18);
+      background: rgba(249, 115, 22, 0.18);
       color: #fff;
       font-size: 0.85rem;
       margin-bottom: 8px;
       font-weight: 600;
     }
+
     .section {
       margin-top: 26px;
       background: var(--card);
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 12px 32px rgba(43,89,195,0.08);
+      box-shadow: 0 12px 32px rgba(43, 89, 195, 0.08);
     }
+
     .section h3 {
       margin: 0 0 12px;
       font-size: 1.02rem;
     }
+
     .reasons {
       list-style: none;
       padding: 0;
       margin: 0;
     }
+
     .reasons li {
       padding: 12px;
       border-radius: 12px;
-      background: rgba(43,89,195,0.08);
+      background: rgba(43, 89, 195, 0.08);
       margin-bottom: 10px;
       line-height: 1.6;
     }
+
     .ticket-list {
       display: grid;
       gap: 12px;
       margin: 16px 0 12px;
     }
+
     .ticket-item {
-      background: rgba(43,89,195,0.08);
+      background: rgba(43, 89, 195, 0.08);
       border-radius: 12px;
       padding: 14px;
     }
+
     .ticket-item strong {
       display: block;
       margin-bottom: 6px;
     }
+
     .summary-grid,
     .condition-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 12px;
     }
+
     .summary-item,
     .condition-item {
       border: 1px solid #e5e9f5;
       border-radius: 12px;
       padding: 12px;
-      background: rgba(43,89,195,0.04);
+      background: rgba(43, 89, 195, 0.04);
     }
+
     .summary-item span,
     .condition-item span {
       display: block;
@@ -135,20 +158,25 @@
       letter-spacing: 0.08em;
       margin-bottom: 4px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.92rem;
     }
-    th, td {
+
+    th,
+    td {
       border-bottom: 1px solid #e5e9f5;
       padding: 10px;
       text-align: left;
     }
+
     th {
-      background: rgba(43,89,195,0.08);
+      background: rgba(43, 89, 195, 0.08);
       font-weight: 600;
     }
+
     .btn-back {
       margin-top: 28px;
       display: inline-block;
@@ -159,6 +187,7 @@
       color: var(--primary);
       font-weight: 600;
     }
+
     .warning {
       margin-top: 18px;
       font-size: 0.85rem;
@@ -167,6 +196,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     {% if not lightgbm_ready %}
@@ -177,8 +207,8 @@
 
     <div class="score-card">
       <div class="risk-chip">{{ result.betting_plan.risk_level }}</div>
-      <h2>荒れ度合い推定確率</h2>
-      <div class="probability">{{ '%.1f%%'|format(probability * 100) }}</div>
+      <h2>荒れ度スコア</h2>
+      <div class="probability">{{ '%.1f'|format(probability) }}</div>
       <div class="confidence">信頼度: {{ result.confidence }}</div>
       <div class="recommendation">{{ result.recommendation }}</div>
     </div>
@@ -233,37 +263,37 @@
         <div class="condition-item">
           <span>気温</span>
           {% if summary.temperature_c is not none %}
-            {{ '%.1f℃'|format(summary.temperature_c) }}
+          {{ '%.1f℃'|format(summary.temperature_c) }}
           {% elif race.temperature %}
-            {{ race.temperature }}℃
+          {{ race.temperature }}℃
           {% else %}
-            -
+          -
           {% endif %}
         </div>
         <div class="condition-item">
           <span>風速 / 風向</span>
           {% if summary.wind_speed_mps is not none %}
-            {{ '%.1f m/s'|format(summary.wind_speed_mps) }} {{ summary.wind_direction or '' }}
+          {{ '%.1f m/s'|format(summary.wind_speed_mps) }} {{ summary.wind_direction or '' }}
           {% elif race.wind_speed %}
-            {{ race.wind_speed }} m/s {{ race.wind_direction or '' }}
+          {{ race.wind_speed }} m/s {{ race.wind_direction or '' }}
           {% else %}
-            -
+          -
           {% endif %}
         </div>
         <div class="condition-item">
           <span>開催日程</span>
           {% if summary.meeting_day %}
-            {{ summary.meeting_day }}日目
+          {{ summary.meeting_day }}日目
           {% else %}
-            {{ race.meeting_day or '-' }}
+          {{ race.meeting_day or '-' }}
           {% endif %}
         </div>
         <div class="condition-item">
           <span>ナイター</span>
           {% if summary.is_night_race or race.is_night_race %}
-            ナイター
+          ナイター
           {% else %}
-            昼開催
+          昼開催
           {% endif %}
         </div>
       </div>
@@ -325,9 +355,9 @@
             <td>{{ rider.style }}</td>
             <td>
               {% if rider.avg_score is not none %}
-                {{ '%.2f'|format(rider.avg_score) }}
+              {{ '%.2f'|format(rider.avg_score) }}
               {% else %}
-                -
+              -
               {% endif %}
             </td>
           </tr>
@@ -337,35 +367,57 @@
     </div>
 
     {% if betting_suggestions and not betting_suggestions.get('error') %}
-    <div class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
-      <h3 style="color: white;">💰 具体的な買い目提案</h3>
-      <p style="margin-bottom: 16px; opacity: 0.95;">
-        <strong>戦略:</strong> {{ betting_suggestions.strategy }}<br>
-        <strong>合計:</strong> {{ betting_suggestions.total_points }}点 × 100円 = {{ betting_suggestions.total_points * 100 }}円
-      </p>
+    <div class="section"
+      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+      <h3 style="color: white;">💰 具体的な買い目提案 (荒れ度: {{ '%.1f'|format(betting_suggestions.roughness_score) }})</h3>
 
       <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
         <h4 style="color: white; font-size: 0.95rem; margin-bottom: 10px;">選手評価ランキング</h4>
         {% for rider in betting_suggestions.rider_ranking[:6] %}
         <div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
           {{ loop.index }}位: {{ rider.car_no }}番 {{ rider.name }}
-          ({{ rider.grade }}/{{ rider.style }}{% if rider.avg_score %}/得点:{{ '%.1f'|format(rider.avg_score) }}{% endif %})
+          ({{ rider.grade }}/{{ rider.style }}{% if rider.avg_score %}/得点:{{ '%.1f'|format(rider.avg_score) }}{% endif
+          %})
           <span style="opacity: 0.8; margin-left: 10px;">評価:{{ '%.1f'|format(rider.strength) }}</span>
         </div>
         {% endfor %}
       </div>
 
-      <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px;">
-        <h4 style="color: white; font-size: 0.95rem; margin-bottom: 10px;">推奨買い目（三連単）</h4>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
-          {% for sug in betting_suggestions.suggestions %}
-          <div style="background: rgba(255,255,255,0.25); border-radius: 8px; padding: 10px; font-size: 0.9rem;">
-            <strong style="font-size: 1.1rem;">{{ sug.combination }}</strong><br>
-            <span style="opacity: 0.9;">{{ sug.points }}点 ({{ sug.type }})</span>
+      {% set tiers = [
+      ('梅 (少額・手堅く)', 'low_cost', '#10b981'),
+      ('竹 (中額・バランス)', 'mid_cost', '#f59e0b'),
+      ('松 (高配当狙い)', 'high_cost', '#ef4444'),
+      ('松・絞り (高配当・厳選)', 'high_cost_reduced', '#8b5cf6')
+      ] %}
+
+      {% for label, key, color in tiers %}
+      {% set sugs = betting_suggestions.suggestions[key] %}
+      {% set strategy = betting_suggestions.strategies[key] %}
+      {% set points = sugs|length %}
+      {% set cost = points * 100 %}
+
+      {% if points > 0 %}
+      <div
+        style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 5px solid {{ color }};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h4 style="color: white; font-size: 1rem; margin: 0;">{{ label }}</h4>
+          <span style="font-size: 0.9rem; opacity: 0.9;">{{ points }}点 (¥{{ cost }})</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.9;">戦略: {{ strategy }}</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;">
+          {% for sug in sugs %}
+          <div
+            style="background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px; font-size: 0.85rem; text-align: center;">
+            <strong style="display: block; font-size: 1rem; margin-bottom: 2px;">{{ sug.combination }}</strong>
+            <span style="opacity: 0.8; font-size: 0.75rem;">{{ sug.type }}</span>
           </div>
           {% endfor %}
         </div>
       </div>
+      {% endif %}
+      {% endfor %}
+
     </div>
     {% endif %}
 
@@ -376,4 +428,5 @@
     </div>
   </div>
 </body>
+
 </html>

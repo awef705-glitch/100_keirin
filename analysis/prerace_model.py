@@ -23,6 +23,8 @@ import math
 import numpy as np
 import pandas as pd
 
+from analysis import betting_suggestions
+
 
 # ---------------------------------------------------------------------------
 # Paths and constants
@@ -361,7 +363,6 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
         back_max = float(back_counts.max())
         
         # Top 3 riders by score - their B counts
-        # (Are the strong riders also the ones who run at the back/front?)
         if not scores.empty:
             top3_indices = scores.nlargest(min(3, len(scores))).index
             back_top3 = back_counts.loc[top3_indices]
@@ -394,7 +395,6 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             "score_top_bottom_gap": top_bottom_gap,
             "estimated_top3_score_sum": top3_score_sum,
             "estimated_favorite_dominance": favorite_dominance,
-            "estimated_favorite_gap": favorite_gap,
             "estimated_favorite_gap": favorite_gap,
             "estimated_top3_vs_others": top3_vs_others,
             "back_count_mean": back_mean,
@@ -431,6 +431,37 @@ def _summarise_riders(rider_frame: pd.DataFrame) -> FeatureBundle:
             f"{col}_max": t_max,
             f"{col}_top3_sum": t_top3_sum,
         })
+
+    # Aggregate recent performance features
+    for col in ["recent_win_rate", "recent_2ren_rate", "recent_3ren_rate"]:
+        if col in rider_frame.columns:
+            vals = pd.to_numeric(rider_frame[col], errors="coerce").fillna(0.0)
+            if not vals.empty:
+                features[f"{col}_mean"] = float(vals.mean())
+                features[f"{col}_max"] = float(vals.max())
+                features[f"{col}_std"] = float(vals.std(ddof=0)) if len(vals) > 1 else 0.0
+            else:
+                features[f"{col}_mean"] = 0.0
+                features[f"{col}_max"] = 0.0
+                features[f"{col}_std"] = 0.0
+        else:
+            features[f"{col}_mean"] = 0.0
+            features[f"{col}_max"] = 0.0
+            features[f"{col}_std"] = 0.0
+
+    # Aggregate extra fields for rule-based logic
+    for col in ["gear_ratio", "hs_count", "dq_points"]:
+        if col in rider_frame.columns:
+            vals = pd.to_numeric(rider_frame[col], errors="coerce").fillna(0.0)
+            if not vals.empty:
+                features[f"{col}_mean"] = float(vals.mean())
+                features[f"{col}_max"] = float(vals.max())
+            else:
+                features[f"{col}_mean"] = 0.0
+                features[f"{col}_max"] = 0.0
+        else:
+            features[f"{col}_mean"] = 0.0
+            features[f"{col}_max"] = 0.0
 
     summary.update(
         {
@@ -585,6 +616,9 @@ def _prepare_rider_frame_from_entries(entries: pd.DataFrame) -> pd.DataFrame:
             "style_norm",
             "grade_norm",
             "prefecture_norm",
+            "recent_win_rate",
+            "recent_2ren_rate",
+            "recent_3ren_rate",
         ]
     ]
 
@@ -608,14 +642,45 @@ def aggregate_rider_features(entries_path: Path) -> pd.DataFrame:
     }
     if "keirin_cd" in header.columns:
         usecols.add("keirin_cd")
+    usecols.add("sensyuName") # Needed for merging recent features
     dtype_map = {"keirin_cd": str} if "keirin_cd" in header.columns else None
     entries = _read_csv(entries_path, usecols=list(usecols), dtype=dtype_map)
     entries["race_date"] = entries["race_date"].astype(int)
     entries["race_no"] = entries["race_no"].astype(int)
     
-    # Use full dataset for better model generalization
-    # entries = entries[entries["race_date"] >= 20250101]  # Removed filter
-    
+    # Load recent features if available
+    recent_features_path = Path("analysis/model_outputs/rider_recent_features.csv")
+    if recent_features_path.exists():
+        print(f"Loading recent features from {recent_features_path}...", flush=True)
+        recent_df = pd.read_csv(recent_features_path)
+        # Ensure types match for merge
+        recent_df["race_date"] = recent_df["race_date"].astype(int)
+        recent_df["race_no"] = recent_df["race_no"].astype(int)
+        if "track" in recent_df.columns:
+             recent_df["track"] = recent_df["track"].astype(str)
+        
+        # Merge
+        # entries has 'track' (maybe), 'race_date', 'race_no', 'sensyuName'
+        # recent_df has 'race_date', 'track', 'race_no', 'sensyuName', ...
+        
+        # Ensure entries has track as string
+        if "track" in entries.columns:
+            entries["track"] = entries["track"].astype(str)
+        else:
+            entries["track"] = ""
+            
+        entries = entries.merge(recent_df, on=["race_date", "track", "race_no", "sensyuName"], how="left")
+        
+        # Fill NA with 0
+        entries["recent_win_rate"] = entries["recent_win_rate"].fillna(0.0)
+        entries["recent_2ren_rate"] = entries["recent_2ren_rate"].fillna(0.0)
+        entries["recent_3ren_rate"] = entries["recent_3ren_rate"].fillna(0.0)
+    else:
+        print("Recent features file not found. Skipping.", flush=True)
+        entries["recent_win_rate"] = 0.0
+        entries["recent_2ren_rate"] = 0.0
+        entries["recent_3ren_rate"] = 0.0
+
     # Load track master to map track names to keirin_cd if needed
     if "keirin_cd" not in entries.columns or entries["keirin_cd"].isna().all():
         track_master_path = Path("analysis/model_outputs/track_master.json")
@@ -833,6 +898,15 @@ def _default_feature_columns() -> List[str]:
         "mark_count_mean",
         "mark_count_max",
         "mark_count_top3_sum",
+        "recent_win_rate_mean",
+        "recent_win_rate_max",
+        "recent_win_rate_std",
+        "recent_2ren_rate_mean",
+        "recent_2ren_rate_max",
+        "recent_2ren_rate_std",
+        "recent_3ren_rate_mean",
+        "recent_3ren_rate_max",
+        "recent_3ren_rate_std",
     ]
 
 
@@ -903,6 +977,14 @@ def manual_riders_to_frame(riders: Iterable[Dict[str, Any]]) -> pd.DataFrame:
                 "style_norm": _normalise_style(rider.get("style")),
                 "grade_norm": _normalise_grade(rider.get("grade")),
                 "prefecture_norm": _normalise_prefecture(rider.get("prefecture")),
+                "recent_win_rate": _safe_float(rider.get("recent_win_rate")),
+                "recent_2ren_rate": _safe_float(rider.get("recent_2ren_rate")),
+                "recent_3ren_rate": _safe_float(rider.get("recent_3ren_rate")),
+                # Extra fields for rule-based logic
+                "gear_ratio": _safe_float(rider.get("gear_ratio")),
+                "hs_count": _safe_float(rider.get("hs_count")),
+                "dq_points": _safe_float(rider.get("dq_points")),
+                "home_bank": str(rider.get("home_bank", "")),
             }
         )
     return pd.DataFrame(rows)
@@ -984,6 +1066,7 @@ def build_manual_feature_row(race_payload: Dict[str, Any]) -> FeatureBundle:
         "keirin_cd": keirin_cd,
         "race_no": race_no,
         "grade": race_payload.get("grade", ""),
+        "riders": riders,  # Add riders list for betting suggestions
         **summary_context,
     }
     return FeatureBundle(features, summary)
@@ -1075,212 +1158,119 @@ def load_model() -> Any:
         return None
 
 
-def predict_probability(
-    feature_frame: pd.DataFrame,
-    model: Any,
-    metadata: Dict[str, Any],
-    race_context: Dict[str, Any] = None,
-) -> float:
+
+
+def calculate_roughness_score(row: pd.Series, metadata: Dict[str, Any]) -> float:
     """
-    Predict high payout probability using RULE-BASED system.
-
-    NOTE: ML model is disabled (ROC-AUC 0.58 = random).
-    Using validated rule-based scoring instead.
+    Calculate 'Roughness Score' (荒れ度) on a 0-100 scale.
+    0 = Extremely Stable (Favorite wins easily)
+    100 = Extremely Chaotic (Anyone can win)
+    
+    This replaces the previous probability calibration to provide a more
+    intuitive and sensitive metric for the user.
     """
-    # ALWAYS use rule-based prediction (ML model performance is too low)
-    row = feature_frame.iloc[0]
-    base_prob = _fallback_probability(row, metadata)
-
-    # Apply track/category adjustment if context provided
-    if race_context and TRACK_CATEGORY_STATS:
-        adjusted_prob = _adjust_by_track_category(base_prob, race_context)
-        return adjusted_prob
-
-    return base_prob
-
-
-def _adjust_by_track_category(base_prob: float, race_context: Dict[str, Any]) -> float:
-    """Adjust probability based on historical track and category rates"""
-    track = race_context.get('track', '')
-    category = race_context.get('category', '')
-
-    overall_rate = TRACK_CATEGORY_STATS.get('overall_high_payout_rate', 0.266)
-    track_rates = TRACK_CATEGORY_STATS.get('track_high_payout_rates', {})
-    category_rates = TRACK_CATEGORY_STATS.get('category_high_payout_rates', {})
-
-    # Calculate adjustment multipliers
-    multiplier = 1.0
-
-    # Track adjustment (weight: 0.4)
-    if track in track_rates:
-        track_rate = track_rates[track]
-        track_multiplier = track_rate / overall_rate
-        multiplier *= (1.0 + 0.4 * (track_multiplier - 1.0))
-
-    # Category adjustment (weight: 0.6)
-    if category in category_rates:
-        category_rate = category_rates[category]
-        category_multiplier = category_rate / overall_rate
-        multiplier *= (1.0 + 0.6 * (category_multiplier - 1.0))
-
-    # Apply multiplier
-    adjusted = base_prob * multiplier
-
-    # Keep in valid range [0, 1]
-    adjusted = max(0.05, min(0.95, adjusted))
-
-    return adjusted
-
-
-def _fallback_probability(row: pd.Series, metadata: Dict[str, Any]) -> float:
-    """
-    Simple rule-based scoring - REALISTIC calibration based on 48k races.
-
-    Key insight from data: High payout rate ranges from 20-35%
-    - Overall average: 26.6%
-    - Most chaotic track: 30.5%
-    - Most stable track: ~25%
-
-    We should stay within 15-40% range (±14% from baseline)
-    """
-    # Start with baseline (overall average)
-    base_prob = 0.266
+    # Base score (Neutral race)
+    score = 50.0
 
     # Core score-based features
     score_cv = float(row.get("score_cv", 0.0) or 0.0)
     favorite_gap = float(row.get("estimated_favorite_gap", 0.0) or 0.0)
     favorite_dominance = float(row.get("estimated_favorite_dominance", 1.0) or 1.0)
-    top3_vs_others = float(row.get("estimated_top3_vs_others", 0.0) or 0.0)
-
+    
     # Line features
     dominant_line_ratio = float(row.get("dominant_line_ratio", 0.0) or 0.0)
     line_score_gap = float(row.get("line_score_gap", 0.0) or 0.0)
 
-    # Race conditions
-    entry_count = float(row.get("entry_count", 0.0) or 0.0)
+    # Tactical features
     nige_count = float(row.get("style_nige_count", 0.0) or 0.0)
-    is_final_day = row.get("is_final_day", 0)
-
-    # Grade composition
-    grade_ss_ratio = float(row.get("grade_SS_ratio", 0.0) or 0.0)
-    grade_s1_ratio = float(row.get("grade_S1_ratio", 0.0) or 0.0)
-    grade_a3_ratio = float(row.get("grade_A3_ratio", 0.0) or 0.0)
-
-    # === RULE 1: Score Coefficient of Variation (most predictive) ===
-    # Very tight race (CV < 0.03) → +10%
-    # Tight (CV < 0.05) → +5%
-    # Dispersed (CV > 0.08) → -6%
+    makuri_count = float(row.get("style_makuri_count", 0.0) or 0.0)
+    
+    # DEBUG PRINT
+    # print(f"DEBUG: CV={score_cv:.4f}, Gap={favorite_gap:.1f}, Dom={dominant_line_ratio:.2f}, Nige={nige_count}")
+    
+    # === FACTOR 1: Score Variation (The most important factor) ===
+    # High variation = Predictable (Strong vs Weak) -> Lower score
+    # Low variation = Chaotic (All similar) -> Higher score
+    
+    # CV < 0.03 (Very tight) -> +25 points
+    # CV > 0.10 (Very dispersed) -> -25 points
     if score_cv < 0.03:
-        base_prob += 0.10
+        score += 25
     elif score_cv < 0.05:
-        base_prob += 0.05
-    elif score_cv > 0.10:
-        base_prob -= 0.06
+        score += 15
+    elif score_cv > 0.12:
+        score -= 25
     elif score_cv > 0.08:
-        base_prob -= 0.03
+        score -= 15
 
-    # === RULE 2: Favorite Gap (1st vs 2nd score) ===
-    # Very close (< 2 points) → +5%
-    # Dominant (> 15 points) → -6%
+    # === FACTOR 2: Favorite Strength ===
+    # Gap between 1st and 2nd place scores
+    # Gap < 2.0 (No clear favorite) -> +20 points
+    # Gap > 15.0 (Dominant favorite) -> -20 points
     if favorite_gap < 2.0:
-        base_prob += 0.05
+        score += 20
     elif favorite_gap < 5.0:
-        base_prob += 0.02
+        score += 10
     elif favorite_gap > 15.0:
-        base_prob -= 0.06
+        score -= 20
     elif favorite_gap > 10.0:
-        base_prob -= 0.03
+        score -= 10
 
-    # === RULE 3: Favorite Dominance ===
-    # Weak favorite (< 1.05) → +4%
-    # Strong favorite (> 1.20) → -5%
+    # Favorite dominance ratio
     if favorite_dominance < 1.05:
-        base_prob += 0.04
-    elif favorite_dominance < 1.10:
-        base_prob += 0.02
-    elif favorite_dominance > 1.20:
-        base_prob -= 0.05
+        score += 15
     elif favorite_dominance > 1.15:
-        base_prob -= 0.02
+        score -= 15
 
-    # === RULE 4: Line Balance ===
-    # Dominant line (> 60%) → -4% (predictable)
-    # No dominant line (< 33%) → +3% (chaotic)
-    if dominant_line_ratio > 0.60:
-        base_prob -= 0.04
-    elif dominant_line_ratio < 0.33:
-        base_prob += 0.03
+    # === FACTOR 3: Line Balance ===
+    # No dominant line (< 30%) -> Chaotic -> +10 points
+    # One huge line (> 60%) -> Predictable -> -10 points
+    if dominant_line_ratio < 0.3:
+        score += 10
+    elif dominant_line_ratio > 0.6:
+        score -= 10
+        
+    # === FACTOR 4: Tactical Chaos ===
+    # Too many 'Nige' (Runners) -> Pace becomes fast/chaotic -> +10
+    # No 'Nige' -> Slow pace, hard to predict -> +5
+    if nige_count >= 4:
+        score += 10
+    elif nige_count == 0:
+        score += 5
+        
+    # === FACTOR 5: Grade Composition ===
+    # All S-class -> High level battle -> Harder to predict? Or more stable?
+    # Actually, mixed grades (S vs A) usually means S wins -> Stable -> Lower score
+    has_mixed = float(row.get("grade_has_mixed", 0.0) or 0.0)
+    if has_mixed > 0.5:
+        score -= 15  # Mixed race is usually predictable (S beats A)
 
-    # Line strength gap
-    if line_score_gap > 12.0:
-        base_prob -= 0.03
-    elif line_score_gap < 4.0:
-        base_prob += 0.02
-
-    # === RULE 5: Race Conditions (minor) ===
-    if entry_count <= 7:
-        base_prob += 0.02
-    if nige_count <= 1:
-        base_prob += 0.02
-    if is_final_day:
-        base_prob += 0.01
-
-    # === RULE 6: Grade Composition ===
-    # SS級が多い = トップレベル同士 = 実力伯仲でない限り固い
-    # A3級が多い = 低レベル = 本命が勝ちやすい
-    if grade_ss_ratio >= 0.9:  # ほぼ全員SS級（GP等）
-        base_prob -= 0.10  # GPレベルでも本命寄り
-    elif grade_ss_ratio >= 0.7:  # 7割以上がSS級
-        base_prob -= 0.07
-    elif grade_ss_ratio >= 0.5:  # 半分以上がSS級
-        base_prob -= 0.04
-
-    if grade_a3_ratio >= 0.9:  # ほぼ全員A3級
-        base_prob -= 0.12  # 低レベルは確実に本命
-    elif grade_a3_ratio >= 0.7:  # 7割以上がA3級
-        base_prob -= 0.09
-    elif grade_a3_ratio >= 0.5:
-        base_prob -= 0.05
-
-    # Clamp to realistic range [0.10, 0.50]
-    # Note: Track/category adjustment will further refine this
-    probability = max(0.10, min(0.50, base_prob))
-
-    return float(probability)
+    # Clamp to 0-100
+    return max(0.0, min(100.0, score))
 
 
-
-def generate_reasons(summary: Dict[str, Any], probability: float, metadata: Dict[str, Any]) -> List[str]:
+def generate_reasons(summary: Dict[str, Any], roughness_score: float, metadata: Dict[str, Any]) -> List[str]:
     """Create lightweight human readable hints based on feature summary."""
     reasons: List[str] = []
 
     score_range = summary.get("score_range", 0.0)
-    if score_range >= 8:
-        reasons.append(f"選手の獲得点差が大きく（約{score_range:.1f}点差）波乱要素があります。")
-    elif score_range >= 5:
-        reasons.append(f"獲得点のバラつき（約{score_range:.1f}点差）が中程度にあります。")
+    if score_range >= 15:
+        reasons.append(f"実力差が大きく（{score_range:.1f}点差）、本命が堅い傾向です。")
+    elif score_range <= 5:
+        reasons.append(f"実力が拮抗しており（{score_range:.1f}点差）、誰が勝ってもおかしくありません。")
 
     diversity = summary.get("style_diversity", 0.0)
-    if diversity >= 0.55:
-        reasons.append("脚質の構成がばらばらで展開が読みづらいレースです。")
-    elif diversity <= 0.2:
-        reasons.append("脚質が偏っており展開が読みやすい構成です。")
+    if diversity >= 0.6:
+        reasons.append("脚質が分散しており、展開が読みづらい混戦模様です。")
+    
+    nige_count = summary.get("style_nige_count", 0)
+    if nige_count >= 4:
+        reasons.append("先行選手が多く、激しい主導権争いで波乱の可能性があります。")
 
-    grade_counts = summary.get("grade_counts", {})
-    s1_ratio = 0.0
-    total = max(1, summary.get("entry_count", 0))
-    if grade_counts:
-        s1_ratio = grade_counts.get("S1", 0) / total
-    if s1_ratio <= 0.3:
-        reasons.append("S級上位が少なく、実力拮抗の選手が多い印象です。")
-    elif s1_ratio >= 0.6:
-        reasons.append("S級上位が多く順当決着のシナリオが目立ちます。")
-
-    threshold = metadata.get("best_threshold", 0.5)
-    if probability >= threshold:
-        reasons.append("過去データでは同様の条件で高配当が目立っています。")
-    else:
-        reasons.append("過去データでは比較的順当な結果が多い条件です。")
+    if roughness_score >= 80:
+        reasons.append("【激荒れ注意】過去データでも高配当が頻発するパターンです。")
+    elif roughness_score <= 20:
+        reasons.append("【本命党推奨】順当な決着が期待できる条件が揃っています。")
 
     # Remove duplicates while preserving order.
     seen = set()
@@ -1293,103 +1283,62 @@ def generate_reasons(summary: Dict[str, Any], probability: float, metadata: Dict
 
 
 def build_betting_plan(
-    probability: float,
+    roughness_score: float,
     summary: Dict[str, Any],
     metadata: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Create heuristic betting guidance for the front-end."""
-    threshold = metadata.get("best_threshold", 0.5)
-    high_threshold = metadata.get("high_confidence_threshold", threshold + 0.1)
-
-    effective_score = probability
-    score_cv = summary.get("score_cv", 0.0) or 0.0
-    if score_cv >= 0.08:
-        effective_score += 0.04
-    elif score_cv <= 0.03:
-        effective_score -= 0.03
-
-    diversity = summary.get("style_diversity", 0.0) or 0.0
-    if diversity >= 0.55:
-        effective_score += 0.03
-    elif diversity <= 0.2:
-        effective_score -= 0.02
-
-    prefecture_unique = summary.get("prefecture_unique_count", 0) or 0
-    if prefecture_unique <= 3:
-        effective_score -= 0.02
-    elif prefecture_unique >= 6:
-        effective_score += 0.02
-
-    weather = summary.get("weather_condition", "")
-    if weather in {"雨", "豪雨", "雷雨", "雪"}:
-        effective_score += 0.05
-    wind_speed = summary.get("wind_speed_mps")
-    if wind_speed is not None:
-        try:
-            wind_speed_val = float(wind_speed)
-            if wind_speed_val >= 8:
-                effective_score += 0.03
-            elif wind_speed_val <= 2:
-                effective_score -= 0.01
-        except (TypeError, ValueError):
-            pass
-
-    track_condition = summary.get("track_condition", "")
-    if track_condition in {"重", "やや重"}:
-        effective_score += 0.03
-
-    if summary.get("is_final_day"):
-        effective_score += 0.02
-
-    effective_score = float(min(1.0, max(0.0, effective_score)))
-
+    """Create heuristic betting guidance based on roughness score."""
+    
     ticket_plan: List[Dict[str, str]]
     money_management: str
     hedge_note: str
     plan_summary: str
     risk_level: str
 
-    if effective_score >= max(high_threshold, 0.75):
-        risk_level = "ハイリスク（波乱期待大）"
-        plan_summary = "本命崩れ・波乱展開を想定し、広めのカバーで高配当に備えましょう。"
+    if roughness_score >= 80:
+        risk_level = "ハイリスク（激荒れ）"
+        plan_summary = "本命総崩れも視野に。手広く構えて高配当を狙い撃つ局面です。"
         ticket_plan = [
             {
-                "label": "三連単フォーメーション",
-                "description": "本命1頭軸マルチ＋相手3〜4車で18〜24点を目安に広げる",
-            },
-            {
-                "label": "三連複フォーメーション",
-                "description": "本命2車-相手4〜5車で波乱の目を抑えつつコストをコントロール",
-            },
-        ]
-        money_management = "総予算の20〜30%を想定。1点あたりは均等よりも穴目を厚めに配分。"
-        hedge_note = "ワイドや二車複で本命-穴を少額抑えておくとドロー対策になります。"
-    elif effective_score >= threshold:
-        risk_level = "ミドルリスク（荒れ警戒）"
-        plan_summary = "本命優勢を前提にしつつ、相手に穴を紛れ込ませる形でリスクとリターンを両立。"
-        ticket_plan = [
-            {
-                "label": "三連単フォーメーション",
-                "description": "本命1着固定 - 対抗・穴3車 - 相手4〜5車で12〜16点程度",
-            },
-            {
-                "label": "ワイド／三連複",
-                "description": "本命-穴のワイドで保険を掛け、三連複は本命2車-相手3〜4車",
-            },
-        ]
-        money_management = "総予算の15〜20%を投下。的中確度の高い組み合わせを厚めに設定。"
-        hedge_note = "リスクヘッジに単勝・複勝を1点添えると収支のブレを抑えられます。"
-    else:
-        risk_level = "ローリスク（静かな展開）"
-        plan_summary = "波乱リスクは低め。無理な勝負は避け、見送りまたは少点数で静観が堅実です。"
-        ticket_plan = [
-            {
-                "label": "見送り／抑え投資",
-                "description": "見送り推奨。どうしても参加する場合は二車複・ワイドを1〜2点で様子見。",
+                "label": "三連単BOX / フォーメーション",
+                "description": "有力選手だけでなく、展開利のある穴選手を含めたBOXや手広いフォーメーション推奨。",
             }
         ]
-        money_management = "投資する場合でも総予算の5〜10%に抑え、深追いしない。"
-        hedge_note = "狙う場合でも1点あたりの金額は極小に。レースを観察して次戦に活かしましょう。"
+        money_management = "資金の20%程度を穴目に配分。的中率は下がるがリターンは大きい。"
+        hedge_note = "ワイドで穴-穴を少額押さえるのも有効。"
+    elif roughness_score >= 60:
+        risk_level = "ミドルリスク（波乱含み）"
+        plan_summary = "本命は信頼しきれず。ヒモ荒れや着順のズレを想定した買い目を。"
+        ticket_plan = [
+            {
+                "label": "三連単 1頭軸マルチ",
+                "description": "軸は決めても着順は決めつけないマルチ投票が安全。",
+            }
+        ]
+        money_management = "均等買い推奨。トリガミに注意。"
+        hedge_note = "本命からのワイドで保険を。"
+    elif roughness_score >= 40:
+        risk_level = "標準（中穴狙い）"
+        plan_summary = "基本は順当だが、3着に穴が飛び込む可能性も。"
+        ticket_plan = [
+            {
+                "label": "三連単 本命-対抗-流し",
+                "description": "1-2着は固め、3着を少し広げる形がベスト。",
+            }
+        ]
+        money_management = "本命サイドに厚く張る。"
+        hedge_note = "特になし。"
+    else:
+        risk_level = "ローリスク（鉄板）"
+        plan_summary = "極めて堅いレース。点数を絞って厚く張るか、見送りが賢明。"
+        ticket_plan = [
+            {
+                "label": "三連単 1点〜4点",
+                "description": "ガチガチの本命ラインで決まる可能性大。点数を絞る。",
+            }
+        ]
+        money_management = "少点数に集中投資。"
+        hedge_note = "なし。外れたら事故と割り切る。"
 
     return {
         "risk_level": risk_level,
@@ -1397,39 +1346,234 @@ def build_betting_plan(
         "ticket_plan": ticket_plan,
         "money_management": money_management,
         "hedge_note": hedge_note,
-        "effective_score": effective_score,
-        "model_probability": probability,
-        "weather": weather,
-        "track_condition": track_condition,
+        "roughness_score": roughness_score,
+        "weather": summary.get("weather_condition", ""),
+        "track_condition": summary.get("track_condition", ""),
     }
 
 
+ 
+
+# Reworking predict_probability to call calculate_roughness_score
+def predict_probability(
+    feature_frame: pd.DataFrame,
+    model: Any,
+    metadata: Dict[str, Any],
+    race_context: Dict[str, Any] = None,
+) -> float:
+    """
+    Returns the Roughness Score (0-100).
+    """
+    row = feature_frame.iloc[0]
+    score = calculate_roughness_score(row, metadata)
+    
+    # Apply track/category adjustment to the SCORE
+    if race_context and TRACK_CATEGORY_STATS:
+        # Simple adjustment: +/- 10% based on track multiplier
+        track = race_context.get('track', '')
+        track_rates = TRACK_CATEGORY_STATS.get('track_high_payout_rates', {})
+        overall_rate = TRACK_CATEGORY_STATS.get('overall_high_payout_rate', 0.266)
+        
+        if track in track_rates:
+            ratio = track_rates[track] / overall_rate
+            if ratio > 1.1:
+                score += 5
+            elif ratio < 0.9:
+                score -= 5
+                
+    return max(0.0, min(100.0, score))
+
+
 def build_prediction_response(
-    probability: float,
+    roughness_score: float,
+    summary: Dict[str, Any],
+    metadata: Dict[str, Any],
+    race_info: Dict[str, Any] = None,
+) -> Dict[str, Any]:
+    
+    if roughness_score >= 80:
+        confidence = "高"
+        recommendation = "★激荒れ予報★ 穴党の出番です"
+    elif roughness_score >= 60:
+        confidence = "中"
+        recommendation = "波乱含み。手広く構えましょう"
+    elif roughness_score >= 40:
+        confidence = "中"
+        recommendation = "中穴狙い。展開次第で配当妙味あり"
+    else:
+        confidence = "低"
+        recommendation = "本命サイド。点数を絞って厚めに"
+
+    reasons = generate_reasons(summary, roughness_score, metadata)
+    betting_plan = build_betting_plan(roughness_score, summary, metadata)
+    
+    betting_data = {}
+    if race_info:
+        try:
+            betting_data = betting_suggestions.generate_tiered_suggestions(
+                race_info=race_info,
+                roughness_score=roughness_score,
+                confidence=confidence
+            )
+        except Exception as e:
+            print(f"Error generating betting suggestions: {e}")
+            betting_data = {"error": str(e)}
+
+    return {
+        "roughness_score": roughness_score,
+        "confidence": confidence,
+        "recommendation": recommendation,
+        "reasons": reasons,
+        "betting_plan": betting_plan,
+        "betting_data": betting_data,
+    }
+
+
+def generate_reasons(summary: Dict[str, Any], roughness_score: float, metadata: Dict[str, Any]) -> List[str]:
+    """Create lightweight human readable hints based on feature summary."""
+    reasons: List[str] = []
+
+    score_range = summary.get("score_range", 0.0)
+    if score_range >= 15:
+        reasons.append(f"実力差が大きく（{score_range:.1f}点差）、本命が堅い傾向です。")
+    elif score_range <= 5:
+        reasons.append(f"実力が拮抗しており（{score_range:.1f}点差）、誰が勝ってもおかしくありません。")
+
+    diversity = summary.get("style_diversity", 0.0)
+    if diversity >= 0.6:
+        reasons.append("脚質が分散しており、展開が読みづらい混戦模様です。")
+    
+    nige_count = summary.get("style_nige_count", 0)
+    if nige_count >= 4:
+        reasons.append("先行選手が多く、激しい主導権争いで波乱の可能性があります。")
+
+    if roughness_score >= 80:
+        reasons.append("【激荒れ注意】過去データでも高配当が頻発するパターンです。")
+    elif roughness_score <= 20:
+        reasons.append("【本命党推奨】順当な決着が期待できる条件が揃っています。")
+
+    # Remove duplicates while preserving order.
+    seen = set()
+    deduped: List[str] = []
+    for reason in reasons:
+        if reason not in seen:
+            seen.add(reason)
+            deduped.append(reason)
+    return deduped[:4]
+
+
+def build_betting_plan(
+    roughness_score: float,
     summary: Dict[str, Any],
     metadata: Dict[str, Any],
 ) -> Dict[str, Any]:
-    threshold = metadata.get("best_threshold", 0.5)
-    high_threshold = metadata.get("high_confidence_threshold", threshold + 0.1)
-    if probability >= high_threshold:
-        confidence = "高"
-        recommendation = "勝負レース候補（掛け金を厚めにする日）"
-    elif probability >= threshold:
-        confidence = "中"
-        recommendation = "状況次第で参加。オッズと相談してください。"
-    else:
-        confidence = "低"
-        recommendation = "見送り推奨。リスクに見合う根拠が不足しています。"
+    """Create heuristic betting guidance based on roughness score."""
+    
+    ticket_plan: List[Dict[str, str]]
+    money_management: str
+    hedge_note: str
+    plan_summary: str
+    risk_level: str
 
-    reasons = generate_reasons(summary, probability, metadata)
-    betting_plan = build_betting_plan(probability, summary, metadata)
+    if roughness_score >= 80:
+        risk_level = "ハイリスク（激荒れ）"
+        plan_summary = "本命総崩れも視野に。手広く構えて高配当を狙い撃つ局面です。"
+        ticket_plan = [
+            {
+                "label": "三連単BOX / フォーメーション",
+                "description": "有力選手だけでなく、展開利のある穴選手を含めたBOXや手広いフォーメーション推奨。",
+            }
+        ]
+        money_management = "資金の20%程度を穴目に配分。的中率は下がるがリターンは大きい。"
+        hedge_note = "ワイドで穴-穴を少額押さえるのも有効。"
+    elif roughness_score >= 60:
+        risk_level = "ミドルリスク（波乱含み）"
+        plan_summary = "本命は信頼しきれず。ヒモ荒れや着順のズレを想定した買い目を。"
+        ticket_plan = [
+            {
+                "label": "三連単 1頭軸マルチ",
+                "description": "軸は決めても着順は決めつけないマルチ投票が安全。",
+            }
+        ]
+        money_management = "均等買い推奨。トリガミに注意。"
+        hedge_note = "本命からのワイドで保険を。"
+    elif roughness_score >= 40:
+        risk_level = "標準（中穴狙い）"
+        plan_summary = "基本は順当だが、3着に穴が飛び込む可能性も。"
+        ticket_plan = [
+            {
+                "label": "三連単 本命-対抗-流し",
+                "description": "1-2着は固め、3着を少し広げる形がベスト。",
+            }
+        ]
+        money_management = "本命サイドに厚く張る。"
+        hedge_note = "特になし。"
+    else:
+        risk_level = "ローリスク（鉄板）"
+        plan_summary = "極めて堅いレース。点数を絞って厚く張るか、見送りが賢明。"
+        ticket_plan = [
+            {
+                "label": "三連単 1点〜4点",
+                "description": "ガチガチの本命ラインで決まる可能性大。点数を絞る。",
+            }
+        ]
+        money_management = "少点数に集中投資。"
+        hedge_note = "なし。外れたら事故と割り切る。"
+
     return {
-        "probability": probability,
+        "risk_level": risk_level,
+        "plan_summary": plan_summary,
+        "ticket_plan": ticket_plan,
+        "money_management": money_management,
+        "hedge_note": hedge_note,
+        "roughness_score": roughness_score,
+        "weather": summary.get("weather_condition", ""),
+        "track_condition": summary.get("track_condition", ""),
+    }
+
+
+# Final build_prediction_response - takes 4 arguments
+def build_prediction_response(
+    roughness_score: float,
+    summary: Dict[str, Any],
+    metadata: Dict[str, Any],
+    race_info: Dict[str, Any] = None,
+) -> Dict[str, Any]:
+    
+    if roughness_score >= 80:
+        confidence = "高"
+        recommendation = "★激荒れ予報★ 穴党の出番です"
+    elif roughness_score >= 60:
+        confidence = "中"
+        recommendation = "波乱含み。手広く構えましょう"
+    elif roughness_score >= 40:
+        confidence = "中"
+        recommendation = "中穴狙い。展開次第で配当妙味あり"
+    else:
+        confidence = "高"
+        recommendation = "本命党推奨。堅い決着が濃厚"
+
+    reasons = generate_reasons(summary, roughness_score, metadata)
+    
+    # Generate tiered betting suggestions
+    # Use race_info if provided, otherwise fall back to summary (which may contain riders list)
+    suggestions_source = race_info if race_info else summary
+    betting_data = betting_suggestions.generate_tiered_suggestions(
+        suggestions_source, # race_info or summary contains 'riders' list with details
+        roughness_score,
+        confidence
+    )
+    
+    # Format for display
+    betting_plan = betting_suggestions.format_betting_suggestions(betting_data)
+
+    return {
+        "roughness_score": roughness_score, # New field
+        "probability": roughness_score / 100.0, # Legacy field for compatibility if needed
         "confidence": confidence,
         "recommendation": recommendation,
-        "threshold": threshold,
-        "high_threshold": high_threshold,
         "reasons": reasons,
         "summary": summary,
         "betting_plan": betting_plan,
+        "betting_data": betting_data, # Raw data for frontend if needed
     }

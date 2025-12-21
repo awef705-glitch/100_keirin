@@ -186,6 +186,13 @@
       gap: 8px;
     }
 
+    .rider-extra-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
     /* Autocomplete */
     .input-wrapper {
       position: relative;
@@ -291,72 +298,56 @@
   <div class="container">
     <header>
       <h1>Keirin AI Predictor</h1>
-      <p class="subtitle">High Dividend Forecast Model v2.0</p>
+      <p class="subtitle">High Dividend Strategy & Roughness Score</p>
     </header>
 
-    {% if not model_ready %}
-    <div class="warning-banner">
-      ⚠️ Model is training. Please wait...
-    </div>
-    {% endif %}
+    <form action="/predict" method="post" class="card">
+      <div class="section-header">
+        <div class="section-icon">🏁</div>
+        <div>Race Details</div>
+      </div>
 
-    <form method="post" action="/predict" id="predict-form">
-      <!-- Race Info -->
-      <div class="card">
-        <div class="section-header">
-          <div class="section-icon">1</div>
-          <span>Race Info</span>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="race_date" id="race_date" required>
         </div>
-        <div class="form-grid">
-          <div class="form-group full">
-            <label>Date</label>
-            <input type="date" id="race_date" name="race_date" required>
-          </div>
-          <div class="form-group">
-            <label>Track</label>
-            <input type="text" id="track" name="track" placeholder="Select..." list="track-list">
-            <datalist id="track-list"></datalist>
-          </div>
-          <div class="form-group">
-            <label>Code</label>
-            <input type="tel" id="keirin_cd" name="keirin_cd" placeholder="27" required>
-          </div>
-          <div class="form-group">
-            <label>Race #</label>
-            <select name="race_no">
-              {% for i in range(1, 13) %}
-              <option value="{{ i }}" {% if i==11 %}selected{% endif %}>{{ i }}R</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Grade</label>
-            <select name="grade">
-              <option value="F1" selected>F1</option>
-              <option value="F2">F2</option>
-              <option value="G3">G3</option>
-              <option value="G2">G2</option>
-              <option value="G1">G1</option>
-              <option value="GP">GP</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label>Track</label>
+          <input list="track-list" name="track" id="track" placeholder="Select Track" required>
+          <datalist id="track-list"></datalist>
+          <input type="hidden" name="keirin_cd" id="keirin_cd">
+        </div>
+        <div class="form-group">
+          <label>Race No</label>
+          <input type="number" name="race_no" value="1" min="1" max="12" required>
+        </div>
+        <div class="form-group">
+          <label>Grade</label>
+          <select name="grade">
+            <option value="F1">F1</option>
+            <option value="F2">F2</option>
+            <option value="G3">G3</option>
+            <option value="G2">G2</option>
+            <option value="G1">G1</option>
+            <option value="GP">GP</option>
+          </select>
         </div>
       </div>
 
-      <!-- Riders -->
-      <div class="card">
-        <div class="section-header">
-          <div class="section-icon">2</div>
-          <span>Riders</span>
-        </div>
-        <div id="rider-list"></div>
-        <button type="button" class="btn-secondary" id="add-rider">+ Add Rider</button>
+      <div class="section-header" style="margin-top: 24px;">
+        <div class="section-icon">🚴</div>
+        <div>Riders <span id="data-status"
+            style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(Loading
+            data...)</span></div>
       </div>
+
+      <div id="rider-list"></div>
+
+      <button type="button" id="add-rider" class="btn-secondary" style="margin-bottom: 60px;">+ Add Rider</button>
 
       <div class="floating-action">
-        <button type="submit" class="btn-primary" {% if not model_ready %}disabled{% endif %}>
-          Predict High Dividend
-        </button>
+        <button type="submit" class="btn-primary">Predict High Payout</button>
       </div>
     </form>
   </div>
@@ -364,42 +355,77 @@
   <template id="rider-template">
     <div class="rider-card">
       <div class="rider-header">
-        <span class="rider-num">Rider #<span class="rider-index"></span></span>
+        <div class="rider-num">Rider <span class="rider-index"></span></div>
         <button type="button" class="rider-remove">Remove</button>
       </div>
 
-      <div class="form-group mb-4 input-wrapper">
-        <label>Name</label>
-        <input type="text" name="rider_names" class="rider-name-input" placeholder="Search rider..." autocomplete="off">
-        <div class="autocomplete-suggestions" style="display:none;"></div>
+      <div class="rider-row">
+        <div class="form-group input-wrapper">
+          <label>Name</label>
+          <input type="text" name="rider_names" class="rider-name-input" placeholder="Name (e.g. 佐藤慎太郎)"
+            autocomplete="off" required>
+          <div class="autocomplete-suggestions"></div>
+        </div>
+        <div class="form-group">
+          <label>Score</label>
+          <input type="number" step="0.01" name="rider_scores" class="rider-score" placeholder="Score" required>
+        </div>
       </div>
 
       <div class="rider-stats-row">
         <div class="form-group">
-          <label>Score</label>
-          <input type="number" step="0.01" name="rider_scores" class="rider-score" placeholder="100.0" required>
+          <label>Back</label>
+          <input type="number" name="rider_back_counts" class="rider-back-count" placeholder="B">
         </div>
         <div class="form-group">
-          <label>B Count</label>
-          <input type="number" step="0.1" name="rider_back_counts" class="rider-back-count" placeholder="0.0">
+          <label>Pref</label>
+          <input type="text" name="rider_prefectures" class="rider-prefecture" placeholder="Pref">
+        </div>
+        <div class="form-group">
+          <label>Grade</label>
+          <input type="text" name="rider_grades" class="rider-grade" placeholder="S1">
+        </div>
+      </div>
+
+      <!-- New Fields for Detailed Features -->
+      <div class="rider-extra-row">
+        <div class="form-group">
+          <label>Recent (1,2,3)</label>
+          <input type="text" name="rider_recent_results" class="rider-recent" placeholder="e.g. 1,2,5,1">
+        </div>
+        <div class="form-group">
+          <label>Gear</label>
+          <input type="number" step="0.01" name="rider_gears" class="rider-gear" placeholder="3.92">
+        </div>
+        <div class="form-group">
+          <label>H/S</label>
+          <input type="text" name="rider_hs_counts" class="rider-hs" placeholder="H:1 S:2">
+        </div>
+      </div>
+      <div class="rider-extra-row">
+        <div class="form-group">
+          <label>Home Bank?</label>
+          <input type="text" name="rider_home_banks" class="rider-home" placeholder="Yes/No or Bank Name">
         </div>
         <div class="form-group">
           <label>Style</label>
           <select name="rider_styles" class="rider-style">
-            <option value="逃">逃</option>
-            <option value="追">追</option>
-            <option value="両">両</option>
+            <option value="逃">逃 (Nige)</option>
+            <option value="追">追 (Tsui)</option>
+            <option value="両">両 (Ryo)</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>DQ Pts</label>
+          <input type="number" name="rider_dq_points" class="rider-dq" placeholder="0">
         </div>
       </div>
 
-      <!-- Hidden fields for auto-filled data -->
-      <input type="hidden" name="rider_prefectures" class="rider-prefecture">
-      <input type="hidden" name="rider_grades" class="rider-grade">
-      <input type="hidden" name="rider_nige_counts" class="rider-nige-count">
-      <input type="hidden" name="rider_makuri_counts" class="rider-makuri-count">
-      <input type="hidden" name="rider_sasi_counts" class="rider-sasi-count">
-      <input type="hidden" name="rider_mark_counts" class="rider-mark-count">
+      <!-- Hidden fields for counts -->
+      <input type="hidden" name="rider_nige_counts" class="rider-nige-count" value="0">
+      <input type="hidden" name="rider_makuri_counts" class="rider-makuri-count" value="0">
+      <input type="hidden" name="rider_sasi_counts" class="rider-sasi-count" value="0">
+      <input type="hidden" name="rider_mark_counts" class="rider-mark-count" value="0">
     </div>
   </template>
 
@@ -408,11 +434,15 @@
     let tracksData = [];
 
     async function loadMasterData() {
+      const statusEl = document.getElementById('data-status');
       try {
         const [ridersRes, tracksRes] = await Promise.all([
           fetch('/api/riders'),
           fetch('/api/tracks')
         ]);
+
+        if (!ridersRes.ok || !tracksRes.ok) throw new Error("Network response was not ok");
+
         ridersData = await ridersRes.json();
         tracksData = await tracksRes.json();
 
@@ -422,8 +452,13 @@
           option.value = track.name;
           trackList.appendChild(option);
         });
+
+        statusEl.textContent = `(Ready: ${ridersData.length} riders)`;
+        statusEl.style.color = '#4ade80'; // Green
       } catch (e) {
         console.error("Data load error", e);
+        statusEl.textContent = "(Data Load Error)";
+        statusEl.style.color = '#f43f5e'; // Red
       }
     }
 
@@ -462,12 +497,13 @@
 
       input.addEventListener('input', function () {
         const val = this.value.toLowerCase();
+
         if (!val) {
           suggestions.style.display = 'none';
           return;
         }
 
-        const matches = ridersData.filter(r => r.name.includes(val)).slice(0, 10);
+        const matches = ridersData.filter(r => r.name.includes(val)).slice(0, 50);
 
         if (matches.length) {
           suggestions.innerHTML = matches.map(r => `
@@ -502,7 +538,6 @@
       card.querySelector('.rider-prefecture').value = r.prefecture || '';
       card.querySelector('.rider-grade').value = r.grade || '';
 
-      // 戦術カウント（追加）
       if (card.querySelector('.rider-nige-count')) {
         card.querySelector('.rider-nige-count').value = r.nige_count || 0;
       }
@@ -527,7 +562,6 @@
 
     // Init with 7 riders
     for (let i = 0; i < 7; i++) addRider();
-
     loadMasterData();
   </script>
 </body>
