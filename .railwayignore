@@ -1,0 +1,10 @@
+data/
+.venv/
+.git/
+__pycache__/
+*.log
+*.pyc
+analysis/model_outputs/*.csv
+!analysis/model_outputs/prerace_model_feature_importance.csv
+!analysis/model_outputs/prerace_model_metadata.json
+!analysis/model_outputs/prerace_model_lgbm.txt

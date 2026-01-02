@@ -9,4 +9,14 @@ analysis/model_outputs/*
 !analysis/model_outputs/prerace_model_lgbm.txt
 !analysis/model_outputs/prerace_model_metadata.json
 !analysis/model_outputs/prerace_model_feature_importance.csv
+!analysis/model_outputs/rider_master.json
+!analysis/model_outputs/track_master.json
 .env
+
+# Data files
+data/archive/
+data/*.csv
+data/*.json
+!data/keirin_results_20240101_20251004.csv
+!data/keirin_prerace_20240101_20251004.csv
+!data/keirin_race_detail_entries_20240101_20251004.csv

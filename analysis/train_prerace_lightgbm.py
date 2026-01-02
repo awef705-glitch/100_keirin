@@ -17,8 +17,12 @@ from sklearn.metrics import (
     classification_report,
     precision_recall_curve,
     roc_auc_score,
+    brier_score_loss,
+    log_loss,
 )
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
 
 # Ensure project root is in PYTHONPATH
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -171,18 +175,84 @@ def train_lightgbm(
     roc_auc = roc_auc_score(y, oof_pred)
     avg_precision = average_precision_score(y, oof_pred)
 
-    precision, recall, thresholds = precision_recall_curve(y, oof_pred)
+    # Calculate calibration metrics BEFORE calibration
+    brier_before = brier_score_loss(y, oof_pred)
+    logloss_before = log_loss(y, oof_pred)
+
+    print(f"\nCalibration metrics (before):")
+    print(f"  Brier Score: {brier_before:.4f}")
+    print(f"  Log Loss: {logloss_before:.4f}")
+
+    # Train calibration models on OOF predictions
+    print("\nTraining calibration models...")
+
+    # Isotonic Regression (non-parametric, preserves ranking)
+    isotonic_calibrator = IsotonicRegression(out_of_bounds='clip')
+    isotonic_calibrator.fit(oof_pred, y)
+    oof_pred_isotonic = isotonic_calibrator.transform(oof_pred)
+
+    # Sigmoid Calibration (Platt scaling)
+    sigmoid_calibrator = LogisticRegression()
+    sigmoid_calibrator.fit(oof_pred.reshape(-1, 1), y)
+    oof_pred_sigmoid = sigmoid_calibrator.predict_proba(oof_pred.reshape(-1, 1))[:, 1]
+
+    # Calculate calibration metrics AFTER calibration
+    brier_isotonic = brier_score_loss(y, oof_pred_isotonic)
+    logloss_isotonic = log_loss(y, oof_pred_isotonic)
+    brier_sigmoid = brier_score_loss(y, oof_pred_sigmoid)
+    logloss_sigmoid = log_loss(y, oof_pred_sigmoid)
+
+    print(f"\nCalibration metrics (isotonic):")
+    print(f"  Brier Score: {brier_isotonic:.4f} (improvement: {brier_before - brier_isotonic:+.4f})")
+    print(f"  Log Loss: {logloss_isotonic:.4f} (improvement: {logloss_before - logloss_isotonic:+.4f})")
+
+    print(f"\nCalibration metrics (sigmoid):")
+    print(f"  Brier Score: {brier_sigmoid:.4f} (improvement: {brier_before - brier_sigmoid:+.4f})")
+    print(f"  Log Loss: {logloss_sigmoid:.4f} (improvement: {logloss_before - logloss_sigmoid:+.4f})")
+
+    # Select best calibration method
+    if brier_isotonic < brier_sigmoid and brier_isotonic < brier_before:
+        best_calibrator = isotonic_calibrator
+        calibration_method = "isotonic"
+        oof_pred_calibrated = oof_pred_isotonic
+        brier_calibrated = brier_isotonic
+        logloss_calibrated = logloss_isotonic
+        print(f"\n✓ Selected: Isotonic Regression")
+    elif brier_sigmoid < brier_before:
+        best_calibrator = sigmoid_calibrator
+        calibration_method = "sigmoid"
+        oof_pred_calibrated = oof_pred_sigmoid
+        brier_calibrated = brier_sigmoid
+        logloss_calibrated = logloss_sigmoid
+        print(f"\n✓ Selected: Sigmoid (Platt scaling)")
+    else:
+        best_calibrator = None
+        calibration_method = "none"
+        oof_pred_calibrated = oof_pred
+        brier_calibrated = brier_before
+        logloss_calibrated = logloss_before
+        print(f"\n✓ Selected: No calibration (raw predictions are best)")
+
+    # Save calibration model
+    if best_calibrator is not None:
+        calibrator_path = prerace_model.MODEL_DIR / "prerace_model_calibrator.pkl"
+        prerace_model.MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        with open(calibrator_path, 'wb') as f:
+            pickle.dump(best_calibrator, f)
+        print(f"Calibrator saved to: {calibrator_path}")
+
+    precision, recall, thresholds = precision_recall_curve(y, oof_pred_calibrated)
     f1_scores = 2 * precision * recall / (precision + recall + 1e-9)
 
     best_idx = int(np.nanargmax(f1_scores)) if len(f1_scores) else 0
     best_threshold = float(thresholds[best_idx]) if len(thresholds) else 0.5
     best_f1 = float(f1_scores[best_idx]) if len(f1_scores) else 0.0
 
-    order = np.argsort(-oof_pred)
+    order = np.argsort(-oof_pred_calibrated)
     top_k = min(args.top_k, len(order))
     precision_at_k = float(y.iloc[order[:top_k]].mean())
 
-    report = classification_report(y, (oof_pred >= best_threshold).astype(int), output_dict=True)
+    report = classification_report(y, (oof_pred_calibrated >= best_threshold).astype(int), output_dict=True)
 
     # Retrain on the full dataset with the average best iteration.
     final_iter = max(50, int(np.mean(best_iterations)))
@@ -217,7 +287,8 @@ def train_lightgbm(
             "target_high_payout",
         ]
     ].copy()
-    oof_df["prediction"] = oof_pred
+    oof_df["prediction_raw"] = oof_pred
+    oof_df["prediction"] = oof_pred_calibrated
     oof_df.rename(columns={"target_high_payout": "label"}, inplace=True)
     prerace_model.MODEL_DIR.mkdir(parents=True, exist_ok=True)
     oof_df.to_csv(prerace_model.MODEL_DIR / "prerace_model_oof.csv", index=False)
@@ -248,6 +319,15 @@ def train_lightgbm(
         "classification_report": report,
         "best_iterations": best_iterations,
         "final_iteration": final_iter,
+        "calibration": {
+            "method": calibration_method,
+            "brier_score_before": brier_before,
+            "brier_score_after": brier_calibrated,
+            "log_loss_before": logloss_before,
+            "log_loss_after": logloss_calibrated,
+            "improvement_brier": brier_before - brier_calibrated,
+            "improvement_logloss": logloss_before - logloss_calibrated,
+        },
     }
 
     metadata = {
@@ -262,6 +342,9 @@ def train_lightgbm(
         "roc_auc": roc_auc,
         "average_precision": avg_precision,
         "final_iteration": final_iter,
+        "calibration_method": calibration_method,
+        "brier_score": brier_calibrated,
+        "log_loss": logloss_calibrated,
     }
 
     # Persist artefacts.

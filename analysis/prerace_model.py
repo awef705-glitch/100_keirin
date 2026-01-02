@@ -14,6 +14,7 @@ before the race starts. Popularity / odds are deliberately excluded.
 from __future__ import annotations
 
 import json
+import pickle
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +33,7 @@ from analysis import betting_suggestions
 
 MODEL_DIR = Path("analysis") / "model_outputs"
 MODEL_PATH = MODEL_DIR / "prerace_model_lgbm.txt"
+CALIBRATOR_PATH = MODEL_DIR / "prerace_model_calibrator.pkl"
 METADATA_PATH = MODEL_DIR / "prerace_model_metadata.json"
 DATASET_PATH = MODEL_DIR / "prerace_training_dataset.csv"
 
@@ -1156,6 +1158,54 @@ def load_model() -> Any:
         print("[WARN] LightGBMモデルのロードに失敗しました。ヒューリスティック推論に切り替えます。")
         print(f"       詳細: {exc}")
         return None
+
+
+def load_calibrator() -> Any:
+    """
+    Load the probability calibration model (Isotonic or Sigmoid) if available.
+    Returns None if no calibrator exists or if loading fails.
+    """
+    if not CALIBRATOR_PATH.exists():
+        return None
+    try:
+        with open(CALIBRATOR_PATH, 'rb') as f:
+            calibrator = pickle.load(f)
+        print(f"[INFO] Loaded calibrator from {CALIBRATOR_PATH}")
+        return calibrator
+    except Exception as exc:
+        print(f"[WARN] Failed to load calibrator: {exc}")
+        return None
+
+
+def apply_calibration(raw_predictions: np.ndarray, calibrator: Any, metadata: Dict[str, Any]) -> np.ndarray:
+    """
+    Apply calibration to raw model predictions.
+
+    Args:
+        raw_predictions: Raw predictions from the model (0-1 probabilities)
+        calibrator: Isotonic or Sigmoid calibrator
+        metadata: Model metadata containing calibration_method
+
+    Returns:
+        Calibrated predictions (0-1 probabilities)
+    """
+    if calibrator is None:
+        return raw_predictions
+
+    calibration_method = metadata.get('calibration_method', 'none')
+
+    try:
+        if calibration_method == 'isotonic':
+            # IsotonicRegression uses transform()
+            return calibrator.transform(raw_predictions)
+        elif calibration_method == 'sigmoid':
+            # LogisticRegression uses predict_proba()
+            return calibrator.predict_proba(raw_predictions.reshape(-1, 1))[:, 1]
+        else:
+            return raw_predictions
+    except Exception as exc:
+        print(f"[WARN] Calibration failed: {exc}")
+        return raw_predictions
 
 
 
