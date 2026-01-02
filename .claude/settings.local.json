@@ -1,0 +1,27 @@
+{
+  "model": "claude-opus-4-5-20251101",
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(for dir in __pycache__ frontend backend dist env_setup docs assets)",
+      "Bash(do echo '=== $dir/ ===' if [ -d $dir ])",
+      "Bash(then ls -la $dir)",
+      "Bash(for dir in frontend backend dist env_setup docs)",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash(then echo \"=== $dir/ ===\" ls -la \"$dir/\")",
+      "Bash(test:*)",
+      "Bash(tree:*)",
+      "Bash(chmod:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(ssh:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
