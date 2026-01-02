@@ -311,6 +311,129 @@ input::placeholder {
   font-size: 0.9rem;
 }
 
+/* 選手入力行 */
+.rider-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+.waku-number {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.waku-1 { background: #fff; color: #000; }
+.waku-2 { background: #000; color: #fff; }
+.waku-3 { background: #e11d48; color: #fff; }
+.waku-4 { background: #2563eb; color: #fff; }
+.waku-5 { background: #facc15; color: #000; }
+.waku-6 { background: #16a34a; color: #fff; }
+.waku-7 { background: #f97316; color: #fff; }
+.waku-8 { background: #ec4899; color: #fff; }
+.waku-9 { background: #8b5cf6; color: #fff; }
+
+.autocomplete-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.rider-search {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.autocomplete-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1e1b4b;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.dropdown-item.no-match {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.rider-name {
+  font-weight: 500;
+}
+
+.rider-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.rider-info {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 120px;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tag.score {
+  background: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+.tag.grade-SS { background: #dc2626; color: #fff; }
+.tag.grade-S1 { background: #ea580c; color: #fff; }
+.tag.grade-S2 { background: #d97706; color: #fff; }
+.tag.grade-A1 { background: #2563eb; color: #fff; }
+.tag.grade-A2 { background: #0891b2; color: #fff; }
+.tag.grade-A3 { background: #0d9488; color: #fff; }
+.tag.grade-L1 { background: #db2777; color: #fff; }
+
+.tag.style-逃 { background: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+.tag.style-追 { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
+.tag.style-両 { background: rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+
 @media (max-width: 480px) {
   .container {
     padding: 16px 12px;
@@ -326,5 +449,15 @@ input::placeholder {
 
   .form-group.full {
     grid-column: 1;
+  }
+
+  .rider-input-row {
+    flex-wrap: wrap;
+  }
+
+  .rider-info {
+    width: 100%;
+    margin-top: 8px;
+    padding-left: 38px;
   }
 }

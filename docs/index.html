@@ -16,24 +16,16 @@
   <div class="container">
     <header>
       <h1>競輪 高配当予測AI</h1>
-      <p class="subtitle">事前情報から荒れるレースを予測</p>
+      <p class="subtitle">選手を選ぶだけで荒れ度を予測</p>
     </header>
 
     <form id="predictionForm">
       <div class="card">
         <div class="section-header">
           <span class="section-icon">📅</span>
-          <span>レース基本情報</span>
+          <span>レース情報</span>
         </div>
         <div class="form-grid">
-          <div class="form-group">
-            <label for="race_date">日付</label>
-            <input type="date" id="race_date" name="race_date" required>
-          </div>
-          <div class="form-group">
-            <label for="race_no">レース番号</label>
-            <input type="number" id="race_no" name="race_no" min="1" max="12" required>
-          </div>
           <div class="form-group">
             <label for="track">競技場</label>
             <input type="text" id="track" name="track" placeholder="例: 京王閣" required>
@@ -41,7 +33,7 @@
           <div class="form-group">
             <label for="grade">グレード</label>
             <select id="grade" name="grade" required>
-              <option value="">選択してください</option>
+              <option value="">選択</option>
               <option value="GP">GP</option>
               <option value="G1">G1</option>
               <option value="G2">G2</option>
@@ -51,20 +43,15 @@
               <option value="一般">一般</option>
             </select>
           </div>
-          <div class="form-group full">
-            <label for="category">カテゴリ</label>
-            <input type="text" id="category" name="category" placeholder="例: S級特選" required>
-          </div>
         </div>
       </div>
 
       <div class="card">
         <div class="section-header">
           <span class="section-icon">👤</span>
-          <span>選手情報（9名）</span>
+          <span>出走選手（名前を入力して選択）</span>
         </div>
         <div id="ridersContainer"></div>
-        <button type="button" class="btn-secondary" onclick="addRider()">+ 選手を追加</button>
       </div>
 
       <button type="submit" class="btn-primary" id="submitBtn">
