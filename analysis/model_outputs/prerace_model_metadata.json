@@ -23,47 +23,47 @@
     "boost_from_average": 1.0,
     "seed": 42.0
   },
-  "roc_auc": 0.5720610322516538,
-  "average_precision": 0.3380462721731089,
-  "best_threshold": 0.4,
-  "best_f1": 0.42355738711065793,
-  "precision_at_top_k": 0.6,
+  "roc_auc": 0.6386381501622247,
+  "average_precision": 0.45434124403403275,
+  "best_threshold": 0.33309112837806526,
+  "best_f1": 0.46875975233822204,
+  "precision_at_top_k": 0.76,
   "top_k": 100,
   "classification_report": {
     "0": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
+      "precision": 0.8115535794832142,
+      "recall": 0.6927286727902756,
+      "f1-score": 0.7474480712166172,
       "support": 36362.0
     },
     "1": {
-      "precision": 0.2686792301039802,
-      "recall": 1.0,
-      "f1-score": 0.4235573874445149,
+      "precision": 0.40196970507948404,
+      "recall": 0.5621678269331537,
+      "f1-score": 0.46875975282441795,
       "support": 13359.0
     },
-    "accuracy": 0.2686792301039802,
+    "accuracy": 0.6576496852436596,
     "macro avg": {
-      "precision": 0.1343396150519901,
-      "recall": 0.5,
-      "f1-score": 0.21177869372225744,
+      "precision": 0.6067616422813491,
+      "recall": 0.6274482498617147,
+      "f1-score": 0.6081039120205176,
       "support": 49721.0
     },
     "weighted avg": {
-      "precision": 0.07218852868926755,
-      "recall": 0.2686792301039802,
-      "f1-score": 0.11380107276344552,
+      "precision": 0.7015068994454147,
+      "recall": 0.6576496852436597,
+      "f1-score": 0.6725703083920281,
       "support": 49721.0
     }
   },
   "best_iterations": [
-    39,
-    20,
-    32,
-    63,
-    72
+    158,
+    73,
+    142,
+    98,
+    165
   ],
-  "final_iteration": 50,
+  "final_iteration": 127,
   "feature_columns": [
     "keirin_cd_num",
     "race_no",
@@ -150,12 +150,16 @@
     "sasi_count_top3_sum",
     "mark_count_mean",
     "mark_count_max",
-    "mark_count_top3_sum"
+    "mark_count_top3_sum",
+    "recent_win_rate_mean",
+    "recent_win_rate_max",
+    "recent_win_rate_std",
+    "recent_2ren_rate_mean",
+    "recent_2ren_rate_max",
+    "recent_2ren_rate_std",
+    "recent_3ren_rate_mean",
+    "recent_3ren_rate_max",
+    "recent_3ren_rate_std"
   ],
-  "high_confidence_threshold": 0.5,
-  "threshold_analysis": {
-    "optimal_threshold": 0.4,
-    "expected_hit_rate": 0.366,
-    "analysis_date": "2025-11-24"
-  }
+  "high_confidence_threshold": 0.4330911283780653
 }

@@ -1,0 +1,44 @@
+# デプロイに不要なファイルを除外
+data/
+workspace/
+.venv/
+__pycache__/
+*.pyc
+*.log
+.git/
+
+# テスト・デバッグファイル
+test_*.py
+debug_*.py
+analyze_*.py
+evaluate_*.py
+collect_*.py
+predict_*.py
+validate_*.py
+verify_*.py
+tune_*.py
+
+# ドキュメント（大量）
+*.md
+!README.md
+!VERCEL_DEPLOY.md
+
+# 一時ファイル
+temp_*.html
+*.csv
+!data/keirin_results_20240101_20251004.csv
+!data/keirin_prerace_20240101_20251004.csv
+!data/keirin_race_detail_entries_20240101_20251004.csv
+
+# Cloudflare Tunnel関連（Vercel不要）
+start_tunnel.sh
+start_tunnel.bat
+CLOUDFLARE_TUNNEL_SETUP.md
+DEPLOYMENT_SOLUTION.md
+QUICK_START_TUNNEL.md
+
+# モデル変換スクリプト（使わない）
+convert_model_to_onnx.py
+
+# Railway関連
+.railwayignore

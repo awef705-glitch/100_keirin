@@ -117,12 +117,74 @@ Precision@Top100:  1.00
    python predict_race.py --interactive
    ```
 
-### Render/Railwayデプロイ
+### 🌐 Vercel デプロイ（推奨・PC不要）
+
+**完全無料・PC不要・デプロイ失敗なし**
+
+1. **Vercelアカウント作成**
+   - https://vercel.com でGitHub連携
+
+2. **GitHubにプッシュ**
+   ```bash
+   git push origin main
+   ```
+
+3. **Vercelでデプロイ**
+   - New Project → GitHubリポジトリ選択 → Deploy
+
+**完了！** 数分で `https://あなたのプロジェクト.vercel.app` が発行されます
+
+**詳細**: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)
+
+**メリット**:
+- ✅ **完全無料（100GB帯域・無制限リクエスト）**
+- ✅ **PC不要**（Vercelがホスティング）
+- ✅ **デプロイ超簡単**（git push だけ）
+- ✅ **PWA対応**（iPhoneアプリのように使える）
+- ✅ **自動SSL**（https://で安全）
+
+---
+
+### Cloudflare Tunnel デプロイ（PC起動時のみ）
+
+**PC依存だが完全無料**
+
+<details>
+<summary>PCを起動している間のみ利用可能（クリックして展開）</summary>
+
+1. **cloudflaredをインストール（初回のみ）**
+   ```bash
+   wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+   sudo dpkg -i cloudflared-linux-amd64.deb
+   ```
+
+2. **アプリを起動（1コマンド）**
+   ```bash
+   ./start_tunnel.sh
+   ```
+
+3. **iPhoneでアクセス**
+   - 表示されたURL（例: `https://xxx.trycloudflare.com`）を開く
+
+**詳細**: [QUICK_START_TUNNEL.md](QUICK_START_TUNNEL.md)
+
+</details>
+
+---
+
+### Render/Railway デプロイ（非推奨）
+
+⚠️ **無料枠の制限とデプロイ失敗のリスクがあるため、Vercelを推奨**
+
+<details>
+<summary>従来の方法（クリックして展開）</summary>
 
 1. GitHubリポジトリをRender/Railwayに接続
 2. ビルドコマンド: `pip install -r requirements.txt`
 3. スタートコマンド: `uvicorn web_app:app --host 0.0.0.0 --port $PORT`
 4. デプロイ完了後のURLにアクセス
+
+</details>
 
 ---
 
@@ -400,6 +462,13 @@ python scripts/fetch_keirin_race_detail.py --prerace data/keirin_prerace.csv
 
 ## 📚 関連ドキュメント
 
+### デプロイ関連（推奨順）
+- [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) - ⭐️ Vercel完全ガイド（推奨・PC不要）
+- [QUICK_START_TUNNEL.md](QUICK_START_TUNNEL.md) - Cloudflare Tunnel 3ステップガイド（PC起動時のみ）
+- [DEPLOYMENT_SOLUTION.md](DEPLOYMENT_SOLUTION.md) - デプロイ問題の完全解決策
+- [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md) - 詳細セットアップガイド
+
+### 技術資料
 - [POPULARITY_ANALYSIS_REPORT.md](analysis/model_outputs/POPULARITY_ANALYSIS_REPORT.md) - 人気順位モデル分析
 - [CLAUDE.md](CLAUDE.md) - プロジェクトガイド（Claude Code用）
 - [requirements.txt](requirements.txt) - 依存パッケージ

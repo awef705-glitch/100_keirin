@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="競輪の高配当レースを事前情報から予測するAIツール">
+  <meta name="theme-color" content="#6366f1">
+  <title>競輪 高配当予測AI</title>
+
+  <!-- PWA Support -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏁 競輪 高配当予測AI</h1>
+      <p class="subtitle">事前情報から荒れるレースを予測</p>
+    </header>
+
+    <form id="predictionForm">
+      <!-- レース基本情報 -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-icon">📅</span>
+          <span>レース基本情報</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="race_date">日付</label>
+            <input type="date" id="race_date" name="race_date" required>
+          </div>
+          <div class="form-group">
+            <label for="race_no">レース番号</label>
+            <input type="number" id="race_no" name="race_no" min="1" max="12" required>
+          </div>
+          <div class="form-group">
+            <label for="track">競技場</label>
+            <input type="text" id="track" name="track" placeholder="例: 京王閣" required>
+          </div>
+          <div class="form-group">
+            <label for="grade">グレード</label>
+            <select id="grade" name="grade" required>
+              <option value="">選択してください</option>
+              <option value="GP">GP</option>
+              <option value="G1">G1</option>
+              <option value="G2">G2</option>
+              <option value="G3">G3</option>
+              <option value="F1">F1</option>
+              <option value="F2">F2</option>
+              <option value="">一般</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label for="category">カテゴリ</label>
+            <input type="text" id="category" name="category" placeholder="例: S級特選" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- 選手情報 -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-icon">👤</span>
+          <span>選手情報（9名）</span>
+        </div>
+        <div id="ridersContainer"></div>
+        <button type="button" class="btn-secondary" onclick="addRider()">+ 選手を追加</button>
+      </div>
+
+      <!-- 送信ボタン -->
+      <button type="submit" class="btn-primary" id="submitBtn">
+        <span id="submitText">予測する</span>
+        <span id="submitLoader" class="loader" style="display: none;"></span>
+      </button>
+    </form>
+
+    <!-- 結果表示エリア -->
+    <div id="resultArea" style="display: none;">
+      <div class="card">
+        <div class="section-header">
+          <span class="section-icon">🎯</span>
+          <span>予測結果</span>
+        </div>
+        <div id="resultContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
