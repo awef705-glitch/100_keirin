@@ -51,18 +51,12 @@ def load_results(path: Path, payout_threshold: int) -> pd.DataFrame:
         "category",
         "meeting_icon",
         "trifecta_payout",
-        "trifecta_popularity",
+        # NOTE: trifecta_popularity は事後データ（レース確定後に決まる人気順位）のため
+        # 特徴量として使用するとデータリーケージになる。意図的に除外。
     ]
     df = pd.read_csv(path, usecols=usecols)
     df["trifecta_payout"] = (
         df["trifecta_payout"]
-        .astype(str)
-        .str.replace(r"[^\d.]", "", regex=True)
-        .replace("", np.nan)
-        .astype(float)
-    )
-    df["trifecta_popularity"] = (
-        df["trifecta_popularity"]
         .astype(str)
         .str.replace(r"[^\d.]", "", regex=True)
         .replace("", np.nan)
@@ -201,11 +195,7 @@ def add_derived_features(df: pd.DataFrame) -> pd.DataFrame:
     if "narabi_y_cnt" in result.columns and "entry_count" in result.columns:
         result["narabi_ratio"] = safe_div(result["narabi_y_cnt"], result["entry_count"])
 
-    if "trifecta_popularity" in result.columns:
-        missing_mask = result["trifecta_popularity"].isna()
-        result["popularity_missing"] = missing_mask.astype(int)
-        median_value = result["trifecta_popularity"].median()
-        result["trifecta_popularity"] = result["trifecta_popularity"].fillna(median_value)
+    # NOTE: trifecta_popularity は事後データのため削除済み（データリーケージ防止）
 
     if "race_no_int" in result.columns and "entry_count" in result.columns:
         result["race_no_norm"] = safe_div(
@@ -216,8 +206,9 @@ def add_derived_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_feature_columns(dataset: pd.DataFrame) -> Tuple[List[str], List[str]]:
+    # NOTE: trifecta_popularity と popularity_missing は事後データのため除外
+    # （データリーケージ防止）
     base_numeric = [
-        "trifecta_popularity",
         "entry_count",
         "narabi_flg",
         "narabi_y_cnt",
@@ -227,7 +218,6 @@ def select_feature_columns(dataset: pd.DataFrame) -> Tuple[List[str], List[str]]
         "entry_intensity",
         "narabi_ratio",
         "race_no_norm",
-        "popularity_missing",
     ]
 
     stat_prefixes = [
